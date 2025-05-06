@@ -72,7 +72,7 @@ app.use(express.static(__dirname + "/public"));
 
 // Routes (root homepage)
 app.get('/', (req, res) => {
-    // res.render("index");
+    res.render("index", { title: 'Home' });
 });
 
 // The route for creating the user.
@@ -89,12 +89,8 @@ app.get('/login', (req, res) => {
 // but before "app.listen".
 app.use((req, res) => {
     res.status(404).send('Page not found – 404');
-  });
-  
-  app.listen(port, () => {
-    console.log(`Server listening on port ${port}`);
-  });
-  
+});
+
 // Start the server
 app.listen(port, () => {
     console.log(`Server is running on port ` + port);
