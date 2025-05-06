@@ -33,7 +33,7 @@ const port = process.env.PORT || 3000;
 // const mongodb_db = process.env.MONGODB_DB;
 // const mongodb_session_secret = process.env.MONGODB_SESSION_SECRET;
 
-// const node_session_secret = process.env.SESSION_SECRET;
+// const node_session_secret = process.env.NODE_SESSION_SECRET;
 /* END secret section */
 
 // Users and Passwords arrays of objects (in memory 'database')
