@@ -77,19 +77,11 @@ app.get('/signup', (req,res) => {
     res.render("signup", { title: "Sign Up" });
 });
 
-<<<<<<< HEAD:app.js
 // The route fot log in user.
 app.get('/login', (req, res) => {
     res.render("login", { title: "Log in" });
 })
-=======
-// The route for logging in.
-app.get('/login', (req,res) => {
-    res.render("login", { title: "Login" } );
-});
->>>>>>> 1f0d37f203376b42f7bf003b973e897513bb6c9f:index.js
 
- 
 // 404 Page, must be placed at the end of all the routes.
 // but before "app.listen".
 app.get("*", (req,res) => {
