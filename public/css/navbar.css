@@ -1,5 +1,3 @@
-@import "tailwindcss";
-
 body {
   margin: 0;
   font-family: Arial, sans-serif;
@@ -19,15 +17,15 @@ body {
 }
 
 .bottom-navbar img {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
 }
 
 .bottom-navbar a {
   color: white;
   text-decoration: none;
   text-align: center;
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .bottom-navbar a:hover {
