@@ -70,7 +70,12 @@ app.use(session({
 
 // Routes (root homepage)
 app.get('/', (req, res) => {
-    res.render("landing");
+    if (req.session.authenticated)
+    {
+        res.render("home", { title: "Home" });
+    } else {
+        res.render("landing", { title: "Landing" });
+    }
 });
 
 // The route for creating the user.
@@ -123,10 +128,13 @@ app.post('/signupSubmit', async (req, res) => {
       return res.render("language", { title: "Select Languages" });
     }
     res.redirect('/');       
-  });
-  
+});
 
-
+// route for logging out
+app.get('/logout', (req,res) => {
+	req.session.destroy();
+    res.redirect('/');
+});
 
 // Allows for images, CSS, JS file to be included inyour website.
 app.use(express.static(__dirname + "/public"));

@@ -1,0 +1,13 @@
+<%- include("templates/header") %>
+
+    <h1>YOU ARE HOME....</h1>
+
+    <button id="signout">Sign out</button>
+    
+    <script>
+        document.getElementById("signout")
+            .addEventListener("click", () => {
+                window.location.href = "/logout"
+        });
+    </script>
+<%- include("templates/footer") %>
