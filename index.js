@@ -70,7 +70,7 @@ app.use(session({
 
 // Routes (root homepage)
 app.get('/', (req, res) => {
-    res.render("index", { title: 'Home' });
+    res.render("landing");
 });
 
 // The route for creating the user.
