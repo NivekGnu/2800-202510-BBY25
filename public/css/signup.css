@@ -1,6 +1,6 @@
 /* signup.css */
 
-/* 1) 박스 사이징 & 리셋 & 수평 스크롤 방지 */
+/* 1) Box sizing, reset, & prevent horizontal scrolling */
 *, *::before, *::after {
     box-sizing: border-box;
   }
@@ -10,7 +10,7 @@
     width: 100%;
     height: 100%;
     background: #fff;
-    overflow-x: hidden; /* 수평 스크롤 방지 */
+    overflow-x: hidden; /* prevent horizontal scrolling */
   }
   body {
     padding: 0 16px;
@@ -18,16 +18,16 @@
     padding-bottom: env(safe-area-inset-bottom);
   }
   
-  /* 2) 컨테이너 (header 아래, max-width 379px) */
+  /* 2) Container (below header, max-width 379px) */
   .signup-container {
-    margin-top: 80px;     /* header와의 간격을 유지 */
+    margin-top: 80px;     /* maintain space from header */
     width: 100%;
     max-width: 379px;
     margin-left: auto;
     margin-right: auto;
   }
   
-  /* 3) 타이틀 */
+  /* 3) Title */
   .signup-title {
     text-align: center;
     font-size: 20px;
@@ -36,20 +36,20 @@
     margin-bottom: 24px;
   }
   
-  /* 4) 폼 아이템들 사이 수직 간격 */
+  /* 4) Vertical spacing between form items */
   .signup-form > * + * {
     margin-top: 16px;
   }
   
-  /* 5) 이름 필드: flex 1로 균등 분할 */
+  /* 5) Name fields: evenly split with flex:1 */
   .name-row {
     display: flex;
     width: 100%;
     gap: 8px;
   }
   .name-row input {
-    flex: 1;           /* 균등 분할 */
-    min-width: 0;      /* 여기가 핵심! */
+    flex: 1;           /* evenly split */
+    min-width: 0;      /* this is essential! */
     height: 51px;
     padding: 0 12px;
     border: none;
@@ -63,7 +63,7 @@
     color: #888;
   }
   
-  /* 6) 이메일 / 비밀번호: 100% 너비 */
+  /* 6) Email / Password: full width */
   .signup-form input[type="email"],
   .signup-form input[type="password"] {
     width: 100%;
@@ -79,7 +79,7 @@
     color: #888;
   }
   
-  /* 7) 체크박스 */
+  /* 7) Checkbox */
   .signup-checkbox {
     display: flex;
     align-items: center;
@@ -92,7 +92,7 @@
     height: 16px;
   }
   
-  /* 8) Buyer/Seller: flex로 균등 분할 */
+  /* 8) Buyer/Seller: evenly split with flex */
   .role-toggle {
     display: flex;
     gap: 8px;
@@ -110,7 +110,7 @@
     background: #ccc;
   }
   
-  /* 9) Sign Up 버튼 */
+  /* 9) Sign Up button */
   .signup-btn {
     width: 100%;
     height: 51px;
