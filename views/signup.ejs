@@ -1,0 +1,34 @@
+<%- include("partials/header") %>
+<link rel="stylesheet" href="/css/signup.css" /> 
+
+<!-- Body part of the sign up page -->
+<body>
+    <!-- signup form container -->
+    <div class="signup-container">
+  
+      <h1 class="signup-title">Create an Account</h1>
+  
+      <form class="signup-form">
+        <div class="name-row">
+          <input type="text" name="firstName" placeholder="First Name" required />
+          <input type="text" name="lastName"  placeholder="Last Name"  required />
+        </div>
+  
+        <input type="email"    name="email"    placeholder="Email"    required />
+        <input type="password" name="password" placeholder="Password" required />
+  
+        <label class="signup-checkbox">
+          <input type="checkbox" name="terms" required />
+          I agree to the Terms and Conditions
+        </label>
+  
+        <div class="role-toggle">
+          <button type="button" class="role-btn active">Buyer</button>
+          <button type="button" class="role-btn">Seller</button>
+        </div>
+  
+        <button type="submit" class="signup-btn">Sign Up</button>
+      </form>
+    </div>
+  </body>
+  
