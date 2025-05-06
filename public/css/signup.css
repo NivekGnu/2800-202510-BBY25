@@ -125,3 +125,8 @@
     cursor: not-allowed;
   }
   
+  .role-btn.active {            /* selected state */
+    background: #2f8a3e;        /* filled green */
+    color: #fff;                /* white text */
+  }
+  

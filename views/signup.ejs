@@ -6,7 +6,7 @@
 
   <h1 class="signup-title">Create an Account</h1>
 
-  <form class="signup-form">
+  <form id="signupForm" class="signup-form" method="POST" action="/signupSubmit" novalidate>
     <div class="name-row">
       <input type="text" name="firstName" placeholder="First Name" required />
       <input type="text" name="lastName"  placeholder="Last Name"  required />
@@ -21,42 +21,53 @@
     </label>
 
     <div class="role-toggle">
+      <!-- map buttons to hidden radio, which will enforce required -->
       <input id="role-buyer"  type="radio" name="role" value="buyer"  required hidden>
       <input id="role-seller" type="radio" name="role" value="seller"         hidden>
 
-      <button type="button" class="role-btn active">Buyer</button>
-      <button type="button" class="role-btn">Seller</button>
+      <button type="button" class="role-btn" data-target="role-buyer">Buyer</button>
+      <button type="button" class="role-btn" data-target="role-seller">Seller</button>
     </div>
 
-    <button type="submit" class="signup-btn">Sign Up</button>
+    <!-- disable signup button until fields valid -->
+    <button id="signupBtn" type="submit" class="signup-btn" disabled>Sign Up</button>
   </form>
 </div>
 
 <script>
-  /* -------- role‑toggle logic -------- */
   document.querySelectorAll('.role-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      // toggle visual state
+      
+      // remove/reset the highlight from both buttons
       document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+
+      // only highlight the button that is clicked
+      // role-btn becomes role-btn.active
       btn.classList.add('active');
-      // check the hidden radio
-      document.getElementById(btn.dataset.target).checked = true;
+
+      /* check the matching radio */
+      const selectedRadio = btn.dataset.target;
+      document.getElementById(selectedRadio).checked = true;
+
+      /* check if form valid */
       validateForm();
     });
   });
   
-  /* -------- enable submit only when valid -------- */
-  const form  = document.getElementById('signupForm');
+  /* ==== enable submit when form valid ==== */
+  const form      = document.getElementById('signupForm');
   const submitBtn = document.getElementById('signupBtn');
   
+  // if form is invalid (false) then button disabled will be true
   function validateForm() {
     submitBtn.disabled = !form.checkValidity();
   }
   
-  // run on every input / change
-  form.addEventListener('input', validateForm);
+  /* run on every change */
+  form.addEventListener('input',  validateForm);
   form.addEventListener('change', validateForm);
-  </script>
+  validateForm();            // initial state
+</script>
 
 <%- include("templates/footer") %>
 

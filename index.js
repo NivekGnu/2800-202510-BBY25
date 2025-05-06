@@ -39,6 +39,7 @@ const node_session_secret = process.env.NODE_SESSION_SECRET;
 // Users and Passwords arrays of objects (in memory 'database')
 // Need to change this to connect with mongoDB
 var {database} = require('./databaseConnection');
+const e = require('express');
 
 app.set('view engine', 'ejs');
 
@@ -77,10 +78,55 @@ app.get('/signup', (req,res) => {
     res.render("signup", { title: "Sign Up" });
 });
 
-// The route fot log in user.
+// The route for log in user.
 app.get('/login', (req, res) => {
     res.render("login", { title: "Log in" });
 })
+
+// route for sign up submission
+app.post('/signupSubmit', async (req, res) => {
+    const { firstName, lastName, email, password, role } = req.body;
+  
+    const schema = Joi.object({
+      firstName: Joi.string().min(1).required(),
+      lastName:  Joi.string().min(1).required(),
+      email:     Joi.string().email().required(),
+      password:  Joi.string().min(6).required(),
+      role:      Joi.string().valid('buyer', 'seller').required(),
+    });
+  
+    const validationResult = schema.validate({ firstName, lastName, email, password, role });
+    if (validationResult.error) {
+        return res.status(400).send(validationResult.error.details[0].message);
+    }
+  
+    // check if email already registered
+    const emailExists = await userCollection.findOne({ email });
+    if (emailExists) {
+        return res.status(400).send('Email already registered');
+    }
+  
+    // hash password
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    // insert into mongoDB
+    await userCollection.insertOne({ firstName: firstName, lastName: lastName, email: email, password: hashedPassword, role: role, languages: [], createdAt: new Date() })
+
+    req.session.authenticated = true;
+    req.session.firstName = firstName;
+    req.session.lastName = lastName;
+    req.session.email = email;
+    req.session.cookie.maxAge = expireTime;
+  
+    if (role === 'seller') {
+      // take seller to language‑selection page
+      return res.render("language", { title: "Select Languages" });
+    }
+    res.redirect('/');       
+  });
+  
+
+
 
 // Allows for images, CSS, JS file to be included inyour website.
 app.use(express.static(__dirname + "/public"));
