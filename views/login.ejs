@@ -1,34 +1,35 @@
 <%- include("templates/header") %>
 <link rel="stylesheet" href="/css/login.css" />
 
-<!-- <body> -->
-  <!-- login form container -->
-  <div class="login-container">
+<!-- login form container -->
+<div class="login-container">
 
-    <h1 class="login-title">Welcome Back</h1>
+  <h1 class="login-title">Welcome Back</h1>
 
-    <form action="/login" method="post" class="login-form">
-      <input
-        type="text"
-        name="username"
-        placeholder="User Name"
-        class="login-input"
-        required
-      />
-      <input
-        type="password"
-        name="password"
-        placeholder="Password"
-        class="login-input"
-        required
-      />
+  <form action="/login" method="post" class="login-form">
+    <input
+      type="text"
+      name="username"
+      placeholder="User Name"
+      class="login-input"
+      required
+    />
+    <input
+      type="password"
+      name="password"
+      placeholder="Password"
+      class="login-input"
+      required
+    />
 
-      <label class="login-checkbox">
-        <input type="checkbox" name="remember" />
-        Remember me
-      </label>
+    <label class="login-checkbox">
+      <input type="checkbox" name="remember" />
+      Remember me
+    </label>
 
-      <button type="submit" class="login-btn">Login</button>
-    </form>
-  </div>
-<!-- </body> -->
+    <button type="submit" class="login-btn">Login</button>
+  </form>
+</div>
+
+<%- include("templates/footer") %>
+
