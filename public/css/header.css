@@ -2,7 +2,7 @@
 header {
     position: fixed;
     top: 0; left: 0; right: 0;
-    height: 64px;                /* (선택) 헤더 높이도 살짝 올려줄 수 있습니다 */
+    height: 64px;                
     display: flex;
     align-items: center;
     padding: 0 16px;
@@ -15,11 +15,10 @@ header {
     margin-right: auto;
   }
   .logo-container img {
-    height: 48px;                /* ← 여기서 로고 높이를 키웠습니다 */
+    height: 48px;               
     width: auto;
   }
   
-  /* (기존 미디어쿼리 유지) */
   @media (min-width: 768px) {
     header {
       justify-content: space-between;
