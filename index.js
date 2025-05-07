@@ -89,6 +89,15 @@ app.get('/login', (req, res) => {
     delete req.session.error;    
     res.render("login", { title: "Log in" , error: error });
 })
+// The route for the chat page
+app.get('/chat', (req, res) => {
+    if (req.session.authenticated) {
+        res.render("chat", { title: "Chat", firstName: req.session.firstName });
+    } 
+    else {
+        res.redirect('/login');
+    }
+});
 
 // The route for logging in page which checks the matching 
 // users with the corresponding pw.
