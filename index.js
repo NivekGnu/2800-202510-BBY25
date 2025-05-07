@@ -25,7 +25,7 @@ const saltRounds = 12;
 const Joi = require('joi');
 
 // Make an express object
-const app = express();  
+const app = express();
 
 // Set up the time of the duration of the session.
 // This code means that session expires after 1 hour.
@@ -46,7 +46,7 @@ const node_session_secret = process.env.NODE_SESSION_SECRET;
 
 // Users and Passwords arrays of objects (in memory 'database')
 // Need to change this to connect with mongoDB
-var {database} = require('./databaseConnection');
+var { database } = require('./databaseConnection');
 const e = require('express');
 
 // Configure Multer to store uploads in memory.
@@ -80,7 +80,7 @@ app.use(session({
 
 // Middleware for to use req.body it is necessary to parse the data.
 // Otherwise req.body will be undefined.
-app.use(express.urlencoded({extended: false}));
+app.use(express.urlencoded({ extended: false }));
 // Allows for images, CSS, JS file to be included inyour website.
 app.use(express.static(__dirname + "/public"));
 
@@ -88,8 +88,7 @@ app.set('view engine', 'ejs');
 
 // Routes (root homepage)
 app.get('/', (req, res) => {
-    if (req.session.authenticated)
-    {
+    if (req.session.authenticated) {
         res.render("home", { title: "Home" });
     } else {
         res.render("landing", { title: "Landing" });
@@ -97,20 +96,20 @@ app.get('/', (req, res) => {
 });
 
 // The route for creating the user.
-app.get('/signup', (req,res) => {
+app.get('/signup', (req, res) => {
     res.render("signup", { title: "Sign Up" });
 });
 
 // The route for log in user.
 app.get('/login', (req, res) => {
     const error = req.session.error;
-    delete req.session.error;    
-    res.render("login", { title: "Log in" , error: error });
+    delete req.session.error;
+    res.render("login", { title: "Log in", error: error });
 })
 
 // The route for logging in page which checks the matching 
 // users with the corresponding pw.
-app.post('/loginSubmit', async (req,res) => {
+app.post('/loginSubmit', async (req, res) => {
     var email = req.body.email;
     var password = req.body.password;
 
@@ -124,17 +123,16 @@ app.post('/loginSubmit', async (req,res) => {
     // Check
     const validationResult = schema.validate({ email, password }, { abortEarly: false });
 
-    if(validationResult.error != null)
-    {
+    if (validationResult.error != null) {
         // collect all missing/empty field names
         const fields = validationResult.error.details.map(d => d.context.key);
         const unique = Array.from(new Set(fields));
-    
+
         // build "X is required." for each
         const msgs = unique
             .map(f => `${f} is required.`)
             .join(' ');
-    
+
         res.send(`
             <p>${msgs}</p>
             <a href="/login">Try again</a>
@@ -143,24 +141,22 @@ app.post('/loginSubmit', async (req,res) => {
     }
 
     // Fetch the user info from the MongoDB (Probably fetching only 1)
-    const result = await userCollection.find({email: email})
-                    .project({email: 1, password: 1, username: 1, _id: 1}).toArray();
+    const result = await userCollection.find({ email: email })
+        .project({ email: 1, password: 1, username: 1, _id: 1 }).toArray();
 
     // How the log in process works (comparing the username and the password)
     // Since it's like an array, if the length is not 1 this means that it didn't 
     // fetch any of it which is an error.
     // In this case, it means that there is no user with the given email and the password.
-    if(result.length != 1)
-    {
+    if (result.length != 1) {
         req.session.error = 'Invalid email/password combination.';
         return res.redirect('/login');
     }
 
     // result[0] is the first index of an array which is the one fetched by the mongoDB.
-    if(await bcrypt.compare(password, result[0].password))
-    {
+    if (await bcrypt.compare(password, result[0].password)) {
         console.log("correct password");
-        
+
         // This 3 lines of code is storing the data in the session so that
         // it can remember the user when they reaccess with the same session (browser).
         // Saving the username as well from the mongoDB so that it can show it in the root page.
@@ -173,11 +169,10 @@ app.post('/loginSubmit', async (req,res) => {
         res.redirect('/members');
         return;
     }
-    else
-    {
+    else {
         // When the email exists in the database but it does not matches the password.
-		console.log("incorrect password");
-		res.send(`
+        console.log("incorrect password");
+        res.send(`
             <!DOCTYPE html>
             <html lang="en">
             <head>
@@ -194,32 +189,32 @@ app.post('/loginSubmit', async (req,res) => {
             </html>
             `)
         return;
-	}
+    }
 });
 
 // route for sign up submission
 app.post('/signupSubmit', async (req, res) => {
     const { firstName, lastName, email, password, role } = req.body;
-  
+
     const schema = Joi.object({
-      firstName: Joi.string().min(1).required(),
-      lastName:  Joi.string().min(1).required(),
-      email:     Joi.string().email().required(),
-      password:  Joi.string().min(6).required(),
-      role:      Joi.string().valid('buyer', 'seller').required(),
+        firstName: Joi.string().min(1).required(),
+        lastName: Joi.string().min(1).required(),
+        email: Joi.string().email().required(),
+        password: Joi.string().min(6).required(),
+        role: Joi.string().valid('buyer', 'seller').required(),
     });
-  
+
     const validationResult = schema.validate({ firstName, lastName, email, password, role });
     if (validationResult.error) {
         return res.status(400).send(validationResult.error.details[0].message);
     }
-  
+
     // check if email already registered
     const emailExists = await userCollection.findOne({ email });
     if (emailExists) {
         return res.status(400).send('Email already registered');
     }
-  
+
     // hash password
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
@@ -232,25 +227,24 @@ app.post('/signupSubmit', async (req, res) => {
     // Distinguish user by email to populate post data.
     req.session.email = email;
     req.session.cookie.maxAge = expireTime;
-  
+
     if (role === 'seller') {
-      // take seller to language‑selection page
-      return res.render("language", { title: "Select Languages" });
+        // take seller to language‑selection page
+        return res.render("language", { title: "Select Languages" });
     }
-    res.redirect('/');       
+    res.redirect('/');
 });
 
 // route for logging out
-app.get('/logout', (req,res) => {
-	req.session.destroy();
+app.get('/logout', (req, res) => {
+    req.session.destroy();
     res.redirect('/');
 });
 
 // Route for post page
 app.get('/createPost', (req, res) => {
     // Redirect to login page when the authentication fails.
-    if(!req.session.authenticated) 
-    {
+    if (!req.session.authenticated) {
         return res.redirect('/login');
     }
 
@@ -263,14 +257,16 @@ app.get('/createPost', (req, res) => {
 //       a) Validate session as seller.
 //       b) Extract form data.
 //       c) Resize images into full-size and thumbnail.
-//       d) Save image files under /public/uploads.
+//       d) Save image files as buffer so that it can be stored in the MongoDB.
 //       e) Insert a document in 'posting' collection.
 //       upload.single('image'): Multer middleware to accept one file 
 //       from the form field named "image" and make it available as req.file
 app.post('/createPost', upload.single('image'), async (req, res) => {
     // a) session check
-    if(!req.session.authenticated)
-    {
+    // (!req.session.authenticated || req.session.role !== 'seller') this condition
+    // will also work. However, since our app will only direct sellers to this route
+    // I omit the second condition.
+    if (!req.session.authenticated) {
         return res.redirect('/login');
     }
 
@@ -280,19 +276,19 @@ app.post('/createPost', upload.single('image'), async (req, res) => {
     // Create a filesystem-safe base filename:
     // timestamp + hyphenated produce name in lowercase.
     const timestamp = Date.now()
-    const safeName  = produce.replace(/\s+/g, '-').toLowerCase()
-    const baseName  = `${timestamp}-${safeName}`
+    const safeName = produce.replace(/\s+/g, '-').toLowerCase()
+    const baseName = `${timestamp}-${safeName}`
 
     // 1) Generate full-size JPEG buffer.
     // Buffer is like a 'byte-bowl' which lets you safely save 
-    // binary data such as file images etc.
+    // binary data such as files, images etc.
     const fullBuffer = await sharp(req.file.buffer)
-        .resize({ width: 1080})
-        .jpeg({ quality: 80, progressive: true})
+        .resize({ width: 1080 })
+        .jpeg({ quality: 80, progressive: true })
         .toBuffer();
 
     // 2) Generate thumbnail buffer
-        const thumbBuffer = await sharp(req.file.buffer)
+    const thumbBuffer = await sharp(req.file.buffer)
         .resize({ width: 400 })
         .jpeg({ quality: 70 })
         .toBuffer();
@@ -304,12 +300,12 @@ app.post('/createPost', upload.single('image'), async (req, res) => {
         price,
         description,
         image: {
-        data: fullBuffer,                   // <-- binary image data
-        contentType: 'image/jpeg'           // <-- for serving later
+            data: fullBuffer,                   // <-- binary image data
+            contentType: 'image/jpeg'           // <-- for serving later
         },
         thumbnail: {
-        data: thumbBuffer,
-        contentType: 'image/jpeg'
+            data: thumbBuffer,
+            contentType: 'image/jpeg'
         },
         sellerEmail: req.session.email,
         createdAt: new Date()
@@ -319,15 +315,59 @@ app.post('/createPost', upload.single('image'), async (req, res) => {
 })
 
 // Temporary route where sellers can see their own postings.
-app.get('/myPosting', (req, res) => {
-    
-})
+app.get('/myPosting', async (req, res) => {
+    if (!req.session.authenticated) {
+        return res.redirect('/login');
+    }
+
+    // Fetch all posts by the current seller, sort them newest-first, and return as an array
+    const docs = await postingCollection
+        .find({ sellerEmail: req.session.email })
+        .sort({ createdAt: -1 })
+        .toArray();
+
+    // Convert each document's image buffer to Base64 data URI.
+    const postings = docs.map(doc => ({
+        // Copy over simple fields unchanged:
+        _id:         doc._id,
+        produce:     doc.produce,
+        quantity:    doc.quantity,
+        price:       doc.price,
+        description: doc.description,
+        createdAt:   doc.createdAt,
+
+//         How it works:
+//  *   1. Base64-encode the Buffer:
+//  *        const base64 = buffer.toString('base64');
+//  *      This turns raw binary data into an ASCII-safe string.
+//  *
+//  *   2. Prepend the Data URI scheme:
+//  *        const dataUri = `data:${mimeType};base64,${base64}`;
+//  *      - `data:` marks this as an inline resource.
+//  *      - `${mimeType}` is the image’s contentType (e.g. "image/jpeg").
+//  *      - `;base64,` tells the browser the following payload is Base64-encoded.
+//  *      - `${base64}` is the actual encoded image data.
+//  *
+//  *   3. Use the Data URI in your HTML:
+//  *        <img src={dataUri} alt="…">
+//  *      The browser decodes the Base64 string on the fly and renders the image.
+        imageSrc: `data:${doc.image.contentType};base64,${doc.image.data.toString('base64')}`,
+
+        thumbSrc: `data:${doc.thumbnail.contentType};base64,${doc.thumbnail.data.toString('base64')}`,
+    }));
+
+    // Send the data to 'myPosting.ejs'
+    res.render("myPosting", {
+        title: 'My Postings',
+        postings: postings
+    });
+});
 
 // The route for the chat page
 app.get('/chat', (req, res) => {
     if (req.session.authenticated) {
         res.render("chat", { title: "Chat", firstName: req.session.firstName });
-    } 
+    }
     else {
         res.redirect('/login');
     }
@@ -337,7 +377,7 @@ app.get('/chat', (req, res) => {
 // but before "app.listen".
 app.use((req, res) => {
     res.status(404);
-	res.render("404", { title: "Error" });
+    res.render("404", { title: "Error" });
 });
 
 
