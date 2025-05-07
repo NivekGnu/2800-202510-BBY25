@@ -3,13 +3,13 @@
   "version": "1.0.0",
   "description": "Team Name: BBY-25\nTeam Members: \n- Tommy Nguyen\n- Kevin Ung\n- Shawn Lee\n- Clinton Nguyen\n## More details to come\nTBA",
   "main": "index.js",
-"scripts": {
-  "start": "node index.js",
-  "dev": "nodemon index.js",
-  "build-css": "tailwindcss -i ./src/input.css -o ./public/css/output.css",
-  "watch-css": "tailwindcss -i ./src/input.css -o ./public/css/output.css --watch",
-  "dev-full": "concurrently \"npm run watch-css\" \"npm run dev\""
-},
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "build-css": "tailwindcss -i ./src/input.css -o ./public/css/output.css",
+    "watch-css": "tailwindcss -i ./src/input.css -o ./public/css/output.css --watch",
+    "dev-full": "concurrently \"npm run watch-css\" \"npm run dev\""
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",

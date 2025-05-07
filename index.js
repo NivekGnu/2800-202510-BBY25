@@ -391,6 +391,16 @@ app.get('/chat', (req, res) => {
     }
 });
 
+// Route for maps page
+app.get('/map', (req, res) => {
+    if (!req.session.authenticated) {
+        res.redirect('/login');
+        return;
+    }
+
+    res.render('map', { title: 'Map', mapboxToken: process.env.MAPBOX_API_TOKEN });
+});
+
 // 404 Page, must be placed at the end of all the routes.
 // but before "app.listen".
 app.use((req, res) => {
