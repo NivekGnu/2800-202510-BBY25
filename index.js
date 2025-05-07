@@ -85,8 +85,99 @@ app.get('/signup', (req,res) => {
 
 // The route for log in user.
 app.get('/login', (req, res) => {
-    res.render("login", { title: "Log in" });
+    const error = req.session.error;
+    delete req.session.error;    
+    res.render("login", { title: "Log in" , error: error });
 })
+
+// The route for logging in page which checks the matching 
+// users with the corresponding pw.
+app.post('/loginSubmit', async (req,res) => {
+    var email = req.body.email;
+    var password = req.body.password;
+
+    const schema = Joi.object(
+        {
+            email: Joi.string().email().required(),
+            password: Joi.string().max(20).required()
+        }
+    );
+
+    // Check
+    const validationResult = schema.validate({ email, password }, { abortEarly: false });
+
+    if(validationResult.error != null)
+    {
+        // collect all missing/empty field names
+        const fields = validationResult.error.details.map(d => d.context.key);
+        const unique = Array.from(new Set(fields));
+    
+        // build "X is required." for each
+        const msgs = unique
+            .map(f => `${f} is required.`)
+            .join(' ');
+    
+        res.send(`
+            <p>${msgs}</p>
+            <a href="/login">Try again</a>
+        `);
+        return;
+    }
+
+    // Fetch the user info from the MongoDB (Probably fetching only 1)
+    const result = await userCollection.find({email: email})
+                    .project({email: 1, password: 1, username: 1, _id: 1}).toArray();
+
+    // How the log in process works (comparing the username and the password)
+    // Since it's like an array, if the length is not 1 this means that it didn't 
+    // fetch any of it which is an error.
+    // In this case, it means that there is no user with the given email and the password.
+    if(result.length != 1)
+    {
+        req.session.error = 'Invalid email/password combination.';
+        return res.redirect('/login');
+    }
+
+    // result[0] is the first index of an array which is the one fetched by the mongoDB.
+    if(await bcrypt.compare(password, result[0].password))
+    {
+        console.log("correct password");
+        
+        // This 3 lines of code is storing the data in the session so that
+        // it can remember the user when they reaccess with the same session (browser).
+        // Saving the username as well from the mongoDB so that it can show it in the root page.
+        req.session.authenticated = true;
+        req.session.email = email;
+        req.session.username = result[0].username;
+        req.session.cookie.maxAge = expireTime;
+
+        // Need to change depending on the user type
+        res.redirect('/members');
+        return;
+    }
+    else
+    {
+        // When the email exists in the database but it does not matches the password.
+		console.log("incorrect password");
+		res.send(`
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+              <meta charset="UTF-8">
+              <title>Login Error</title>
+            </head>
+            <body>
+              <div class="container">
+                <span>Incorrect password</span>
+                <br>
+                <a href="/login">Try again</a>
+              </div>
+            </body>
+            </html>
+            `)
+        return;
+	}
+});
 
 // route for sign up submission
 app.post('/signupSubmit', async (req, res) => {
