@@ -108,6 +108,15 @@ app.get('/viewpage', (req, res) => {
     }
 });
 
+// The route for the contact page
+app.get('/contact', (req, res) => {
+    if (req.session.authenticated) {
+        res.render("contact", { title: "contact Page", username: req.session.username });
+    } else {
+        res.redirect('/login');
+    }
+});
+
 // The route for logging in page which checks the matching 
 // users with the corresponding pw.
 app.post('/loginSubmit', async (req,res) => {
