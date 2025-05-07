@@ -99,6 +99,15 @@ app.get('/chat', (req, res) => {
     }
 });
 
+// The route for the view page
+app.get('/viewpage', (req, res) => {
+    if (req.session.authenticated) {
+        res.render("viewpage", { title: "View Page", username: req.session.username });
+    } else {
+        res.redirect('/login');
+    }
+});
+
 // The route for logging in page which checks the matching 
 // users with the corresponding pw.
 app.post('/loginSubmit', async (req,res) => {

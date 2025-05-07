@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Clone</title>
+    <link href="/css/output.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+    <!-- Header -->
+    <div class="bg-green-800 h-20 w-full flex items-center sticky top-0 z-10">
+        <div class="text-white font-semibold p-5 text-xl">WhatsApp</div>
+        <div class="flex items-center ml-auto">
+            <div class="p-5 text-white cursor-pointer hover:bg-green-700">🔎</div>
+            <div class="p-5 text-white cursor-pointer hover:bg-green-700">⋮</div>
+        </div>
+    </div>
+
+    <!-- Chat List -->
+    <div class="flex flex-col pb-20"> <!-- Added padding-bottom for footer -->
+        <!-- Chat Item Template (Repeated for each contact) -->
+        <div class="flex items-center p-3 hover:bg-gray-200 cursor-pointer border-b border-gray-200">
+            <div class="h-16 w-16 rounded-full bg-gray-500 flex items-center justify-center text-3xl">🧑</div>
+            <div class="flex-1 ml-3">
+                <div class="flex justify-between items-center">
+                    <div class="text-lg font-medium">Alice</div>
+                    <div class="text-xs text-gray-500">14:24</div>
+                </div>
+                <div class="flex justify-between items-center mt-1">
+                    <div class="text-gray-600 text-sm truncate max-w-xs">Hello how is your day</div>
+                    <div class="text-gray-400">📌</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Repeat for other contacts -->
+        <div class="flex items-center p-3 hover:bg-gray-200 cursor-pointer border-b border-gray-200">
+            <div class="h-16 w-16 rounded-full bg-gray-500 flex items-center justify-center text-3xl">🧑</div>
+            <div class="flex-1 ml-3">
+                <div class="flex justify-between items-center">
+                    <div class="text-lg font-medium">Bob</div>
+                    <div class="text-xs text-gray-500">14:24</div>
+                </div>
+                <div class="flex justify-between items-center mt-1">
+                    <div class="text-gray-600 text-sm truncate max-w-xs">Hello how is your day</div>
+                    <div class="text-gray-400">📌</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- James -->
+        <div class="flex items-center p-3 hover:bg-gray-200 cursor-pointer border-b border-gray-200">
+            <div class="h-16 w-16 rounded-full bg-gray-500 flex items-center justify-center text-3xl">🧑</div>
+            <div class="flex-1 ml-3">
+                <div class="flex justify-between items-center">
+                    <div class="text-lg font-medium">James</div>
+                    <div class="text-xs text-gray-500">14:24</div>
+                </div>
+                <div class="flex justify-between items-center mt-1">
+                    <div class="text-gray-600 text-sm truncate max-w-xs">Hello how is your day</div>
+                    <div class="text-gray-400">📌</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- John -->
+        <div class="flex items-center p-3 hover:bg-gray-200 cursor-pointer border-b border-gray-200">
+            <div class="h-16 w-16 rounded-full bg-gray-500 flex items-center justify-center text-3xl">🧑</div>
+            <div class="flex-1 ml-3">
+                <div class="flex justify-between items-center">
+                    <div class="text-lg font-medium">John</div>
+                    <div class="text-xs text-gray-500">14:24</div>
+                </div>
+                <div class="flex justify-between items-center mt-1">
+                    <div class="text-gray-600 text-sm truncate max-w-xs">Hello how is your day</div>
+                    <div class="text-gray-400">📌</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer Navigation -->
+    <div class="bg-white flex justify-around items-center p-4 fixed w-full bottom-0 border-t border-gray-300">
+        <div class="text-gray-600 text-2xl cursor-pointer hover:text-green-800">⮜</div>
+        <div class="text-gray-600 text-2xl cursor-pointer hover:text-green-800">⚫</div>
+        <div class="text-gray-600 text-2xl cursor-pointer hover:text-green-800">⬛</div>
+    </div>
+</body>
+</html>
