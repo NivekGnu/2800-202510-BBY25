@@ -87,7 +87,15 @@ app.get('/signup', (req,res) => {
 app.get('/login', (req, res) => {
     res.render("login", { title: "Log in" });
 })
-
+// The route for the chat page
+app.get('/chat', (req, res) => {
+    if (req.session.authenticated) {
+        res.render("chat", { title: "Chat", firstName: req.session.firstName });
+    } 
+    else {
+        res.redirect('/login');
+    }
+});
 // route for sign up submission
 app.post('/signupSubmit', async (req, res) => {
     const { firstName, lastName, email, password, role } = req.body;
