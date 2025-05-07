@@ -10,6 +10,14 @@ const MongoStore = require('connect-mongo');
 // A module to bcrpyt(hash the pw).
 const bcrypt = require('bcrypt');
 
+// multer: Express middleware for handling multipart/form-data, 
+// especially used to process file uploads (e.g., images, documents).
+const multer = require('multer');
+
+// sharp: High-performance image processing library for Node.js, 
+// used to resize, crop, convert formats, and otherwise manipulate images.
+const sharp = require('sharp');
+
 // Generally 12 is adequate. If the round is too high, it takes more time.
 const saltRounds = 12;
 
@@ -41,14 +49,16 @@ const node_session_secret = process.env.NODE_SESSION_SECRET;
 var {database} = require('./databaseConnection');
 const e = require('express');
 
-app.set('view engine', 'ejs');
-
-// Middleware for to use req.body it is necessary to parse the data.
-// Otherwise req.body will be undefined.
-app.use(express.urlencoded({extended: false}));
+// Configure Multer to store uploads in memory.
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: { filesize: 5 * 1024 * 1024 } // Reject files larger than 5 MB
+})
 
 // Sets the location of the database when the new user is created.
 const userCollection = database.db(mongodb_db).collection('users');
+// Sets the location of the database when the seller creates a post.
+const postingCollection = database.db(mongodb_db).collection('posting')
 
 // Need to use the information in the .env file which is defined in the secret section
 // (e.g. ${mongodb_user}:${mongodb_password}@${mongodb_host}/${mongodb_db})
@@ -67,6 +77,14 @@ app.use(session({
     saveUninitialized: false,
     resave: true
 }));
+
+// Middleware for to use req.body it is necessary to parse the data.
+// Otherwise req.body will be undefined.
+app.use(express.urlencoded({extended: false}));
+// Allows for images, CSS, JS file to be included inyour website.
+app.use(express.static(__dirname + "/public"));
+
+app.set('view engine', 'ejs');
 
 // Routes (root homepage)
 app.get('/', (req, res) => {
@@ -89,15 +107,6 @@ app.get('/login', (req, res) => {
     delete req.session.error;    
     res.render("login", { title: "Log in" , error: error });
 })
-// The route for the chat page
-app.get('/chat', (req, res) => {
-    if (req.session.authenticated) {
-        res.render("chat", { title: "Chat", firstName: req.session.firstName });
-    } 
-    else {
-        res.redirect('/login');
-    }
-});
 
 // The route for logging in page which checks the matching 
 // users with the corresponding pw.
@@ -220,6 +229,7 @@ app.post('/signupSubmit', async (req, res) => {
     req.session.authenticated = true;
     req.session.firstName = firstName;
     req.session.lastName = lastName;
+    // Distinguish user by email to populate post data.
     req.session.email = email;
     req.session.cookie.maxAge = expireTime;
   
@@ -236,8 +246,92 @@ app.get('/logout', (req,res) => {
     res.redirect('/');
 });
 
-// Allows for images, CSS, JS file to be included inyour website.
-app.use(express.static(__dirname + "/public"));
+// Route for post page
+app.get('/createPost', (req, res) => {
+    // Redirect to login page when the authentication fails.
+    if(!req.session.authenticated) 
+    {
+        return res.redirect('/login');
+    }
+
+    // Render EJS view with a title variable.
+    res.render("createPost", { title: 'Create Post', listing: null })
+});
+
+//     Route for POST / createPost
+//     Handle form submission:
+//       a) Validate session as seller.
+//       b) Extract form data.
+//       c) Resize images into full-size and thumbnail.
+//       d) Save image files under /public/uploads.
+//       e) Insert a document in 'posting' collection.
+//       upload.single('image'): Multer middleware to accept one file 
+//       from the form field named "image" and make it available as req.file
+app.post('/createPost', upload.single('image'), async (req, res) => {
+    // a) session check
+    if(!req.session.authenticated)
+    {
+        return res.redirect('/login');
+    }
+
+    // b) extract fields from the body (form - name field)
+    const { produce, quantity, price, description } = req.body
+
+    // Create a filesystem-safe base filename:
+    // timestamp + hyphenated produce name in lowercase.
+    const timestamp = Date.now()
+    const safeName  = produce.replace(/\s+/g, '-').toLowerCase()
+    const baseName  = `${timestamp}-${safeName}`
+
+    // 1) Generate full-size JPEG buffer.
+    // Buffer is like a 'byte-bowl' which lets you safely save 
+    // binary data such as file images etc.
+    const fullBuffer = await sharp(req.file.buffer)
+        .resize({ width: 1080})
+        .jpeg({ quality: 80, progressive: true})
+        .toBuffer();
+
+    // 2) Generate thumbnail buffer
+        const thumbBuffer = await sharp(req.file.buffer)
+        .resize({ width: 400 })
+        .jpeg({ quality: 70 })
+        .toBuffer();
+
+    // Adding data to MongoDB 'post'.
+    await postingCollection.insertOne({
+        produce,
+        quantity: parseInt(quantity, 10),
+        price,
+        description,
+        image: {
+        data: fullBuffer,                   // <-- binary image data
+        contentType: 'image/jpeg'           // <-- for serving later
+        },
+        thumbnail: {
+        data: thumbBuffer,
+        contentType: 'image/jpeg'
+        },
+        sellerEmail: req.session.email,
+        createdAt: new Date()
+    })
+
+    res.redirect('/myPosting');
+})
+
+// Temporary route where sellers can see their own postings.
+app.get('/myPosting', (req, res) => {
+    
+})
+
+// The route for the chat page
+app.get('/chat', (req, res) => {
+    if (req.session.authenticated) {
+        res.render("chat", { title: "Chat", firstName: req.session.firstName });
+    } 
+    else {
+        res.redirect('/login');
+    }
+});
 
 // 404 Page, must be placed at the end of all the routes.
 // but before "app.listen".
