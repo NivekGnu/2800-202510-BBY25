@@ -27,6 +27,9 @@ const Joi = require('joi');
 // Make an express object
 const app = express();
 
+// extract ObjectId property from object
+const { ObjectId } = require('mongodb');
+
 // Set up the time of the duration of the session.
 // This code means that session expires after 1 hour.
 const expireTime = 1 * 60 * 60 * 1000;
@@ -47,7 +50,7 @@ const node_session_secret = process.env.NODE_SESSION_SECRET;
 // Users and Passwords arrays of objects (in memory 'database')
 // Need to change this to connect with mongoDB
 var { database } = require('./databaseConnection');
-const e = require('express');
+
 
 // Configure Multer to store uploads in memory.
 const upload = multer({
@@ -89,7 +92,13 @@ app.set('view engine', 'ejs');
 // Routes (root homepage)
 app.get('/', (req, res) => {
     if (req.session.authenticated) {
-        res.render("home", { title: "Home" });
+        if (req.session.role === 'seller') {
+            res.render("sellerHome", { title: "Seller Home Page" });
+        }
+
+        if (req.session.role === 'buyer') {
+            res.render("buyerHome", { title: "Buyer Home Page" });
+        }
     } else {
         res.render("landing", { title: "Landing" });
     }
@@ -160,7 +169,7 @@ app.post('/loginSubmit', async (req, res) => {
 
     // Fetch the user info from the MongoDB (Probably fetching only 1)
     const result = await userCollection.find({ email: email })
-        .project({ email: 1, password: 1, username: 1, _id: 1 }).toArray();
+        .project({ email: 1, password: 1, firstName: 1, lastName: 1, role: 1, _id: 1}).toArray();
 
     // How the log in process works (comparing the username and the password)
     // Since it's like an array, if the length is not 1 this means that it didn't 
@@ -168,6 +177,7 @@ app.post('/loginSubmit', async (req, res) => {
     // In this case, it means that there is no user with the given email and the password.
     if (result.length != 1) {
         req.session.error = 'Invalid email/password combination.';
+        console.log("email not associated with any account");
         return res.redirect('/login');
     }
 
@@ -180,12 +190,13 @@ app.post('/loginSubmit', async (req, res) => {
         // Saving the username as well from the mongoDB so that it can show it in the root page.
         req.session.authenticated = true;
         req.session.email = email;
-        req.session.username = result[0].username;
+        req.session.firstName = result[0].firstName;
+        req.session.lastName = result[0].lastName;
+        req.session.role = result[0].role;
         req.session.cookie.maxAge = expireTime;
+        req.session.userId = result[0]._id.toString(); //objectId -clinton
 
-        // Need to change depending on the user type
-        res.redirect('/members');
-        return;
+        res.redirect('/');
     }
     else {
         // When the email exists in the database but it does not matches the password.
@@ -237,24 +248,59 @@ app.post('/signupSubmit', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
     // insert into mongoDB
-    await userCollection.insertOne({ firstName: firstName, lastName: lastName, email: email, password: hashedPassword, role: role, languages: [], createdAt: new Date() })
+    // extract insertedId property which is ObjectId
+    const { insertedId } = await userCollection.insertOne({ firstName: firstName, lastName: lastName, email: email, password: hashedPassword, role: role, languages: [], createdAt: new Date() })
 
     req.session.authenticated = true;
     req.session.firstName = firstName;
     req.session.lastName = lastName;
     // Distinguish user by email to populate post data.
     req.session.email = email;
+    req.session.role = role;
     req.session.cookie.maxAge = expireTime;
+    req.session.userId = insertedId.toString(); // ObjectId -clinton
 
-    if (role === 'seller') {
-      // take seller to language‑selection page
-      return res.render("languages", { title: "Select Languages" });
+    if (req.session.role === 'seller') {
+        // take seller to languages page first
+        return res.redirect('/languages');
     }
+    
     res.redirect('/');
 });
 
-app.get('/select-languages', (req,res) => {
-    //TODO
+app.get('/languages', (req,res) => {
+    if (!req.session.authenticated || req.session.role !== 'seller') {
+        return res.redirect('/');
+    }
+    res.render("languages", { title: "Select Languages" });
+});
+
+app.post('/languagesSubmit', async (req,res) => {
+    if (!req.session.authenticated || req.session.role !== 'seller') {
+        return res.redirect('/');
+    }
+
+    // Extract languages from the form post
+    let languages = req.body.languages; // could be string "English" or array ["English", "Tagalog"] since urlencoded
+
+    // if nothing checked
+    if (!languages) {
+        languages = [];
+    }        
+
+    // if not in array (single language), convert to array
+    if (!Array.isArray(languages)) {
+        languages = [languages];
+    }
+
+    // Update the user document
+    await userCollection.updateOne(
+        { _id: new ObjectId(req.session.userId) }, // find document w/ given ObjectId
+        { $set: { languages: languages } } // set languages
+    );
+    console.log("languages written into DB");
+
+    res.redirect('/');
 });
 
 // route for logging out
