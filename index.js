@@ -119,7 +119,7 @@ app.get('/login', (req, res) => {
 // The route for the view page
 app.get('/viewpage', (req, res) => {
     if (req.session.authenticated) {
-        res.render("viewpage", { title: "View Page", username: req.session.username });
+        res.render("viewpage", { title: "View Page", username: req.session.username, mapboxToken: process.env.MAPBOX_API_TOKEN });
     } else {
         res.redirect('/login');
     }
