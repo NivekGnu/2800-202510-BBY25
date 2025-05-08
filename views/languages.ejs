@@ -1,0 +1,44 @@
+<%- include('templates/header') %>
+<link rel="stylesheet" href="/css/languages.css" />
+
+<div class="language-container">
+  <h1 class="language-title">Select Languages You Speak</h1>
+
+  <!-- POST to select-languages with req.body.languages -->
+  <form id="langForm" class="language-form" method="POST" action="/languagesSubmit">
+    <% const LANGUAGES = ['English', '中文', 'Español', 'Français', '한국어', 'Punjabi', 'Tiếng Việt', 'Tagalog']; %>
+
+    <!-- grid of checkboxes labels, grouped together as "languages" -->
+    <div class="lang-grid">
+        <!-- start, for each lang in LANGUAGES -->
+        <% LANGUAGES.forEach(lang => { %>
+        <!-- create checkbox label-->
+        <label class="lang-item">
+            <input type="checkbox" name="languages" value="<%= lang %>">
+            <span><%= lang %></span>
+        </label>
+        <!-- close -->
+        <% }) %>
+    </div>
+
+    <button id="saveBtn" class="save-btn" type="submit" disabled>
+        Save Languages
+    </button>
+  </form>
+</div>
+
+<script>
+  const form    = document.getElementById('langForm');
+  const saveBtn = document.getElementById('saveBtn');
+
+  function toggleSave() {
+    // form.elements['languages'] is array-like structure of checkbox elements
+    // [...form.elements['languages']] use spread operator (...) to convert into array of DOM checkbox elements
+    const anyChecked = [...form.elements['languages']].some(cb => cb.checked); // check if any checked
+    saveBtn.disabled = !anyChecked;
+  }
+
+  form.addEventListener('change', toggleSave);
+</script>
+
+<%- include('templates/footer') %>
