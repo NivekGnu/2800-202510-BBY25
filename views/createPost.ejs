@@ -1,0 +1,83 @@
+<%- include('templates/header') %>
+
+<div class="container">
+  <h1><%= title %></h1>
+  <!-- POST /listings, To uploag the file set up enctype. -->
+  <form action="/createPost" method="POST" enctype="multipart/form-data">
+    
+    <!-- 1) Name of the Product -->
+    <!-- <%= listing ? listing.produce : '' %> -->
+    <!-- Pre-fill the produce field with the existing listing value when editing -->
+    <div class="form-group">
+      <input
+        type="text"
+        id="produce"
+        name="produce"
+        class="form-control"
+        placeholder="Enter produce"
+        value="<%= listing ? listing.produce : '' %>"
+        required
+      />
+    </div>
+
+    <!-- 2) Quantity -->
+    <div class="form-group">
+      <input
+        type="number"
+        id="quantity"
+        name="quantity"
+        class="form-control"
+        placeholder="Enter quantity"
+        value="<%= listing ? listing.quantity : '' %>"
+        required
+      />
+    </div>
+
+    <!-- 3) Price -->
+    <div class="form-group">
+      <input
+        type="text"
+        id="price"
+        name="price"
+        class="form-control"
+        placeholder="Enter price (per item/weight)"
+        value="<%= listing ? listing.price : '' %>"
+        required
+      />
+    </div>
+
+    <!-- 4) Description -->
+    <div class="form-group">
+      <textarea
+        id="description"
+        name="description"
+        class="form-control"
+        rows="4"
+        maxlength="200"
+        placeholder="Enter produce descriptions (max 200 characters)"
+      ><%= listing ? listing.description : '' %></textarea>
+    </div>
+
+    <!-- 5) Image Upload -->
+    <div class="form-group">
+      <input
+        type="file"
+        id="image"
+        name="image"
+        accept="image/*"
+        capture="envioronment"
+        class="form-control-file"
+        required
+      />
+      <% if (listing && listing.imageUrl) { %>
+        <p>Current posted image:</p>
+        <img src="<%= listing.imageUrl %>" alt="listing image" style="max-width:150px;">
+      <% } %>
+    </div>
+
+    <!-- Submit Button -->
+    <button type="submit" class="btn btn-primary">Submit</button>
+  </form>
+</div>
+
+<%- include('templates/footer') %>
