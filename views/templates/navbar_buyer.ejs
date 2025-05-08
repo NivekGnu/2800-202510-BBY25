@@ -1,18 +1,43 @@
-<div class="bottom-navbar">
-    <a href="#map">
-        <img src="/img/map.svg" alt="Map Icon" class="icon">
-        <br>Map
-    </a>
-    <a href="#cart">
-        <img src="/img/cart.svg" alt="Cart Icon" class="icon">
-        <br>Cart
-    </a>
-    <a href="#chat">
-        <img src="/img/chat-bubble-empty.svg" alt="Chat Icon" class="icon">
-        <br>Chat
-    </a>
-    <a href="#profile">
-        <img src="/img/profile-circle.svg" alt="Profile Icon" class="icon">
-        <br></bar>Profile
-    </a>
-</div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+</head>
+<body class="mb-24">
+
+  <div class="h-20 w-auto bg-gray-300 fixed bottom-0 left-0 right-0 flex flex-row justify-between">
+    
+    <div class="w-24 h-24 flex justify-center items-center">
+      <a href="#map" class="group flex flex-col items-center text-white">
+        <img src="/img/map.svg" alt="Map Icon" class="h-8 w-8 group-hover:invert group-hover:brightness-0 group-hover:text-green-500 transition" />
+        <span class="text-sm mt-1 group-hover:text-green-500 transition">Map</span>
+      </a>
+    </div>
+    
+    <div class="w-24 h-24 flex justify-center items-center">
+      <a href="#cart" class="group flex flex-col items-center text-white">
+        <img src="/img/cart.svg" alt="Cart Icon" class="h-8 w-8 group-hover:invert group-hover:brightness-0 group-hover:text-green-500 transition" />
+        <span class="text-sm mt-1 group-hover:text-green-500 transition">Cart</span>
+      </a>
+    </div>
+    
+    <div class="w-24 h-24 flex justify-center items-center">
+      <a href="#chat" class="group flex flex-col items-center text-white">
+        <img src="/img/chat-bubble-empty.svg" alt="Chat Icon" class="h-8 w-8 group-hover:invert group-hover:brightness-0 group-hover:text-green-500 transition" />
+        <span class="text-sm mt-1 group-hover:text-green-500 transition">Chat</span>
+      </a>
+    </div>
+    
+    <div class="w-24 h-24 flex justify-center items-center">
+      <a href="#profile" class="group flex flex-col items-center text-white">
+        <img src="/img/profile-circle.svg" alt="Profile Icon" class="h-8 w-8 group-hover:invert group-hover:brightness-0 group-hover:text-green-500 transition" />
+        <span class="text-sm mt-1 group-hover:text-green-500 transition">Profile</span>
+      </a>
+    </div>
+
+  </div>
+</body>
+</html>
