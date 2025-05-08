@@ -134,6 +134,14 @@ app.get('/contact', (req, res) => {
     }
 });
 
+// app.get('/contact', (req, res) => {
+//     if (req.session.authenticated) {
+//         res.render("navbar", { title: "Navbar", username: req.session.username });
+//     } else {
+//         res.redirect('/login');
+//     }
+// });
+
 // The route for logging in page which checks the matching 
 // users with the corresponding pw.
 app.post('/loginSubmit', async (req, res) => {
@@ -375,7 +383,7 @@ app.post('/createPost', upload.single('image'), async (req, res) => {
             data: thumbBuffer,
             contentType: 'image/jpeg'
         },
-        sellerEmail: req.session.email,
+        sellerId: new ObjectId(req.session.userId), // Stores the seller's id in the posting collection field.
         createdAt: new Date()
     })
 
@@ -390,14 +398,13 @@ app.get('/myPosting', async (req, res) => {
 
     // Fetch all posts by the current seller, sort them newest-first, and return as an array
     const docs = await postingCollection
-        .find({ sellerEmail: req.session.email })
+        .find({ sellerId: new ObjectId(req.session.userId) })
         .sort({ createdAt: -1 })
         .toArray();
 
     // Convert each document's image buffer to Base64 data URI.
     const postings = docs.map(doc => ({
         // Copy over simple fields unchanged:
-        _id:         doc._id,
         produce:     doc.produce,
         quantity:    doc.quantity,
         price:       doc.price,
