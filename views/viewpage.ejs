@@ -16,10 +16,10 @@
     <!-- Header -->
     <header class="flex justify-between items-center p-4 border-b border-gray-200">
       <div class="w-6 h-6"> 
-        <img src="img/arrow.png" alt="Back" class="w-full h-full object-contain">
+        <img src="img/arrow.png" alt="Back" class="w-full h-full object-contain" onclick="window.history.back()">
       </div>
       <div class="w-6 h-6"> 
-        <img src="img/cart.png" alt="Cart" class="w-full h-full object-contain">
+        <img src="img/cart.png" alt="Cart" class="w-full h-full object-contain" onclick="testAlert()">
       </div>
     </header>
 
@@ -53,13 +53,13 @@
         <div class="flex justify-between items-start">
           <div>
             <p class="text-xs text-green-600 font-semibold">IN STOCK</p>
-            <p class="text-3xl font-bold text-gray-900 mt-1">$6.99</p>
+            <p id="priceOfItem" class="text-3xl font-bold text-gray-900 mt-1">$5</p>
             <div class="flex items-center space-x-2 mt-3">
               <span class="text-sm text-gray-700">Qty</span>
               <div class="flex items-center border border-gray-300 rounded-md">
-                <button class="px-3 py-1 text-gray-800 hover:bg-gray-100 rounded-l-md text-lg font-medium">-</button>
-                <span class="px-4 py-1 border-l border-r border-gray-300 text-gray-900 font-semibold text-base">1</span>
-                <button class="px-3 py-1 text-gray-800 hover:bg-gray-100 rounded-r-md text-lg font-medium">+</button>
+                <button onclick="downButton()" class="px-3 py-1 text-gray-800 hover:bg-gray-100 rounded-l-md text-lg font-medium">-</button>
+                <span id="item-quality" class="px-4 py-1 border-l border-r border-gray-300 text-gray-900 font-semibold text-base">1</span>
+                <button onclick="upButton()" class="px-3 py-1 text-gray-800 hover:bg-gray-100 rounded-r-md text-lg font-medium">+</button>
               </div>
             </div>
           </div>
@@ -87,7 +87,7 @@
 
       <!-- Map Placeholder -->
       <div class="mb-4">
-        <div id="map" class="h-48 w-128"></div>
+        <div id="map" class="h-48 w-128 z-0 rounded-lg"></div>
 
         </div>
       </div>
@@ -95,9 +95,9 @@
     </main>
 
     <!-- Sticky Chat Footer -->
-    <footer class="fixed bottom-0 left-0 right-0 ">
+    <footer class="fixed bottom-0 left-0 right-0">
       <div class="max-w-md mx-auto p-3">
-        <button class="bg-neutral-800 hover:bg-neutral-700 text-white py-3 px-6 rounded-md w-full flex justify-between items-center text-lg font-semibold">
+        <button class="bg-neutral-800 hover:bg-neutral-700 text-white py-3 px-6 rounded-md w-full flex justify-between items-center text-lg font-semibold" onclick="window.location.href='/contact'">
           <span>Chat</span>
           <div class="w-7 h-6 bg-white rounded-sm">
           </div>
@@ -109,6 +109,38 @@
 
   <!-- Leaflet library -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script>
+  
+  let itemQuality = 1;
+  let itemPrice = 5;
+
+  function updatePrice() {
+    const totalPrice = (itemQuality * itemPrice).toFixed(2);
+    document.getElementById("priceOfItem").innerText = `$${totalPrice}`;
+  }
+
+  function upButton() {
+    itemQuality += 1;
+    document.getElementById("item-quality").innerText = itemQuality;
+    updatePrice(); // update price after increasing
+  }
+
+  function downButton() {
+    if (itemQuality > 1) {
+      itemQuality -= 1;
+      document.getElementById("item-quality").innerText = itemQuality;
+      updatePrice(); // update price after decreasing
+    }
+  }
+
+  
+
+  function testAlert() {
+    alert("This is a test alert!");
+  }
+
+</script>
 
   <!-- Map Scripts -->
   <script>
@@ -127,8 +159,23 @@
         accessToken: accessToken
     }).addTo(map);
 
-    const marker = L.marker([49.249999, -123.001]).addTo(map);
-    marker.bindPopup("<b>Burnaby</b><br>Home of BCIT.").openPopup();
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const latitude = position.coords.latitude;
+          const longitude = position.coords.longitude;
+          console.log(`Latitude: ${latitude}, Longitude: ${longitude}`);
+
+          const marker = L.marker([latitude, longitude]).addTo(map);
+          marker.bindPopup("<b>Your current location</b>").openPopup();
+        },
+        (error) => {
+          console.error("Error getting location:", error.message);
+        }
+      );
+    } else {
+      console.error("Geolocation is not supported by this browser.");
+    }
   </script>
 
 </body>
