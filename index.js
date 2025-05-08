@@ -125,9 +125,13 @@ app.post('/signupSubmit', async (req, res) => {
   
     if (role === 'seller') {
       // take seller to language‑selection page
-      return res.render("language", { title: "Select Languages" });
+      return res.render("languages", { title: "Select Languages" });
     }
     res.redirect('/');       
+});
+
+app.get('/select-languages', (req,res) => {
+    //TODO
 });
 
 // route for logging out

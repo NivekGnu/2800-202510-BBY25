@@ -1,0 +1,43 @@
+<%- include('templates/header') %>
+<link rel="stylesheet" href="/css/signup.css" />
+
+<div class="signup-container">
+  <h1 class="signup-title">Select Languages You Speak</h1>
+
+  <form id="langForm" class="signup-form" method="POST" action="/select-languages">
+    <% const LANGUAGES = ['English', '中文', 'Español', 'Français', '한국어', 'Punjabi','Tiếng Việt']; %>
+
+    <div class="lang-grid">
+      <% LANGUAGES.forEach(lang => { %>
+        <label class="lang-item">
+          <input type="checkbox" name="languages" value="<%= lang %>">
+          <span><%= lang %></span>
+        </label>
+      <% }) %>
+    </div>
+
+    <button class="signup-btn" type="submit" id="saveBtn" disabled>Save Languages</button>
+  </form>
+</div>
+
+<script>
+    const form = document.getElementById('langForm');
+    const saveBtn = document.getElementById('saveBtn');
+
+    function validateForm() {
+        const anyChecked = [...form.elements['languages']].some(cb => cb.checked);
+        saveBtn.disabled = !anyChecked;
+    }
+
+    form.addEventListener('change', validateForm);
+</script>
+
+<style>
+    .lang-grid { display:flex; flex-wrap:wrap; gap:8px; }
+    .lang-item { flex:1 1 45%; background:#ddd; border-radius:8px; padding:12px;
+                 display:flex; align-items:center; gap:8px; }
+    .lang-item input { width:18px; height:18px; }
+    .lang-item span  { font-size:16px; color:#333; }
+    </style>
+
+<%- include('templates/footer') %>
