@@ -1,27 +1,46 @@
 <%- include("templates/header") %>
-    <div id="map" style="height: 100vh;"></div>
+  <div id="map" style="height: 100vh;"></div>
 
-    <!-- Leaflet library -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Leaflet library -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-    <!-- Map Scripts -->
-    <script>
-        // Default Burnaby
-        const map = L.map('map').setView([49.24871980930831, -122.98067289034908], 12);
+  <!-- Map Scripts -->
+  <script>
+    // Default Burnaby
+    const map = L.map('map').setView([49.24871980930831, -122.98067289034908], 12);
 
-        const accessToken = '<%= mapboxToken %>';
+    const accessToken = '<%= mapboxToken %>';
 
-        // We can change to "streets-v11", "outdoors-v11", "satellite-v9", etc for different map views
-        const mapboxStyle = 'mapbox/streets-v12';
+    // We can change to "streets-v11", "outdoors-v11", "satellite-v9", etc for different map views
+    const mapboxStyle = 'mapbox/streets-v12';
 
-        L.tileLayer(`https://api.mapbox.com/styles/v1/${mapboxStyle}/tiles/{z}/{x}/{y}?access_token=${accessToken}`, {
-            tileSize: 512,
-            zoomOffset: -1,
-            attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-            accessToken: accessToken
-        }).addTo(map);
+    L.tileLayer(`https://api.mapbox.com/styles/v1/${mapboxStyle}/tiles/{z}/{x}/{y}?access_token=${accessToken}`, {
+      tileSize: 512,
+      zoomOffset: -1,
+      attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      accessToken: accessToken
+    }).addTo(map);
 
-        const marker = L.marker([49.249999, -123.001]).addTo(map);
-        marker.bindPopup("<b>Burnaby</b><br>Home of BCIT.").openPopup();
-    </script>
-<%- include("templates/footer") %>
+    const marker = L.marker([49.249999, -123.001]).addTo(map);
+    marker.bindPopup("<b>Burnaby</b><br>Home of BCIT.").openPopup();
+  </script>
+
+  <script>
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition((position) => {
+          const latitude = position.coords.latitude;
+          const longitude = position.coords.longitude;
+          console.log(`Latitude: ${latitude}, Longitude: ${longitude}`);
+
+          const marker = L.marker([latitude, longitude]).addTo(map);
+          marker.bindPopup("<b>Your current location</b>").openPopup();
+        },
+        (error) => {
+          console.error("Error getting location:", error.message);
+        }
+      );
+    } else {
+      console.error("Geolocation is not supported by this browser.");
+    }
+  </script>
+  <%- include("templates/footer") %>
