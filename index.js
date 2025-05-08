@@ -97,7 +97,7 @@ app.get('/', (req, res) => {
         }
 
         if (req.session.role === 'buyer') {
-            res.render("buyerHome", { title: "Buyer Home Page" });
+            res.render("buyerHome", { title: "Buyer Home Page", mapboxToken: process.env.MAPBOX_API_TOKEN });
         }
     } else {
         res.render("landing", { title: "Landing" });

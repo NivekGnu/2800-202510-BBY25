@@ -1,6 +1,7 @@
 <%- include("templates/header") %>
 
     <h1>BUYER HOME PAGE</h1>
+    <p>Your city: <span id="city">Detecting…</span></p>
 
     <button id="signout">Sign out</button>
     
@@ -9,6 +10,27 @@
             .addEventListener("click", () => {
                 window.location.href = "/logout"
         });
+        
+        // check if browser supports geolocation
+        // if yes, geolocation object exists
+        if (navigator.geolocation) {
+            // ask user for permission; location services request popup
+            navigator.geolocation.getCurrentPosition(async ({ coords }) => {
+                const { latitude, longitude } = coords;
+                const res = await fetch(
+                    `https://api.mapbox.com/geocoding/v5/mapbox.places/` +
+                    `${longitude},${latitude}.json?` +
+                    `access_token=<%= mapboxToken %>`
+                );
+                const json = await res.json();
+                const place = json.features.find(f => f.place_type.includes('place'));
+                document.getElementById('city').textContent = place?.text || 'Unknown';
+            }, () => {
+                document.getElementById('city').textContent = 'Permission denied';
+            });
+        } else { // browser does not support geolocation
+            document.getElementById('city').textContent = 'Geolocation not supported';
+        }
     </script>
-    
+
 <%- include("templates/footer") %>
