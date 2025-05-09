@@ -174,6 +174,14 @@ app.get('/contact', (req, res) => {
     }
 });
 
+// app.get('/contact', (req, res) => {
+//     if (req.session.authenticated) {
+//         res.render("navbar", { title: "Navbar", username: req.session.username });
+//     } else {
+//         res.redirect('/login');
+//     }
+// });
+
 // The route for logging in page which checks the matching 
 // users with the corresponding pw.
 app.post('/loginSubmit', async (req, res) => {
