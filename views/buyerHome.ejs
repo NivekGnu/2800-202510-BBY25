@@ -1,0 +1,39 @@
+<%- include("templates/header") %>
+
+    <h1>BUYER HOME PAGE</h1>
+    <p>Your city: <span id="city">Detecting…</span></p>
+
+    <button id="signout">Sign out</button>
+    
+    <script>
+        document.getElementById("signout")
+            .addEventListener("click", () => {
+                window.location.href = "/logout"
+        });
+        
+        // check if browser supports geolocation
+        // if yes, geolocation object exists
+        if (navigator.geolocation) {
+            // ask user for permission
+            navigator.geolocation.getCurrentPosition(async ({ coords }) => { // permission granted callback
+                // extract latitude and longitude from coords and store them
+                const { latitude, longitude } = coords;
+                // get the response object for reverse geocoding (coordinates -> place)
+                const res = await fetch(
+                    `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=<%= mapboxToken %>`
+                );
+                // since response object is raw, parse as JSON
+                const json = await res.json();
+                // in features, find object whose place_type is "place" aka city in mapbox
+                const place = json.features.find(f => f.place_type.includes('place')); 
+                // place?.text only gets text if place exists
+                document.getElementById('city').textContent = place?.text || 'Unknown';
+            }, () => { // permission denied callback
+                document.getElementById('city').textContent = 'Permission denied';
+            });
+        } else { // browser does not support geolocation
+            document.getElementById('city').textContent = 'Geolocation not supported';
+        }
+    </script>
+    <%- include("templates/navbar_buyer") %>
+<%- include("templates/footer") %>
