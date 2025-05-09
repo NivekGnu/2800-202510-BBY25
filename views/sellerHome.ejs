@@ -1,15 +1,58 @@
-<%- include("templates/header") %>
+<%- include('templates/header') %>
 
     <h1>SELLER HOME PAGE</h1>
-
-    <button id="signout">Sign out</button>
-    
+    <button id="signout" class="btn btn-sm btn-outline-secondary">Sign out</button>
     <script>
         document.getElementById("signout")
             .addEventListener("click", () => {
                 window.location.href = "/logout"
         });
     </script>
-    
-    <%- include("templates/navbar_seller") %>
-<%- include("templates/footer") %>
+
+    <%- include('templates/navbar_seller') %>
+
+    <div class="container mt-4">
+      <h2>Your Postings</h2>
+
+      <% if (postings.length === 0) { %>
+        <p>You have not created any postings yet.</p>
+      <% } else { %>
+        <% postings.forEach(p => { %>
+          <div class="card mb-3" style="max-width: 540px;">
+            <div class="row no-gutters">
+              <div class="col-md-4">
+                <!-- Print thumbnail image -->
+                <img 
+                  src="<%= p.thumbSrc %>" 
+                  class="card-img" 
+                  alt="Thumbnail of <%= p.produce %>"
+                >
+              </div>
+              <div class="col-md-8">
+                <div class="card-body">
+                  <h5 class="card-title"><%= p.produce %></h5>
+                  <p class="card-text">
+                    Quantity: <%= p.quantity %><br>
+                    Price: <%= p.price %>
+                  </p>
+                  <p class="card-text"><small class="text-muted">
+                    Posted on <%= p.createdAt.toLocaleString() %>
+                  </small></p>
+                  <p class="card-text"><%= p.description %></p>
+                  <!-- Original image -->
+                  <a 
+                    href="<%= p.imageSrc %>" 
+                    target="_blank" 
+                    class="btn btn-sm btn-outline-primary"
+                  >
+                    View Full Image
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        <% }) %>
+      <% } %>
+    </div>
+
+<%- include('templates/footer') %>
