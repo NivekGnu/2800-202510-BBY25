@@ -42,7 +42,11 @@
           console.log(`Latitude: ${latitude}, Longitude: ${longitude}`);
 
           const marker = L.marker([latitude, longitude]).addTo(map);
-          marker.bindPopup("<b>Your current location</b>").openPopup();
+          marker.bindPopup(`
+            <a href="https://www.google.com/maps/place/${latitude},${longitude}" target="_blank" style="text-decoration: none; color: inherit; display: block;">
+              <b>Your current location</b>
+            </a>
+          `).openPopup();
         },
         (error) => {
           console.error("Error getting location:", error.message);
