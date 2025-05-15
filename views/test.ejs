@@ -1,5 +1,33 @@
 <%- include('templates/header') %>
-<head>
+
+<button id="ai-button">Press me!</button>
+
+<div id="output" style="margin-top: 20px; font-size: 18px;"></div>
+
+<script>
+  document.getElementById('ai-button').addEventListener('click', main);
+
+  async function main() {
+    try {
+      const res = await fetch('/api/gemini', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ prompt: "How does AI work?" }),
+      });
+
+      const data = await res.json();
+      console.log(data.output);
+      document.getElementById('output').innerText = data.output || "No response";
+    } catch (error) {
+      console.error('Error:', error);
+      document.getElementById('output').innerText = 'Error contacting Gemini API';
+    }
+  }
+</script>
+
+<!-- <head>
     <script
         id="search-js"
         defer
@@ -23,6 +51,6 @@
         <input name="postalCode" style="visibility: hidden;" placeholder="Postal Code" type="text" autocomplete="postal-code" />
 
         <button type="submit">Submit</button>
-    </form>
+    </form> -->
 
 <%- include('templates/footer') %>

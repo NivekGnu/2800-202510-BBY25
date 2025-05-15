@@ -30,6 +30,9 @@ const app = express();
 // extract ObjectId property from object
 const { ObjectId } = require('mongodb');
 
+// Google Gemini API
+const { GoogleGenAI } = require('@google/genai');
+
 // Set up the time of the duration of the session.
 // This code means that session expires after 1 hour.
 const expireTime = 1 * 60 * 60 * 1000;
@@ -45,6 +48,7 @@ const mongodb_db = process.env.MONGODB_DB;
 const mongodb_session_secret = process.env.MONGODB_SESSION_SECRET;
 
 const node_session_secret = process.env.NODE_SESSION_SECRET;
+const google_gemini = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 /* END secret section */
 
 // Users and Passwords arrays of objects (in memory 'database')
@@ -84,6 +88,8 @@ app.use(session({
 // Middleware for to use req.body it is necessary to parse the data.
 // Otherwise req.body will be undefined.
 app.use(express.urlencoded({ extended: false }));
+// Middleware for parsing JSON data in the request body.
+app.use(express.json());
 // Allows for images, CSS, JS file to be included inyour website.
 app.use(express.static(__dirname + "/public"));
 
@@ -493,7 +499,27 @@ app.get('/map', (req, res) => {
 });
 
 app.get('/test', (req, res) => {
-    res.render('test', { title: 'Test', mapboxToken: process.env.MAPBOX_API_TOKEN  });
+    res.render('test', { title: 'Test', mapboxToken: process.env.MAPBOX_API_TOKEN, google_gemini: google_gemini });
+});
+
+// Gemini API route
+app.post('/api/gemini', async (req, res) => {
+  try {
+    const prompt = req.body.prompt;
+
+    if (!prompt) {
+      return res.status(400).json({ error: 'Missing prompt' });
+    }
+
+    const model = google_gemini.getGenerativeModel({ model: 'gemini-1.5-pro' });
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    res.json({ output: response.text() });
+  } catch (err) {
+    console.error(err);
+    console.error("Gemini error:", err);
+    res.status(500).json({ error: 'Gemini API call failed.' });
+  }
 });
 
 app.post('/testPost', (req, res) => {
