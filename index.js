@@ -90,14 +90,91 @@ app.use(express.static(__dirname + "/public"));
 app.set('view engine', 'ejs');
 
 // Routes (root homepage)
-app.get('/', (req, res) => {
+app.get('/', async (req, res) => {
     if (req.session.authenticated) {
         if (req.session.role === 'seller') {
-            res.render("sellerHome", { title: "Seller Home Page" });
+            // Fetch all posts by the current seller, sort them newest-first, and return as an array
+            // If there is no post then it shows 'no posting' message.
+            const docs = await postingCollection
+                .find({ sellerId: new ObjectId(req.session.userId) })
+                .sort({ createdAt: -1 })
+                .toArray();
+
+            // Convert each document's image buffer to Base64 data URI.
+            const postings = docs.map(doc => ({
+                // Copy over simple fields unchanged:
+                produce: doc.produce,
+                quantity: doc.quantity,
+                price: doc.price,
+                description: doc.description,
+                createdAt: doc.createdAt,
+
+                //         How it works:
+                //  *   1. Base64-encode the Buffer:
+                //  *        const base64 = buffer.toString('base64');
+                //  *      This turns raw binary data into an ASCII-safe string.
+                //  *
+                //  *   2. Prepend the Data URI scheme:
+                //  *        const dataUri = `data:${mimeType};base64,${base64}`;
+                //  *      - `data:` marks this as an inline resource.
+                //  *      - `${mimeType}` is the image’s contentType (e.g. "image/jpeg").
+                //  *      - `;base64,` tells the browser the following payload is Base64-encoded.
+                //  *      - `${base64}` is the actual encoded image data.
+                //  *
+                //  *   3. Use the Data URI in your HTML:
+                //  *        <img src={dataUri} alt="…">
+                //  *      The browser decodes the Base64 string on the fly and renders the image.
+                imageSrc: `data:${doc.image.contentType};base64,${doc.image.data.toString('base64')}`,
+
+                thumbSrc: `data:${doc.thumbnail.contentType};base64,${doc.thumbnail.data.toString('base64')}`,
+            }));
+
+            // Send the data to 'sellerHome.ejs'
+            res.render("sellerHome", {
+                title: 'My Postings',
+                postings: postings
+            });
         }
 
+        // reusing code from above for seller
         if (req.session.role === 'buyer') {
-            res.render("buyerHome", { title: "Buyer Home Page", mapboxToken: process.env.MAPBOX_API_TOKEN });
+            // Fetch all posts, sort them newest-first, and return as an array
+            // If there is no post then it shows 'no posting' message.
+            const docs = await postingCollection
+                .find({}) //find all posts
+                .sort({ createdAt: -1 })
+                .toArray();
+
+            // Convert each document's image buffer to Base64 data URI.
+            const postings = docs.map(doc => ({
+                // Copy over simple fields unchanged:
+                produce: doc.produce,
+                quantity: doc.quantity,
+                price: doc.price,
+                description: doc.description,
+                createdAt: doc.createdAt,
+
+                //         How it works:
+                //  *   1. Base64-encode the Buffer:
+                //  *        const base64 = buffer.toString('base64');
+                //  *      This turns raw binary data into an ASCII-safe string.
+                //  *
+                //  *   2. Prepend the Data URI scheme:
+                //  *        const dataUri = `data:${mimeType};base64,${base64}`;
+                //  *      - `data:` marks this as an inline resource.
+                //  *      - `${mimeType}` is the image’s contentType (e.g. "image/jpeg").
+                //  *      - `;base64,` tells the browser the following payload is Base64-encoded.
+                //  *      - `${base64}` is the actual encoded image data.
+                //  *
+                //  *   3. Use the Data URI in your HTML:
+                //  *        <img src={dataUri} alt="…">
+                //  *      The browser decodes the Base64 string on the fly and renders the image.
+                imageSrc: `data:${doc.image.contentType};base64,${doc.image.data.toString('base64')}`,
+
+                thumbSrc: `data:${doc.thumbnail.contentType};base64,${doc.thumbnail.data.toString('base64')}`,
+            }));
+
+            res.render("buyerHome", { title: "Buyer Home Page", mapboxToken: process.env.MAPBOX_API_TOKEN, postings: postings });
         }
     } else {
         res.render("landing", { title: "Landing" });
@@ -177,7 +254,7 @@ app.post('/loginSubmit', async (req, res) => {
 
     // Fetch the user info from the MongoDB (Probably fetching only 1)
     const result = await userCollection.find({ email: email })
-        .project({ email: 1, password: 1, firstName: 1, lastName: 1, role: 1, _id: 1}).toArray();
+        .project({ email: 1, password: 1, firstName: 1, lastName: 1, role: 1, _id: 1 }).toArray();
 
     // How the log in process works (comparing the username and the password)
     // Since it's like an array, if the length is not 1 this means that it didn't 
@@ -272,18 +349,18 @@ app.post('/signupSubmit', async (req, res) => {
         // take seller to languages page first
         return res.redirect('/languages');
     }
-    
+
     res.redirect('/');
 });
 
-app.get('/languages', (req,res) => {
+app.get('/languages', (req, res) => {
     if (!req.session.authenticated || req.session.role !== 'seller') {
         return res.redirect('/');
     }
     res.render("languages", { title: "Select Languages" });
 });
 
-app.post('/languagesSubmit', async (req,res) => {
+app.post('/languagesSubmit', async (req, res) => {
     if (!req.session.authenticated || req.session.role !== 'seller') {
         return res.redirect('/');
     }
@@ -294,7 +371,7 @@ app.post('/languagesSubmit', async (req,res) => {
     // if nothing checked
     if (!languages) {
         languages = [];
-    }        
+    }
 
     // if not in array (single language), convert to array
     if (!Array.isArray(languages)) {
@@ -319,8 +396,8 @@ app.get('/logout', (req, res) => {
 
 // Route for post page
 app.get('/createPost', (req, res) => {
-    // Redirect to login page when the authentication fails.
-    if (!req.session.authenticated) {
+    // Redirect to login page when the authentication fails or if the user is not a seller.
+    if (!req.session.authenticated || req.session.role !== 'seller') {
         return res.redirect('/login');
     }
 
@@ -339,10 +416,7 @@ app.get('/createPost', (req, res) => {
 //       from the form field named "image" and make it available as req.file
 app.post('/createPost', upload.single('image'), async (req, res) => {
     // a) session check
-    // (!req.session.authenticated || req.session.role !== 'seller') this condition
-    // will also work. However, since our app will only direct sellers to this route
-    // I omit the second condition.
-    if (!req.session.authenticated) {
+    if (!req.session.authenticated || req.session.role !== 'seller') {
         return res.redirect('/login');
     }
 
@@ -387,56 +461,8 @@ app.post('/createPost', upload.single('image'), async (req, res) => {
         createdAt: new Date()
     })
 
-    res.redirect('/myPosting');
+    res.redirect('/');
 })
-
-// Temporary route where sellers can see their own postings.
-app.get('/myPosting', async (req, res) => {
-    if (!req.session.authenticated) {
-        return res.redirect('/login');
-    }
-
-    // Fetch all posts by the current seller, sort them newest-first, and return as an array
-    const docs = await postingCollection
-        .find({ sellerId: new ObjectId(req.session.userId) })
-        .sort({ createdAt: -1 })
-        .toArray();
-
-    // Convert each document's image buffer to Base64 data URI.
-    const postings = docs.map(doc => ({
-        // Copy over simple fields unchanged:
-        produce:     doc.produce,
-        quantity:    doc.quantity,
-        price:       doc.price,
-        description: doc.description,
-        createdAt:   doc.createdAt,
-
-//         How it works:
-//  *   1. Base64-encode the Buffer:
-//  *        const base64 = buffer.toString('base64');
-//  *      This turns raw binary data into an ASCII-safe string.
-//  *
-//  *   2. Prepend the Data URI scheme:
-//  *        const dataUri = `data:${mimeType};base64,${base64}`;
-//  *      - `data:` marks this as an inline resource.
-//  *      - `${mimeType}` is the image’s contentType (e.g. "image/jpeg").
-//  *      - `;base64,` tells the browser the following payload is Base64-encoded.
-//  *      - `${base64}` is the actual encoded image data.
-//  *
-//  *   3. Use the Data URI in your HTML:
-//  *        <img src={dataUri} alt="…">
-//  *      The browser decodes the Base64 string on the fly and renders the image.
-        imageSrc: `data:${doc.image.contentType};base64,${doc.image.data.toString('base64')}`,
-
-        thumbSrc: `data:${doc.thumbnail.contentType};base64,${doc.thumbnail.data.toString('base64')}`,
-    }));
-
-    // Send the data to 'myPosting.ejs'
-    res.render("myPosting", {
-        title: 'My Postings',
-        postings: postings
-    });
-});
 
 // The route for the chat page
 app.get('/chat', (req, res) => {

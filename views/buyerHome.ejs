@@ -1,39 +1,81 @@
 <%- include("templates/header") %>
 
-    <h1>BUYER HOME PAGE</h1>
-    <p>Your city: <span id="city">Detecting…</span></p>
+<h1>BUYER HOME PAGE</h1>
+<p>Your city: <span id="city">Detecting…</span></p>
 
-    <button id="signout">Sign out</button>
+<button id="signout">Sign out</button>
+
+<script>
+    document.getElementById("signout")
+        .addEventListener("click", () => {
+            window.location.href = "/logout"
+    });
     
-    <script>
-        document.getElementById("signout")
-            .addEventListener("click", () => {
-                window.location.href = "/logout"
+    // check if browser supports geolocation
+    // if yes, geolocation object exists
+    if (navigator.geolocation) {
+        // ask user for permission
+        navigator.geolocation.getCurrentPosition(async ({ coords }) => { // permission granted callback
+            // extract latitude and longitude from coords and store them
+            const { latitude, longitude } = coords;
+            // get the response object for reverse geocoding (coordinates -> place)
+            const res = await fetch(
+                `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=<%= mapboxToken %>`
+            );
+            // since response object is raw, parse as JSON
+            const json = await res.json();
+            // in features, find object whose place_type is "place" aka city in mapbox
+            const place = json.features.find(f => f.place_type.includes('place')); 
+            // place?.text only gets text if place exists
+            document.getElementById('city').textContent = place?.text || 'Unknown';
+        }, () => { // permission denied callback
+            document.getElementById('city').textContent = 'Permission denied';
         });
-        
-        // check if browser supports geolocation
-        // if yes, geolocation object exists
-        if (navigator.geolocation) {
-            // ask user for permission
-            navigator.geolocation.getCurrentPosition(async ({ coords }) => { // permission granted callback
-                // extract latitude and longitude from coords and store them
-                const { latitude, longitude } = coords;
-                // get the response object for reverse geocoding (coordinates -> place)
-                const res = await fetch(
-                    `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=<%= mapboxToken %>`
-                );
-                // since response object is raw, parse as JSON
-                const json = await res.json();
-                // in features, find object whose place_type is "place" aka city in mapbox
-                const place = json.features.find(f => f.place_type.includes('place')); 
-                // place?.text only gets text if place exists
-                document.getElementById('city').textContent = place?.text || 'Unknown';
-            }, () => { // permission denied callback
-                document.getElementById('city').textContent = 'Permission denied';
-            });
-        } else { // browser does not support geolocation
-            document.getElementById('city').textContent = 'Geolocation not supported';
-        }
-    </script>
-    <%- include("templates/navbar_buyer") %>
+    } else { // browser does not support geolocation
+        document.getElementById('city').textContent = 'Geolocation not supported';
+    }
+</script>
+
+<%- include("templates/navbar_buyer") %>
+
+<div class="container mt-4">
+    <h2>All Available Postings</h2>
+
+    <% if (postings.length===0) { %>
+        <p>There are currently no postings yet.</p>
+    <% } else { %>
+        <% postings.forEach(p=> { %>
+            <div class="card mb-3" style="max-width: 540px;">
+                <div class="row no-gutters">
+                    <div class="col-md-4">
+                        <!-- Print thumbnail image -->
+                        <img src="<%= p.thumbSrc %>" class="card-img" alt="Thumbnail of <%= p.produce %>">
+                    </div>
+                    <div class="col-md-8">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <%= p.produce %>
+                            </h5>
+                            <p class="card-text">
+                                Avaiable Quantity: <%= p.quantity %><br>
+                                    Price: <%= p.price %>
+                            </p>
+                            <p class="card-text"><small class="text-muted">
+                                    Posted on <%= p.createdAt.toLocaleString() %>
+                            </small></p>
+                            <p class="card-text">
+                                <%= p.description %>
+                            </p>
+                            <!-- Original image -->
+                            <a href="<%= p.imageSrc %>" target="_blank" class="btn btn-sm btn-outline-primary">
+                                View Full Image
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <% }) %>
+    <% } %>
+</div>
+
 <%- include("templates/footer") %>
