@@ -1,58 +1,45 @@
 <%- include('templates/header') %>
 
-    <h1>SELLER HOME PAGE</h1>
-    <button id="signout" class="btn btn-sm btn-outline-secondary">Sign out</button>
-    <script>
-        document.getElementById("signout")
-            .addEventListener("click", () => {
-                window.location.href = "/logout"
-        });
-    </script>
-
-    <%- include('templates/navbar_seller') %>
-
-    <div class="container mt-4">
-      <h2>Your Postings</h2>
-
-      <% if (postings.length === 0) { %>
-        <p>You have not created any postings yet.</p>
-      <% } else { %>
-        <% postings.forEach(p => { %>
-          <div class="card mb-3" style="max-width: 540px;">
-            <div class="row no-gutters">
-              <div class="col-md-4">
-                <!-- Print thumbnail image -->
-                <img 
-                  src="<%= p.thumbSrc %>" 
-                  class="card-img" 
-                  alt="Thumbnail of <%= p.produce %>"
-                >
-              </div>
-              <div class="col-md-8">
-                <div class="card-body">
-                  <h5 class="card-title"><%= p.produce %></h5>
-                  <p class="card-text">
-                    Quantity: <%= p.quantity %><br>
-                    Price: <%= p.price %>
-                  </p>
-                  <p class="card-text"><small class="text-muted">
-                    Posted on <%= p.createdAt.toLocaleString() %>
-                  </small></p>
-                  <p class="card-text"><%= p.description %></p>
-                  <!-- Original image -->
-                  <a 
-                    href="<%= p.imageSrc %>" 
-                    target="_blank" 
-                    class="btn btn-sm btn-outline-primary"
-                  >
-                    View Full Image
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-        <% }) %>
-      <% } %>
+<div class="flex flex-col h-screen bg-gray-50">
+  <!-- Header -->
+  <header class="flex-none p-4 bg-white shadow">
+    <div class="flex items-center justify-between">
+      <h1 class="text-lg font-semibold">Your Listings</h1>
+      <button id="signout" class="text-sm text-gray-600 hover:text-gray-800">Sign out</button>
     </div>
+    <script>
+      document.getElementById("signout")
+        .addEventListener("click", () => window.location.href = "/logout");
+    </script>
+  </header>
 
-<%- include('templates/footer') %>
+  <!-- Main -->
+  <main class="flex-1 overflow-auto p-2">
+    <% if (postings.length === 0) { %>
+      <p class="text-center text-gray-500 mt-4">No postings yet.</p>
+    <% } else { %>
+      <div class="grid grid-cols-2 gap-2">
+        <% postings.forEach(p => { %>
+          <a href="/post/<%= p.id %>" class="block bg-white rounded-lg shadow overflow-hidden">
+            <!-- 1:1 image box -->
+            <div class="w-full aspect-square bg-gray-100">
+              <img
+                src="<%= p.thumbSrc %>"
+                alt="<%= p.produce %>"
+                class="object-cover w-full h-full"
+              />
+            </div>
+            <!-- Text -->
+            <div class="p-2">
+              <div class="text-sm font-semibold text-gray-900 mb-1">$<%= p.price %></div>
+              <div class="text-xs text-gray-700 truncate"><%= p.produce %></div>
+              <div class="text-xs text-gray-500"><%= p.mileage %> miles</div>
+            </div>
+          </a>
+        <% }) %>
+      </div>
+    <% } %>
+  </main>
+
+  <%- include('templates/footer') %>
+</div>
