@@ -136,8 +136,45 @@ app.get('/', async (req, res) => {
             });
         }
 
+        // reusing code from above for seller
         if (req.session.role === 'buyer') {
-            res.render("buyerHome", { title: "Buyer Home Page", mapboxToken: process.env.MAPBOX_API_TOKEN });
+            // Fetch all posts, sort them newest-first, and return as an array
+            // If there is no post then it shows 'no posting' message.
+            const docs = await postingCollection
+                .find({}) //find all posts
+                .sort({ createdAt: -1 })
+                .toArray();
+
+            // Convert each document's image buffer to Base64 data URI.
+            const postings = docs.map(doc => ({
+                // Copy over simple fields unchanged:
+                produce: doc.produce,
+                quantity: doc.quantity,
+                price: doc.price,
+                description: doc.description,
+                createdAt: doc.createdAt,
+
+                //         How it works:
+                //  *   1. Base64-encode the Buffer:
+                //  *        const base64 = buffer.toString('base64');
+                //  *      This turns raw binary data into an ASCII-safe string.
+                //  *
+                //  *   2. Prepend the Data URI scheme:
+                //  *        const dataUri = `data:${mimeType};base64,${base64}`;
+                //  *      - `data:` marks this as an inline resource.
+                //  *      - `${mimeType}` is the image’s contentType (e.g. "image/jpeg").
+                //  *      - `;base64,` tells the browser the following payload is Base64-encoded.
+                //  *      - `${base64}` is the actual encoded image data.
+                //  *
+                //  *   3. Use the Data URI in your HTML:
+                //  *        <img src={dataUri} alt="…">
+                //  *      The browser decodes the Base64 string on the fly and renders the image.
+                imageSrc: `data:${doc.image.contentType};base64,${doc.image.data.toString('base64')}`,
+
+                thumbSrc: `data:${doc.thumbnail.contentType};base64,${doc.thumbnail.data.toString('base64')}`,
+            }));
+
+            res.render("buyerHome", { title: "Buyer Home Page", mapboxToken: process.env.MAPBOX_API_TOKEN, postings: postings });
         }
     } else {
         res.render("landing", { title: "Landing" });
