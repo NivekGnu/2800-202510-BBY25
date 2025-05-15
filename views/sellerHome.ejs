@@ -1,44 +1,96 @@
 <%- include('templates/header') %>
 
-<div class="flex flex-col h-screen bg-gray-50">
-  <!-- Header -->
+<div class="flex flex-col min-h-screen bg-gray-50">
+  <!-- HEADER -->
   <header class="flex-none p-4 bg-white shadow">
     <div class="flex items-center justify-between">
-      <h1 class="text-lg font-semibold">Your Listings</h1>
-      <button id="signout" class="text-sm text-gray-600 hover:text-gray-800">Sign out</button>
+      <h1 class="text-lg font-semibold">SELLER HOME PAGE</h1>
+      <button
+        id="signout"
+        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
+      >
+        Sign out
+      </button>
     </div>
-    <script>
-      document.getElementById("signout")
-        .addEventListener("click", () => window.location.href = "/logout");
-    </script>
   </header>
 
-  <!-- Main -->
-  <main class="flex-1 overflow-auto p-2">
-    <% if (postings.length === 0) { %>
-      <p class="text-center text-gray-500 mt-4">No postings yet.</p>
-    <% } else { %>
-      <div class="grid grid-cols-2 gap-2">
-        <% postings.forEach(p => { %>
-          <a href="/post/<%= p.id %>" class="block bg-white rounded-lg shadow overflow-hidden">
-            <!-- 1:1 image box -->
-            <div class="w-full aspect-square bg-gray-100">
-              <img
-                src="<%= p.thumbSrc %>"
-                alt="<%= p.produce %>"
-                class="object-cover w-full h-full"
-              />
-            </div>
-            <!-- Text -->
-            <div class="p-2">
-              <div class="text-sm font-semibold text-gray-900 mb-1">$<%= p.price %></div>
-              <div class="text-xs text-gray-700 truncate"><%= p.produce %></div>
-              <div class="text-xs text-gray-500"><%= p.mileage %> miles</div>
-            </div>
-          </a>
-        <% }) %>
-      </div>
-    <% } %>
+  <script>
+    // sign out
+    document.getElementById("signout")
+      .addEventListener("click", () => window.location.href = "/logout");
+
+    // geolocation → city
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(async ({ coords }) => {
+        const { latitude, longitude } = coords;
+        const res = await fetch(
+          `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=<%= mapboxToken %>`
+        );
+        const json = await res.json();
+        const place = json.features.find(f => f.place_type.includes('place'));
+        document.getElementById('city').textContent = place?.text || 'Unknown';
+      }, () => {
+        document.getElementById('city').textContent = 'Permission denied';
+      });
+    } else {
+      document.getElementById('city').textContent = 'Geolocation not supported';
+    }
+  </script>
+
+  <!-- MAIN -->
+  <main class="flex-1 overflow-auto px-4 py-6">
+    <p class="mb-4">
+      Your city:
+      <span id="city" class="font-medium">Detecting…</span>
+    </p>
+
+    <%- include('templates/navbar_buyer') %>
+
+    <section class="mt-8">
+      <h2 class="text-2xl font-semibold mb-4">All Available Postings</h2>
+
+      <% if (postings.length === 0) { %>
+        <p class="text-gray-600">There are currently no postings yet.</p>
+      <% } else { %>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <% postings.forEach(p => { %>
+            <a
+              href="/post/<%= p.id %>"
+              class="block bg-white shadow-lg rounded-lg overflow-hidden flex flex-col h-full"
+            >
+              <!-- thumbnail -->
+              <div class="w-full h-48 bg-gray-100">
+                <img
+                  src="<%= p.thumbSrc %>"
+                  alt="Thumbnail of <%= p.produce %>"
+                  class="object-cover w-full h-full"
+                >
+              </div>
+
+              <!-- details -->
+              <div class="p-4 flex-1 flex flex-col">
+                <h3 class="text-xl font-medium mb-2 truncate"><%= p.produce %></h3>
+                <p class="text-gray-700 text-sm mb-1">
+                  Available: <span class="font-semibold"><%= p.quantity %></span>
+                </p>
+                <p class="text-gray-700 text-sm mb-2">
+                  Price: <span class="font-semibold">$<%= p.price %></span>
+                </p>
+                <p class="text-gray-500 text-xs mb-4">
+                  Posted on <%= p.createdAt.toLocaleDateString() %>
+                </p>
+                <p class="text-gray-800 text-sm mb-4 flex-1 line-clamp-3">
+                  <%= p.description %>
+                </p>
+                <span class="mt-auto text-blue-600 hover:underline text-sm">
+                  View Details
+                </span>
+              </div>
+            </a>
+          <% }) %>
+        </div>
+      <% } %>
+    </section>
   </main>
 
   <%- include('templates/footer') %>

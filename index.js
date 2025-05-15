@@ -132,7 +132,9 @@ app.get('/', async (req, res) => {
             // Send the data to 'sellerHome.ejs'
             res.render("sellerHome", {
                 title: 'My Postings',
-                postings: postings
+                postings: postings,
+                // note the name here must match what you use in EJS:
+                mapboxToken: process.env.MAPBOX_API_TOKEN
             });
         }
 
