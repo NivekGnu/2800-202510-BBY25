@@ -18,8 +18,8 @@
       });
 
       const data = await res.json();
-      console.log(data.output);
-      document.getElementById('output').innerText = data.output || "No response";
+      console.log(data);
+      document.getElementById('output').innerText = data || "No response";
     } catch (error) {
       console.error('Error:', error);
       document.getElementById('output').innerText = 'Error contacting Gemini API';

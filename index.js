@@ -511,10 +511,11 @@ app.post('/api/gemini', async (req, res) => {
       return res.status(400).json({ error: 'Missing prompt' });
     }
 
-    const model = google_gemini.getGenerativeModel({ model: 'gemini-1.5-pro' });
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    res.json({ output: response.text() });
+    const result = await google_gemini.models.generateContent({ model: 'gemini-1.5-flash', contents: prompt });
+
+    return res.json(result.text); // get res.text and send as JSON object
+
+
   } catch (err) {
     console.error(err);
     console.error("Gemini error:", err);
