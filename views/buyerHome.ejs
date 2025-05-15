@@ -1,11 +1,19 @@
 <%- include("templates/header") %>
 
-<h1>BUYER HOME PAGE</h1>
-<p>Your city: <span id="city">Detecting…</span></p>
+<div class="px-4 py-6">
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="text-3xl font-bold">BUYER HOME PAGE</h1>
+    <button
+      id="signout"
+      class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
+    >
+      Sign out
+    </button>
+  </div>
 
-<button id="signout">Sign out</button>
+  <p class="mb-4">Your current location: <span id="city" class="font-medium">Detecting…</span>.</p>
 
-<script>
+  <script>
     document.getElementById("signout")
         .addEventListener("click", () => {
             window.location.href = "/logout"
@@ -36,46 +44,47 @@
     }
 </script>
 
-<%- include("templates/navbar_buyer") %>
+  <%- include("templates/navbar_buyer") %>
 
-<div class="container mt-4">
-    <h2>All Available Postings</h2>
+  <section class="mt-8">
+    <h2 class="text-2xl font-semibold mb-4">All Available Postings</h2>
 
-    <% if (postings.length===0) { %>
-        <p>There are currently no postings yet.</p>
+    <% if (postings.length === 0) { %>
+      <p class="text-gray-600">There are currently no postings yet.</p>
     <% } else { %>
-        <% postings.forEach(p=> { %>
-            <div class="card mb-3" style="max-width: 540px;">
-                <div class="row no-gutters">
-                    <div class="col-md-4">
-                        <!-- Print thumbnail image -->
-                        <img src="<%= p.thumbSrc %>" class="card-img" alt="Thumbnail of <%= p.produce %>">
-                    </div>
-                    <div class="col-md-8">
-                        <div class="card-body">
-                            <h5 class="card-title">
-                                <%= p.produce %>
-                            </h5>
-                            <p class="card-text">
-                                Avaiable Quantity: <%= p.quantity %><br>
-                                    Price: <%= p.price %>
-                            </p>
-                            <p class="card-text"><small class="text-muted">
-                                    Posted on <%= p.createdAt.toLocaleString() %>
-                            </small></p>
-                            <p class="card-text">
-                                <%= p.description %>
-                            </p>
-                            <!-- Original image -->
-                            <a href="<%= p.imageSrc %>" target="_blank" class="btn btn-sm btn-outline-primary">
-                                View Full Image
-                            </a>
-                        </div>
-                    </div>
-                </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <% postings.forEach(p => { %>
+          <div class="bg-white shadow-lg rounded-lg overflow-hidden flex flex-col">
+            <img
+              src="<%= p.thumbSrc %>"
+              alt="Thumbnail of <%= p.produce %>"
+              class="w-full h-48 object-cover"
+            >
+            <div class="p-4 flex-1 flex flex-col">
+              <h3 class="text-xl font-medium mb-2"><%= p.produce %></h3>
+              <p class="text-gray-700 text-sm mb-1">
+                Available Quantity: <span class="font-semibold"><%= p.quantity %></span>
+              </p>
+              <p class="text-gray-700 text-sm mb-2">
+                Price: <span class="font-semibold"><%= p.price %></span>
+              </p>
+              <p class="text-gray-500 text-xs mb-4">
+                Posted on <%= p.createdAt.toLocaleString() %>
+              </p>
+              <p class="text-gray-800 text-sm mb-4 flex-1"><%= p.description %></p>
+              <a
+                href="<%= p.imageSrc %>"
+                target="_blank"
+                class="mt-auto inline-block text-blue-600 hover:underline text-sm"
+              >
+                View Full Image
+              </a>
             </div>
+          </div>
         <% }) %>
+      </div>
     <% } %>
+  </section>
 </div>
 
 <%- include("templates/footer") %>
