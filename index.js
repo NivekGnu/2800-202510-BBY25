@@ -334,7 +334,15 @@ app.post('/signupSubmit', async (req, res) => {
 
     // insert into mongoDB
     // extract insertedId property which is ObjectId
-    const { insertedId } = await userCollection.insertOne({ firstName: firstName, lastName: lastName, email: email, password: hashedPassword, role: role, languages: [], createdAt: new Date() })
+    const { insertedId } = await userCollection.insertOne(
+        { firstName: firstName, 
+            lastName: lastName, 
+            email: email, password: hashedPassword, 
+            role: role, 
+            languages: [], 
+            createdAt: new Date() 
+        }
+    );
 
     req.session.authenticated = true;
     req.session.firstName = firstName;
@@ -483,6 +491,27 @@ app.get('/map', (req, res) => {
 
     res.render('map', { title: 'Map', mapboxToken: process.env.MAPBOX_API_TOKEN });
 });
+
+app.get('/test', (req, res) => {
+    res.render('test', { title: 'Test', mapboxToken: process.env.MAPBOX_API_TOKEN  });
+});
+
+app.post('/testPost', (req, res) => {
+    const {'address address-search': address, city, province, postalCode} = req.body;
+
+    console.log(JSON.stringify(req.body));
+    res.send(`
+        req.body: ${JSON.stringify(req.body)}
+        
+        <h1>Test Post</h1>
+        <p>Address: ${address}</p>
+        <p>City: ${city}</p>
+        <p>Province: ${province}</p>
+        <p>Postal Code: ${postalCode}</p>
+        <a href="/test">Back</a>
+        `)
+});
+     
 
 // 404 Page, must be placed at the end of all the routes.
 // but before "app.listen".
