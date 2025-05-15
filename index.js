@@ -499,24 +499,20 @@ app.get('/map', (req, res) => {
 });
 
 app.get('/test', (req, res) => {
-    res.render('test', { title: 'Test', mapboxToken: process.env.MAPBOX_API_TOKEN, google_gemini: google_gemini });
+    res.render('test', { title: 'Test', mapboxToken: process.env.MAPBOX_API_TOKEN });
 });
 
 // Gemini API route
 app.post('/api/gemini', async (req, res) => {
   try {
     const prompt = req.body.prompt;
+    if (!prompt) return res.status(400).json({ error: 'Missing prompt' });
 
-    if (!prompt) {
-      return res.status(400).json({ error: 'Missing prompt' });
-    }
+    const response = await google_gemini.models.generateContent({ model: 'gemini-2.0-flash', contents: prompt });
 
-    const model = google_gemini.getGenerativeModel({ model: 'gemini-1.5-pro' });
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    res.json({ output: response.text() });
+    console.log("Gemini response:", response.text);
+    return res.json({ output: response.text });
   } catch (err) {
-    console.error(err);
     console.error("Gemini error:", err);
     res.status(500).json({ error: 'Gemini API call failed.' });
   }
