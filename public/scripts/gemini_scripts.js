@@ -1,11 +1,18 @@
+const aiButton = document.getElementById('ai-helper-button');
+
 // Start the AI helper and show modal
-document.getElementById('ai-helper-button').addEventListener('click', geminiCall);
+aiButton.addEventListener('click', geminiCall);
 
 // Close the modal
 document.getElementById('close-modal').addEventListener('click', () => {
     const modal = document.getElementById('ai-modal');
     modal.classList.remove("opacity-100");
     modal.classList.add("opacity-0", "pointer-events-none");
+
+    // Enable the AI button
+    aiButton.disabled = false;
+    aiButton.classList.remove("bg-gray-400", "text-white", "font-semibold", "px-4", "py-2", "rounded", "opacity-50", "cursor-not-allowed");
+    aiButton.classList.add("bg-green-500", "hover:bg-green-700");
 });
 
 // Animates the loading dots while waiting for a response
@@ -20,9 +27,9 @@ function animateLoadingDots(elementId, baseText = "Generating response") {
 }
 
 // Creates animation similar to AI typing
-async function printLineEffect(elementId, text, delay = 500) {
+async function printLineEffect(elementId, text) {
     const container = document.getElementById(elementId);
-    container.innerHTML = ""; // Clear previous content
+    container.innerHTML = ""; // Clear's 'generating resposne' text
 
     const lines = text.split('\n');
 
@@ -30,21 +37,32 @@ async function printLineEffect(elementId, text, delay = 500) {
         const p = document.createElement("p");
         p.textContent = line;
         p.style.opacity = 0;
-        p.style.transition = "opacity 0.5s ease";
+        p.style.transition = "opacity 1s ease";
 
         container.appendChild(p);
 
         // Trigger fade-in after a tiny pause
         requestAnimationFrame(() => {
-            p.style.opacity = 1;
+            setTimeout(() => {
+                p.style.opacity = 1;
+            }, 0);
         });
-
-        await new Promise(resolve => setTimeout(resolve, delay));
     }
 }
 
 // Call the Gemini API and handle the response
 async function geminiCall() {
+
+    // Disable AI button to prevent multiple clicks
+    aiButton.disabled = true; // Disable the button
+    aiButton.classList.add(
+        "bg-gray-400",
+        "text-white",
+        "opacity-50",
+        "cursor-not-allowed"
+    );
+    aiButton.classList.remove("bg-green-500", "hover:bg-green-700");
+
     // Clear old response
     document.getElementById('output').value = ''
     // Start running loading animation
