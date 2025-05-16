@@ -129,6 +129,13 @@ app.get('/', async (req, res) => {
                 mapboxToken: process.env.MAPBOX_API_TOKEN, 
                 postings: postings 
             });
+
+            app.get("/cart", (req, res) => {
+                if (!req.session.authenticated || req.session.role !== "buyer") {
+                    return res.redirect("/login");
+                }
+                res.render("cart", { title: "Your Cart" });
+            });
         } else {
             // Should not happen if role is always set, but as a fallback:
             res.redirect("/login");
