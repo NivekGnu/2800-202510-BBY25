@@ -31,7 +31,7 @@ const app = express();
 const { ObjectId } = require('mongodb');
 
 // Google Gemini API
-const { GoogleGenAI } = require('@google/genai');
+const { GoogleGenerativeAI  } = require('@google/generative-ai');
 
 // Set up the time of the duration of the session.
 // This code means that session expires after 1 hour.
@@ -48,7 +48,8 @@ const mongodb_db = process.env.MONGODB_DB;
 const mongodb_session_secret = process.env.MONGODB_SESSION_SECRET;
 
 const node_session_secret = process.env.NODE_SESSION_SECRET;
-const google_gemini = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const google_gemini = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const geminiModel = google_gemini.getGenerativeModel({ model: "gemini-2.0-flash" });
 /* END secret section */
 
 // Users and Passwords arrays of objects (in memory 'database')
@@ -504,13 +505,15 @@ app.get('/test', (req, res) => {
 
 // Gemini API route
 app.post('/api/gemini', async (req, res) => {
-  try {
+    try {    
     const prompt = req.body.prompt;
     if (!prompt) return res.status(400).json({ error: 'Missing prompt' });
 
-    const result = await google_gemini.models.generateContent({ model: 'gemini-1.5-flash', contents: prompt });
+    const result = await geminiModel.generateContent(prompt);
+    const response = await result.response; 
+    const text = response.text();           
 
-    return res.json(result.text); // get res.text and send as JSON object
+    return res.json({ text });   
   } catch (err) {
     console.error("Gemini error:", err);
     res.status(500).json({ error: 'Gemini API call failed.' });
