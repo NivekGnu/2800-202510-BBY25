@@ -11,7 +11,7 @@ const { ObjectId } = require("mongodb");
 const http = require("http"); // Required for Socket.IO
 const { Server } = require("socket.io"); // Required for Socket.IO
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY); // required for Stripe
-const local_domain = 'http://localhost:3000'; // needed for Stripe redirect, later change to live site //TODO
+const LIVE_DOMAIN = process.env.LIVE_DOMAIN || 'http://localhost:3000'; // needed for Stripe redirect
 
 
 const saltRounds = 12;
@@ -756,8 +756,8 @@ app.post('/checkout', async (req, res) => {
             application_fee_amount: 0,
             transfer_data: { destination: seller.stripeAccountId }, // send money to seller's stripe acc 
         },
-        success_url: `${local_domain}/checkout/success`, //change later
-        cancel_url: `${local_domain}/cartout/fail`, //change later
+        success_url: `${LIVE_DOMAIN}/checkout/success`, //change later
+        cancel_url: `${LIVE_DOMAIN}/cartout/fail`, //change later
         metadata: {
             buyerId: req.session.userId,
             sellerId: sellerId,
