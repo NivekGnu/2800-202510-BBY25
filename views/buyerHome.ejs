@@ -1,16 +1,109 @@
 <%- include("templates/header") %>
 
-    <h1>BUYER HOME PAGE</h1>
-    <p>Your city: <span id="city">Detecting…</span></p>
+    <div class="px-4 py-6">
+        <div class="flex items-center justify-between mb-6">
+            <h1 class="text-3xl font-bold">BUYER HOME PAGE</h1>
+            <button id="signout" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition">
+                Sign out
+            </button>
+        </div>
 
-    <button id="signout">Sign out</button>
-    
+        <p class="mb-4">Your current location: <span id="city" class="font-medium">Detecting…</span>.</p>
+
+        <section class="mt-8">
+            <h2 class="text-2xl font-semibold mb-4">All Available Postings</h2>
+
+            <% if (postings.length===0) { %>
+                <p>There are currently no postings yet.</p>
+                <% } else { %>
+                    <% postings.forEach(p=> { %>
+                        <div class="card mb-3" style="max-width: 540px;">
+                            <div class="row no-gutters">
+                                <div class="col-md-4">
+                                    <!-- Print thumbnail image -->
+                                    <img src="<%= p.thumbSrc %>" class="card-img" alt="Thumbnail of <%= p.produce %>">
+                                </div>
+                                <div class="col-md-8">
+                                    <div class="card-body">
+                                        <h5 class="card-title">
+                                            <%= p.produce %>
+                                        </h5>
+                                        <p class="card-text">
+                                            Avaiable Quantity: <%= p.quantity %><br>
+                                                Price: <%= p.price %>
+                                        </p>
+                                        <p class="card-text"><small class="text-muted">
+                                                Posted on <%= p.createdAt.toLocaleString() %>
+                                            </small></p>
+                                        <p class="card-text">
+                                            <%= p.description %>
+                                        </p>
+                                        <!-- Original image -->
+                                        <a href="<%= p.imageSrc %>" target="_blank"
+                                            class="btn btn-sm btn-outline-primary">
+                                            View Full Image
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <% }) %>
+                            <% } %>
+    </div>
+
+    <!-- AI BUTTON -->
+    <button id="ai-helper-button"
+        class="fixed bottom-20 right-6 z-50 bg-green-700 hover:bg-green-800 text-white p-3 rounded-full ">
+        <img src="/img/glow-icon.svg" alt="AI Helper Icon" class="w-10 h-10">
+    </button>
+
+    <!-- AI modal; default hidden -->
+    <div id="ai-modal" class="relative z-10 opacity-0 pointer-events-none transition-opacity duration-300 ease-out"
+        aria-labelledby="modal-title" role="dialog" aria-modal="true">
+
+        <div class="fixed inset-0 bg-gray-500/75 transition-opacity" aria-hidden="true"></div>
+
+        <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
+            <div class="flex min-h-screen items-center justify-center p-4 text-center">
+                <div
+                    class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
+
+                    <!-- GREEN HEADER BAR -->
+                    <div class="bg-gray-500 px-4 py-3">
+                        <h3 id="modal-title" class="text-lg text-center font-semibold text-black">
+                            What are some produce in season right now?
+                        </h3>
+                    </div>
+
+                    <!-- MAIN CONTENT -->
+                    <div class="bg-white px-4 pt-2 pb-4 sm:p-6 sm:pb-4">
+                        <div class="sm:flex sm:items-start">
+                            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                                <div class="mt-2 max-h-60 overflow-y-auto">
+                                    <p id="output" class="text-sm text-gray-700"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FOOTER BUTTON -->
+                    <div class="bg-gray-100 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                        <button type="button" id="close-modal"
+                            class="inline-flex w-full justify-center rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-green-500 sm:ml-3 sm:w-auto">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="scripts/gemini_scripts.js"></script>
+
     <script>
         document.getElementById("signout")
             .addEventListener("click", () => {
                 window.location.href = "/logout"
-        });
-        
+            });
+
         // check if browser supports geolocation
         // if yes, geolocation object exists
         if (navigator.geolocation) {
@@ -25,7 +118,7 @@
                 // since response object is raw, parse as JSON
                 const json = await res.json();
                 // in features, find object whose place_type is "place" aka city in mapbox
-                const place = json.features.find(f => f.place_type.includes('place')); 
+                const place = json.features.find(f => f.place_type.includes('place'));
                 // place?.text only gets text if place exists
                 document.getElementById('city').textContent = place?.text || 'Unknown';
             }, () => { // permission denied callback
@@ -35,5 +128,38 @@
             document.getElementById('city').textContent = 'Geolocation not supported';
         }
     </script>
+
+    <script>
+        document.getElementById("signout")
+            .addEventListener("click", () => {
+                window.location.href = "/logout"
+            });
+
+        // check if browser supports geolocation
+        // if yes, geolocation object exists
+        if (navigator.geolocation) {
+            // ask user for permission
+            navigator.geolocation.getCurrentPosition(async ({ coords }) => { // permission granted callback
+                // extract latitude and longitude from coords and store them
+                const { latitude, longitude } = coords;
+                // get the response object for reverse geocoding (coordinates -> place)
+                const res = await fetch(
+                    `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=<%= mapboxToken %>`
+                );
+                // since response object is raw, parse as JSON
+                const json = await res.json();
+                // in features, find object whose place_type is "place" aka city in mapbox
+                const place = json.features.find(f => f.place_type.includes('place'));
+                // place?.text only gets text if place exists
+                document.getElementById('city').textContent = place?.text || 'Unknown';
+            }, () => { // permission denied callback
+                document.getElementById('city').textContent = 'Permission denied';
+            });
+        } else { // browser does not support geolocation
+            document.getElementById('city').textContent = 'Geolocation not supported';
+        }
+    </script>
+
     <%- include("templates/navbar_buyer") %>
-<%- include("templates/footer") %>
+        <%- include("templates/navbar_buyer") %>
+            <%- include("templates/footer") %>

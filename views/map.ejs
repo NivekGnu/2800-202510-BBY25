@@ -1,5 +1,7 @@
 <%- include("templates/header") %>
-  <div id="map" style="height: 100vh;"></div>
+  <div id="map" class="z-0" style="height: 100vh;"></div>
+
+  <%- include("templates/navbar_buyer") %>
 
   <!-- Leaflet library -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -7,7 +9,7 @@
   <!-- Map Scripts -->
   <script>
     // Default Burnaby
-    const map = L.map('map').setView([49.24871980930831, -122.98067289034908], 12);
+    const map = L.map('map').setView([49.24871980930831, -122.98067289034908], 13);
 
     const accessToken = '<%= mapboxToken %>';
 
@@ -22,7 +24,14 @@
     }).addTo(map);
 
     const marker = L.marker([49.249999, -123.001]).addTo(map);
-    marker.bindPopup("<b>Burnaby</b><br>Home of BCIT.").openPopup();
+    marker.bindPopup(`
+      <a href="https://www.bcit.ca/" target="_blank" style="text-decoration: none; color: inherit; display: block;">
+        <div style="padding: 4px;">
+        <b>Burnaby</b><br>
+        Home of BCIT.
+        </div>
+      </a>
+    `).openPopup();
   </script>
 
   <script>
@@ -33,7 +42,11 @@
           console.log(`Latitude: ${latitude}, Longitude: ${longitude}`);
 
           const marker = L.marker([latitude, longitude]).addTo(map);
-          marker.bindPopup("<b>Your current location</b>").openPopup();
+          marker.bindPopup(`
+            <a href="https://www.google.com/maps/place/${latitude},${longitude}" target="_blank" style="text-decoration: none; color: inherit; display: block;">
+              <b>Your current location</b>
+            </a>
+          `).openPopup();
         },
         (error) => {
           console.error("Error getting location:", error.message);
@@ -43,4 +56,5 @@
       console.error("Geolocation is not supported by this browser.");
     }
   </script>
-  <%- include("templates/footer") %>
+  
+<%- include("templates/footer") %>

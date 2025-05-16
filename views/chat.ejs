@@ -1,20 +1,391 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat Page</title>
-    <link rel="stylesheet" href="/css/chat.css"> 
-</head>
-<body>
-    <div class="container">
-        <div id="chat-box">
-            <!-- Chat messages will appear here -->
-        </div>
-        <div class="message-form">
-            <img src="img/camera-plus.png" alt="Add media" id="camera-icon">
-            <input type="text" id="message-input" placeholder="Message">
-        </div>
-    </div>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+      .chat-messages::-webkit-scrollbar {
+        width: 6px;
+      }
+      .chat-messages::-webkit-scrollbar-thumb {
+        background-color: #cbd5e1;
+        border-radius: 3px;
+      }
+      .chat-messages::-webkit-scrollbar-track {
+        background-color: #f7fafc;
+      }
+      .avatar-icon {
+        fill: currentColor;
+      }
+    </style>
+  </head>
+  <body class="bg-white flex flex-col h-screen">
+    <header class="p-4 border-b border-gray-200 flex items-center">
+      <button onclick="window.history.back()" aria-label="Go back" class="mr-4">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="2"
+          stroke="currentColor"
+          class="w-6 h-6 text-gray-700"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M15.75 19.5L8.25 12l7.5-7.5"
+          />
+        </svg>
+      </button>
+      <h1 class="text-lg font-semibold text-gray-800">
+        Chat with <%= otherUserName %>
+      </h1>
+    </header>
+
+    <main
+      id="chat-messages"
+      class="flex-grow p-4 space-y-4 overflow-y-auto chat-messages bg-gray-50"
+    >
+      <!-- Messages will be loaded here -->
+    </main>
+
+    <footer class="p-3 border-t border-gray-200 bg-white">
+      <form
+        id="message-form"
+        class="bg-gray-100 rounded-xl flex items-center w-full"
+      >
+        <input
+          type="file"
+          id="image-upload-input"
+          accept="image/*"
+          class="hidden"
+        />
+        <button
+          type="button"
+          id="open-image-upload-button"
+          class="p-3 text-gray-600 hover:text-gray-800 focus:outline-none"
+          aria-label="Attach image"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="1.5"
+            stroke="currentColor"
+            class="w-6 h-6"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"
+            />
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM12 10.5v3m1.5-1.5h-3"
+            />
+          </svg>
+        </button>
+        <input
+          type="text"
+          id="message-text-input"
+          placeholder="Message"
+          class="flex-grow bg-transparent p-3 text-sm text-gray-800 placeholder-gray-500 focus:outline-none"
+        />
+        <button
+          type="submit"
+          id="send-button"
+          class="p-3 text-blue-600 hover:text-blue-700 focus:outline-none"
+          aria-label="Send message"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            class="w-6 h-6"
+          >
+            <path
+              d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z"
+            />
+          </svg>
+        </button>
+      </form>
+      <div id="image-preview-container" class="mt-2 hidden">
+        <img
+          id="image-preview"
+          src="#"
+          alt="Image preview"
+          class="max-h-20 rounded"
+        />
+        <button id="cancel-image-upload" class="text-xs text-red-500 ml-2">
+          Cancel
+        </button>
+      </div>
+    </footer>
+
+    <script>
+      const currentUserId = "<%= currentUserId %>";
+      const otherUserId = "<%= otherUserId %>";
+      const chatId = "<%= chatId %>";
+      console.log("Chat Page Initialized. Current User:", currentUserId, "Other User:", otherUserId, "Chat ID:", chatId);
+
+
+      const chatMessagesContainer = document.getElementById('chat-messages');
+      const messageForm = document.getElementById('message-form');
+      const messageTextInput = document.getElementById('message-text-input');
+      const openImageUploadButton = document.getElementById('open-image-upload-button');
+      const imageUploadInput = document.getElementById('image-upload-input');
+
+      const imagePreviewContainer = document.getElementById('image-preview-container');
+      const imagePreview = document.getElementById('image-preview');
+      const cancelImageUploadButton = document.getElementById('cancel-image-upload');
+      let selectedFile = null;
+
+      const socket = io();
+
+      socket.on('connect', () => {
+          console.log('Socket.IO: Connected to server with ID:', socket.id);
+          if (chatId) { // Ensure chatId is valid before emitting
+              socket.emit('joinChat', chatId);
+              console.log('Socket.IO: Emitted joinChat for chatId:', chatId);
+          } else {
+              console.error('Socket.IO: chatId is undefined or invalid, cannot join chat room.');
+              alert('Error: Chat ID is missing. Cannot initialize real-time chat.');
+          }
+      });
+
+      socket.on('newMessage', (message) => {
+          console.log('Socket.IO: New message received from server:', message);
+          if (message.chatId === chatId) {
+              // If the message sender is the current user, it was likely already added optimistically.
+              // We only add if it's from the other user to avoid duplicates from optimistic UI.
+              if (message.senderId !== currentUserId) {
+                  console.log('Socket.IO: Displaying message from other user:', message.senderId);
+                  displayMessage(message);
+              } else {
+                  console.log('Socket.IO: Received own message echo. Assuming already displayed optimistically.');
+                  // TODO: Potentially update the optimistically displayed message with the server's confirmed _id and timestamp.
+              }
+          } else {
+              console.log('Socket.IO: Received message for a different chatId, ignoring.');
+          }
+      });
+
+      socket.on('disconnect', (reason) => {
+          console.log('Socket.IO: Disconnected from server. Reason:', reason);
+      });
+      socket.on('connect_error', (error) => {
+          console.error('Socket.IO: Connection error!', error);
+      });
+
+
+      const avatarSVG = (isYou) => {
+          const bgColor = isYou ? 'bg-blue-200' : 'bg-gray-300';
+          const textColor = isYou ? 'text-blue-700' : 'text-gray-600';
+          return `<div class="w-10 h-10 rounded-full ${bgColor} flex items-center justify-center flex-shrink-0 text-sm font-semibold ${textColor}">
+                      ${isYou ? 'Me' : 'U'}
+                  </div>`;
+      };
+
+      function displayMessage(msg) {
+          console.log("Displaying message:", msg);
+          const isSentByCurrentUser = msg.senderId === currentUserId;
+          const messageWrapper = document.createElement('div');
+          messageWrapper.classList.add('flex', 'items-end', 'space-x-2', 'mb-3');
+          if (isSentByCurrentUser) { messageWrapper.classList.add('justify-end'); }
+          
+          const bubble = document.createElement('div');
+          if (isSentByCurrentUser) { bubble.classList.add('bg-blue-500', 'text-white'); }
+          else { bubble.classList.add('bg-gray-200', 'text-gray-700'); }
+          bubble.classList.add('p-3', 'rounded-lg', 'max-w-[75%]', 'shadow-sm');
+          
+          if (msg.messageType === 'image' && msg.imageDataUri) {
+              const img = document.createElement('img'); img.src = msg.imageDataUri; img.alt = msg.messageText || 'Chat image';
+              img.classList.add('max-w-full', 'h-auto', 'rounded-md', 'max-h-60', 'cursor-pointer');
+              img.onload = () => { chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight; }; // Scroll after image loads
+              img.onerror = () => { console.error("Error loading image for message:", msg._id); }
+              img.onclick = () => window.open(msg.imageDataUri, '_blank'); 
+              bubble.appendChild(img);
+              if (msg.messageText) { 
+                  const caption = document.createElement('p'); 
+                  if (isSentByCurrentUser) { caption.classList.add('text-blue-100'); } else { caption.classList.add('text-gray-600'); } 
+                  caption.classList.add('text-xs', 'mt-1'); caption.textContent = msg.messageText; 
+                  bubble.appendChild(caption); 
+              }
+          } else { 
+              const text = document.createElement('p'); 
+              text.classList.add('text-sm', 'whitespace-pre-wrap'); 
+              text.textContent = msg.messageText || ""; // Ensure textContent is at least an empty string
+              bubble.appendChild(text); 
+          }
+          
+          const time = document.createElement('div'); 
+          if (isSentByCurrentUser) { time.classList.add('text-blue-200', 'text-right'); } else { time.classList.add('text-gray-500', 'text-left'); }
+          time.classList.add('text-xs', 'mt-1'); 
+          try { time.textContent = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); } 
+          catch (e) { time.textContent = '--:--'; } 
+          bubble.appendChild(time);
+          
+          if (isSentByCurrentUser) { 
+              messageWrapper.appendChild(bubble); 
+          }
+          else { 
+              messageWrapper.insertAdjacentHTML('afterbegin', avatarSVG(false)); 
+              messageWrapper.appendChild(bubble); 
+          }
+          chatMessagesContainer.appendChild(messageWrapper);
+          
+          if (msg.messageType !== 'image' || !msg.imageDataUri) { // For text or image that failed to get URI, scroll immediately
+               chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+          }
+      }
+
+      async function fetchAndDisplayMessages() {
+          console.log("Fetching initial messages for chatId:", chatId);
+          try {
+              const response = await fetch(`/api/chat/${chatId}/messages`);
+              console.log("Fetch messages - Response status:", response.status);
+              const responseContentType = response.headers.get("content-type");
+              if (!response.ok) {
+                  let errorText = `HTTP error! Status: ${response.status}`;
+                  if(responseContentType && responseContentType.includes("application/json")){
+                      const errJson = await response.json().catch(() => null);
+                      errorText = errJson?.error || errJson?.details || errorText;
+                  } else {
+                      errorText = await response.text().catch(() => errorText);
+                  }
+                  throw new Error(errorText);
+              }
+              const messages = await response.json();
+              if (messages.error) throw new Error(messages.error); // check if server response itself indicates an error object
+              chatMessagesContainer.innerHTML = '';
+              messages.forEach(displayMessage);
+              console.log("Fetched and displayed", messages.length, "messages.");
+          } catch (error) {
+              console.error("Failed to fetch messages:", error);
+              chatMessagesContainer.innerHTML = `<p class="text-center text-red-500 p-4">Could not load messages. ${error.message}</p>`;
+          }
+      }
+
+      async function handleFormSubmit(event) {
+          event.preventDefault();
+          console.log("handleFormSubmit triggered.");
+          const text = messageTextInput.value.trim();
+          let endpoint;
+          let bodyData;
+          let optimisticMessageData;
+
+          if (selectedFile) {
+              console.log("Form submit: Image selected.");
+              endpoint = '/api/chat/messages/image';
+              const formData = new FormData();
+              formData.append('chatImage', selectedFile);
+              formData.append('chatId', chatId);
+              formData.append('senderId', currentUserId);
+              formData.append('receiverId', otherUserId);
+              if (text) formData.append('caption', text);
+              bodyData = formData;
+
+              // Optimistic UI for image
+              const reader = new FileReader();
+              reader.onload = (e) => {
+                  optimisticMessageData = { senderId: currentUserId, messageType: 'image', imageDataUri: e.target.result, messageText: text, timestamp: new Date().toISOString() };
+                  displayMessage(optimisticMessageData);
+              };
+              reader.readAsDataURL(selectedFile);
+              
+          } else if (text) {
+              console.log("Form submit: Text message:", text);
+              endpoint = '/api/chat/messages';
+              bodyData = JSON.stringify({ chatId, senderId: currentUserId, receiverId: otherUserId, messageText: text });
+              
+              // Optimistic UI for text
+              optimisticMessageData = { senderId: currentUserId, messageType: 'text', messageText: text, timestamp: new Date().toISOString() };
+              displayMessage(optimisticMessageData);
+
+          } else {
+              console.log("Form submit: No text or file. Aborting.");
+              return; // Nothing to send
+          }
+          
+          // Clear inputs after setting up optimistic display or after preparing data
+          messageTextInput.value = '';
+          if (selectedFile) resetImagePreview();
+
+
+          try {
+              console.log(`Attempting POST to ${endpoint}. Body preview (if JSON):`, (typeof bodyData === 'string' ? bodyData.substring(0,100) : 'FormData'));
+              const response = await fetch(endpoint, {
+                  method: 'POST',
+                  headers: selectedFile ? {} : { 'Content-Type': 'application/json' }, // No Content-Type for FormData
+                  body: bodyData
+              });
+
+              console.log(`Response from ${endpoint} - Status: ${response.status}`);
+              const responseContentType = response.headers.get("content-type");
+
+              if (!response.ok) {
+                  let errorPayload = { error: `HTTP error! Status: ${response.status}` };
+                  if (responseContentType && responseContentType.includes("application/json")) {
+                      errorPayload = await response.json().catch(() => ({error: "Failed to parse JSON error response"}));
+                  } else {
+                      const errorText = await response.text().catch(() => "Could not read error response text");
+                      console.error(`Non-JSON error response from server (${endpoint}):`, errorText.substring(0, 500));
+                      errorPayload.error = `Server error: ${response.status}. Response not JSON. Preview: ${errorText.substring(0,100)}...`;
+                  }
+                  throw new Error(errorPayload.error || `Unknown error from server, status ${response.status}`);
+              }
+
+              const savedMessage = await response.json();
+              console.log(`Message successfully POSTed to ${endpoint}, server will emit via Socket.IO:`, savedMessage);
+              // The optimistic display is already there.
+              // The Socket.IO 'newMessage' listener will also receive this if the server emits it to the sender's room.
+              // We have a check in the 'newMessage' listener to not re-display if senderId === currentUserId.
+          } catch (error) {
+              console.error(`Failed to POST to ${endpoint} (client-side catch):`, error);
+              alert(`Error sending message: ${error.message}`);
+              // Consider reverting optimistic UI or restoring input text here if needed.
+              // For example, by removing the optimistically added message if it had a temporary ID.
+          }
+      }
+
+      function resetImagePreview() {
+          selectedFile = null; imageUploadInput.value = ''; // Clear file input
+          imagePreviewContainer.classList.add('hidden'); imagePreview.src = '#';
+      }
+
+      openImageUploadButton.addEventListener('click', () => imageUploadInput.click());
+      imageUploadInput.addEventListener('change', (event) => {
+          const file = event.target.files[0];
+          if (file) { 
+              selectedFile = file; 
+              const reader = new FileReader(); 
+              reader.onload = (e) => { 
+                  imagePreview.src = e.target.result; 
+                  imagePreviewContainer.classList.remove('hidden');
+              } 
+              reader.readAsDataURL(file); 
+          }
+          else { resetImagePreview(); }
+      });
+      cancelImageUploadButton.addEventListener('click', resetImagePreview);
+      messageForm.addEventListener('submit', handleFormSubmit);
+
+      // Initial load of messages when page is ready
+      document.addEventListener('DOMContentLoaded', () => {
+          if (chatId && currentUserId && otherUserId) { // Ensure critical variables are present
+              fetchAndDisplayMessages();
+          } else {
+              console.error("Critical chat variables missing on page load. Chat will not function correctly.", {chatId, currentUserId, otherUserId});
+              alert("Error: Essential chat information is missing. Please try re-entering the chat.");
+              chatMessagesContainer.innerHTML = `<p class="text-center text-red-500 p-4">Chat cannot be initialized. Missing critical data.</p>`;
+          }
+      });
+    </script>
+  </body>
 </html>

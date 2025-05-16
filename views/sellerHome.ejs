@@ -1,58 +1,94 @@
 <%- include('templates/header') %>
 
-    <h1>SELLER HOME PAGE</h1>
-    <button id="signout" class="btn btn-sm btn-outline-secondary">Sign out</button>
-    <script>
-        document.getElementById("signout")
-            .addEventListener("click", () => {
-                window.location.href = "/logout"
-        });
-    </script>
+<div class="flex flex-col min-h-screen bg-gray-50">
+  <!-- HEADER -->
+  <header class="flex-none p-4 bg-white shadow">
+    <div class="flex items-center justify-between">
+      <h1 class="text-lg font-semibold">SELLER HOME PAGE</h1>
+      <button
+        id="signout"
+        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
+      >
+        Sign out
+      </button>
+    </div>
+  </header>
+
+  <script>
+    // sign out
+    document.getElementById("signout")
+      .addEventListener("click", () => window.location.href = "/logout");
+
+    // geolocation → city
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(async ({ coords }) => {
+        const { latitude, longitude } = coords;
+        const res = await fetch(
+          `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=<%= mapboxToken %>`
+        );
+        const json = await res.json();
+        const place = json.features.find(f => f.place_type.includes('place'));
+        document.getElementById('city').textContent = place?.text || 'Unknown';
+      }, () => {
+        document.getElementById('city').textContent = 'Permission denied';
+      });
+    } else {
+      document.getElementById('city').textContent = 'Geolocation not supported';
+    }
+  </script>
+
+  <!-- MAIN -->
+  <main class="flex-1 overflow-auto px-4 py-6">
+    <p class="mb-4">
+      Your city:
+      <span id="city" class="font-medium">Detecting…</span>
+    </p>
 
     <%- include('templates/navbar_seller') %>
 
-    <div class="container mt-4">
-      <h2>Your Postings</h2>
+    <section class="mt-8">
+      <h2 class="text-2xl font-semibold mb-4">All Available Postings</h2>
 
       <% if (postings.length === 0) { %>
-        <p>You have not created any postings yet.</p>
+        <p class="text-gray-600">There are currently no postings yet.</p>
       <% } else { %>
-        <% postings.forEach(p => { %>
-          <div class="card mb-3" style="max-width: 540px;">
-            <div class="row no-gutters">
-              <div class="col-md-4">
-                <!-- Print thumbnail image -->
-                <img 
-                  src="<%= p.thumbSrc %>" 
-                  class="card-img" 
+        <div class="grid grid-cols-2 gap-6">
+          <% postings.forEach(p => { %>
+            <!-- card wrapper -->
+            <div class="bg-white shadow-lg rounded-lg overflow-hidden flex flex-col h-full">
+
+              <!-- thumbnail -->
+              <div class="w-full aspect-square bg-gray-100 overflow-hidden">
+                <img
+                  src="<%= p.thumbSrc %>"
                   alt="Thumbnail of <%= p.produce %>"
+                  class="w-full h-full object-cover object-center"
                 >
               </div>
-              <div class="col-md-8">
-                <div class="card-body">
-                  <h5 class="card-title"><%= p.produce %></h5>
-                  <p class="card-text">
-                    Quantity: <%= p.quantity %><br>
-                    Price: <%= p.price %>
-                  </p>
-                  <p class="card-text"><small class="text-muted">
-                    Posted on <%= p.createdAt.toLocaleString() %>
-                  </small></p>
-                  <p class="card-text"><%= p.description %></p>
-                  <!-- Original image -->
-                  <a 
-                    href="<%= p.imageSrc %>" 
-                    target="_blank" 
-                    class="btn btn-sm btn-outline-primary"
-                  >
-                    View Full Image
-                  </a>
-                </div>
+
+              <!-- product name centered -->
+              <div class="flex-1 flex flex-col justify-center items-center p-4">
+                <h3 class="text-xl font-medium truncate"><%= p.produce %></h3>
+              </div>
+
+              <!-- edit button -->
+              <!-- href: From the client’s (browser’s) perspective, it changes the URL and 
+                   at the same time issues a GET request to the server for that URL. 
+                   Which in this case, calls the route of app.get("/post/:id/edit"-->
+              <div class="px-4 pb-4">
+                <a
+                  href="/post/<%= p.id %>/edit"
+                  class="block w-full text-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
+                >
+                  Edit
+                </a>
               </div>
             </div>
-          </div>
-        <% }) %>
+          <% }) %>
+        </div>
       <% } %>
-    </div>
+    </section>
+  </main>
 
-<%- include('templates/footer') %>
+  <%- include('templates/footer') %>
+</div>
