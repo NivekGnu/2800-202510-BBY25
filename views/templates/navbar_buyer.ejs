@@ -1,65 +1,59 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-</head>
-<body class="mb-24">
-  <div class="h-20 w-auto bg-gray-300 fixed bottom-0 left-0 right-0 flex flex-row justify-between">
-    <div class="w-24 h-24 flex justify-center items-center">
-      <a href="#map" class="group flex flex-col items-center">
+<!-- Navbar box -->
+
+<div class="fixed bottom-4 left-1/2 transform -translate-x-1/2 
+              flex justify-around items-center 
+              w-[90%] max-w-md px-4 py-2 
+              bg-white/60 backdrop-blur-md 
+              rounded-2xl shadow-lg border border-gray-200 z-50">
+
+    <!-- Map -->
+    <a href="/map" class="group flex flex-col items-center">
       <img src="/img/map.svg" alt="Map Icon"
-                 class="h-8 w-8 transition
-               fill-green-800 /* Or text-green-800 if font icon */
-               group-hover:brightness-10
-               group-hover:invert
-               group-hover:sepia
-               group-hover:saturate-[400%]
-               group-hover:contrast-100
-               group-hover:hue-rotate-[95deg]">
-     
-        <span class="text-sm mt-1 text-gray-900 group-hover:text-green-500 transition">Map</span>
-      </a>
-    </div>
-    <div class="w-24 h-24 flex justify-center items-center">
-      <a href="#cart" class="group flex flex-col items-center">
-        <img src="/img/cart.svg" alt="Cart Icon"
-             class="h-8 w-8 transition 
-                    group-hover:brightness-0 
-                    group-hover:invert 
-                    group-hover:sepia 
-                    group-hover:saturate-200 
-                    group-hover:hue-rotate-75" />
-        <span class="text-sm mt-1 text-gray-900 group-hover:text-green-500 transition">Cart</span>
-      </a>
-    </div>
-    <div class="w-24 h-24 flex justify-center items-center">
-      <a href="#chat" class="group flex flex-col items-center">
-        <img src="/img/chat-bubble-empty.svg" alt="Chat Icon"
-             class="h-8 w-8 transition 
-                    group-hover:brightness-0 
-                    group-hover:invert 
-                    group-hover:sepia 
-                    group-hover:saturate-200 
-                    group-hover:hue-rotate-75" />
-        <span class="text-sm mt-1 text-gray-900 group-hover:text-green-500 transition">Chat</span>
-      </a>
-    </div>
-    <div class="w-24 h-24 flex justify-center items-center">
-      <a href="#profile" class="group flex flex-col items-center">
-        <img src="/img/profile-circle.svg" alt="Profile Icon"
-             class="h-8 w-8 transition 
-                    group-hover:brightness-0 
-                    group-hover:invert 
-                    group-hover:sepia 
-                    group-hover:saturate-200 
-                    group-hover:hue-rotate-75" />
-        <span class="text-sm mt-1 text-gray-900 group-hover:text-green-500 transition">Profile</span>
-      </a>
-    </div>
+           class="h-6 w-6 transition 
+                  group-hover:brightness-10 
+                  group-hover:invert 
+                  group-hover:sepia 
+                  group-hover:saturate-[400%] 
+                  group-hover:contrast-100 
+                  group-hover:hue-rotate-[95deg]" />
+      <span class="text-xs mt-1 text-gray-900 group-hover:text-green-500 transition">Map</span>
+    </a>
+
+    <!-- Cart -->
+    <a href="#cart" class="group flex flex-col items-center">
+      <img src="/img/cart.svg" alt="Cart Icon"
+           class="h-6 w-6 transition 
+                  group-hover:brightness-0 
+                  group-hover:invert 
+                  group-hover:sepia 
+                  group-hover:saturate-200 
+                  group-hover:hue-rotate-75" />
+      <span class="text-xs mt-1 text-gray-900 group-hover:text-green-500 transition">Cart</span>
+    </a>
+
+    <!-- Chat -->
+    <a href="#chat" class="group flex flex-col items-center">
+      <img src="/img/chat-bubble-empty.svg" alt="Chat Icon"
+           class="h-6 w-6 transition 
+                  group-hover:brightness-0 
+                  group-hover:invert 
+                  group-hover:sepia 
+                  group-hover:saturate-200 
+                  group-hover:hue-rotate-75" />
+      <span class="text-xs mt-1 text-gray-900 group-hover:text-green-500 transition">Chat</span>
+    </a>
+
+    <!-- Profile -->
+    <a href="#profile" class="group flex flex-col items-center">
+      <img src="/img/profile-circle.svg" alt="Profile Icon"
+           class="h-6 w-6 transition 
+                  group-hover:brightness-0 
+                  group-hover:invert 
+                  group-hover:sepia 
+                  group-hover:saturate-200 
+                  group-hover:hue-rotate-75" />
+      <span class="text-xs mt-1 text-gray-900 group-hover:text-green-500 transition">Profile</span>
+    </a>
 
   </div>
-</body>
-</html>
+  

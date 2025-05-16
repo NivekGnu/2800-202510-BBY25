@@ -21,7 +21,14 @@ const io = new Server(server, {
   },
 });
 
-const expireTime = 1 * 60 * 60 * 1000; // 1 hour
+// Google Gemini API
+const { GoogleGenerativeAI  } = require('@google/generative-ai');
+
+// Set up the time of the duration of the session.
+// This code means that session expires after 1 hour.
+const expireTime = 1 * 60 * 60 * 1000;
+
+// process.env. lets to access .env file so that it can fetch value(cf. .env).
 const port = process.env.PORT || 3000;
 
 const mongodb_host = process.env.MONGODB_HOST;
@@ -30,6 +37,9 @@ const mongodb_password = process.env.MONGODB_PASSWORD;
 const mongodb_db = process.env.MONGODB_DB;
 const mongodb_session_secret = process.env.MONGODB_SESSION_SECRET;
 const node_session_secret = process.env.NODE_SESSION_SECRET;
+const google_gemini = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const geminiModel = google_gemini.getGenerativeModel({ model: "gemini-2.0-flash" });
+/* END secret section */
 
 var { database } = require("./databaseConnection"); // Assuming this file exports a connected MongoDB client
 
@@ -71,7 +81,9 @@ io.use((socket, next) => {
 
 // Express middleware
 app.use(express.urlencoded({ extended: false }));
-app.use(express.json()); // For parsing application/json
+// Middleware for parsing JSON data in the request body.
+app.use(express.json());
+// Allows for images, CSS, JS file to be included inyour website.
 app.use(express.static(__dirname + "/public"));
 app.set("view engine", "ejs");
 
@@ -136,6 +148,24 @@ app.get('/', async (req, res) => {
     }
   } else {
     res.render("landing", { title: "Landing" });
+  }
+});
+
+// For Gemini Calls
+// Gemini API route
+app.post('/api/gemini', async (req, res) => {
+    try {    
+    const prompt = req.body.prompt;
+    if (!prompt) return res.status(400).json({ error: 'Missing prompt' });
+
+    const result = await geminiModel.generateContent(prompt);
+    const response = await result.response; 
+    const text = response.text();           
+
+    return res.json({ text });   
+  } catch (err) {
+    console.error("Gemini error:", err);
+    res.status(500).json({ error: 'Gemini API call failed.' });
   }
 });
 
@@ -237,6 +267,7 @@ app.post("/signupSubmit", async (req, res) => {
     };
 
     const result = await userCollection.insertOne(newUser);
+    
     req.session.authenticated = true;
     req.session.firstName = firstName;
     req.session.lastName = lastName;

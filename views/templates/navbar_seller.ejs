@@ -1,50 +1,42 @@
-<!-- templates/navbar_seller.ejs -->
+<!-- Navbar box -->
 
-<!-- Include TailwindCSS (assuming it’s not already loaded in header) -->
-<script src="https://cdn.tailwindcss.com"></script>
+<div class="fixed bottom-4 left-1/2 transform -translate-x-1/2 
+              flex justify-around items-center 
+              w-[90%] max-w-md px-4 py-2 
+              bg-white/60 backdrop-blur-md 
+              rounded-2xl shadow-lg border border-gray-200">
 
-<body class="mb-24"> <!-- Add bottom margin equal to navbar height to prevent overlap -->
-
-  <!-- Fixed bottom navbar -->
-  <div
-    class="h-20 w-full bg-gray-300 fixed bottom-0 left-0 right-0
-           flex justify-around items-center"
-  >
-    <!-- Add Listing Button -->
-    <a href="/createPost" class="group flex flex-col items-center">
-      <img
-        src="/img/plus-circle.svg"
-        alt="Add Listing Icon"
-        class="h-8 w-8 transition group-hover:brightness-0 group-hover:invert"
-      />
-      <span class="text-sm mt-1 text-gray-900 group-hover:text-green-500 transition">
-        Add
-      </span>
+    <!-- Create Listing -->
+    <a href="#cart" class="group flex flex-col items-center">
+        <img src="/img/plus-circle.svg" alt="Cart Icon" class="h-6 w-6 transition 
+                  group-hover:brightness-0 
+                  group-hover:invert 
+                  group-hover:sepia 
+                  group-hover:saturate-200 
+                  group-hover:hue-rotate-75" />
+        <span class="text-xs mt-1 text-gray-900 group-hover:text-green-500 transition">Cart</span>
     </a>
 
-    <!-- Chat Button -->
-    <a href="/chat" class="group flex flex-col items-center">
-      <img
-        src="/img/chat-bubble-empty.svg"
-        alt="Chat Icon"
-        class="h-8 w-8 transition group-hover:brightness-0 group-hover:invert"
-      />
-      <span class="text-sm mt-1 text-gray-900 group-hover:text-green-500 transition">
-        Chat
-      </span>
+    <!-- Chat -->
+    <a href="#chat" class="group flex flex-col items-center">
+        <img src="/img/chat-bubble-empty.svg" alt="Chat Icon" class="h-6 w-6 transition 
+                  group-hover:brightness-0 
+                  group-hover:invert 
+                  group-hover:sepia 
+                  group-hover:saturate-200 
+                  group-hover:hue-rotate-75" />
+        <span class="text-xs mt-1 text-gray-900 group-hover:text-green-500 transition">Chat</span>
     </a>
 
-    <!-- Profile Button -->
-    <a href="/profile" class="group flex flex-col items-center">
-      <img
-        src="/img/profile-circle.svg"
-        alt="Profile Icon"
-        class="h-8 w-8 transition group-hover:brightness-0 group-hover:invert"
-      />
-      <span class="text-sm mt-1 text-gray-900 group-hover:text-green-500 transition">
-        Profile
-      </span>
+    <!-- Profile -->
+    <a href="#profile" class="group flex flex-col items-center">
+        <img src="/img/profile-circle.svg" alt="Profile Icon" class="h-6 w-6 transition 
+                  group-hover:brightness-0 
+                  group-hover:invert 
+                  group-hover:sepia 
+                  group-hover:saturate-200 
+                  group-hover:hue-rotate-75" />
+        <span class="text-xs mt-1 text-gray-900 group-hover:text-green-500 transition">Profile</span>
     </a>
-  </div>
 
-</body>
+</div>
