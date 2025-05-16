@@ -1,22 +1,26 @@
 <%- include('templates/header') %>
 
-    <button id="ai-button">Press me!</button>
+    <button id="ai-helper-button"
+        class="fixed bottom-6 right-6 z-50 bg-green-500 hover:bg-green-700 text-white p-3 rounded-full ">
+        <img src="/img/glow-icon.svg" alt="AI Helper Icon" class="w-10 h-10">
+    </button>
 
-    <div id="ai-modal" class="relative z-10" aria-labelledby="modal-title" role="dialog" aria-modal="true"
-        hidden="true">
+    <div id="ai-modal" class="relative z-10 opacity-0 pointer-events-none transition-opacity duration-300 ease-out"
+        aria-labelledby="modal-title" role="dialog" aria-modal="true">
         <div class="fixed inset-0 bg-gray-500/75 transition-opacity" aria-hidden="true"></div>
 
         <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
-            <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+            <div class="flex min-h-screen items-center justify-center p-4 text-center">
                 <div
                     class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
                     <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                         <div class="sm:flex sm:items-start">
 
                             <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-                                <h3 class="text-base font-semibold text-gray-900">AI helper</h3>
+                                <h3 class="text-base font-semibold text-gray-900">What are some produce in season right
+                                    now?</h3>
 
-                                <div class="mt-2">
+                                <div class="mt-2 max-h-60 overflow-y-auto">
                                     <p id="output" class="text-sm text-gray-500"></p>
                                 </div>
 
@@ -32,79 +36,7 @@
         </div>
     </div>
 
-    <script>
-        document.getElementById('ai-button').addEventListener('click', geminiCall);
-        document.getElementById('close-modal').addEventListener('click', () => {
-            const modal = document.getElementById('ai-modal');
-            modal.setAttribute('hidden', 'true');
-        });
-
-        function animateLoadingDots(elementId, baseText = "Generating response") {
-            const newText = document.getElementById(elementId);
-            let dots = 0;
-            const dotCycle = setInterval(() => {
-                dots = (dots + 1) % 4; // cycles between number of dots
-                newText.innerText = baseText + ".".repeat(dots);
-            }, 500); // update every 500ms
-            return dotCycle;
-        }
-
-        async function printLineEffect(elementId, text, delay = 500) {
-            const container = document.getElementById(elementId);
-            container.innerHTML = ""; // Clear previous content
-
-            const lines = text.split('\n');
-
-            for (let line of lines) {
-                const p = document.createElement("p");
-                p.textContent = line;
-                p.style.opacity = 0;
-                p.style.transition = "opacity 0.5s ease";
-
-                container.appendChild(p);
-
-                // Trigger fade-in after a tiny pause
-                requestAnimationFrame(() => {
-                    p.style.opacity = 1;
-                });
-
-                await new Promise(resolve => setTimeout(resolve, delay));
-            }
-        }
-
-        async function geminiCall() {
-            // Clear old response
-            document.getElementById('output').value = ''
-            // Start running loading animation
-            const loadingDots = animateLoadingDots("output");
-
-            try {
-                const modal = document.getElementById('ai-modal');
-                const output = document.getElementById('modal-title');
-
-                // Show the modal
-                modal.removeAttribute('hidden');
-
-                const res = await fetch('/api/gemini', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ prompt: "What produce is in season?" })
-                });
-
-                const data = await res.json();
-                console.log(data);
-
-                clearInterval(loadingDots); // Stop the loading animation
-                await printLineEffect("output", data.text || "No response");
-
-            } catch (error) {
-                console.error('Error:', error);
-                document.getElementById('output').innerText = 'Error contacting Gemini API';
-            }
-        }
-    </script>
+    <script src="\scripts\gemini_scripts.js"></script>
 
     <!-- <head>
     <script
