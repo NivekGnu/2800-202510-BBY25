@@ -508,10 +508,9 @@ app.post('/api/gemini', async (req, res) => {
     const prompt = req.body.prompt;
     if (!prompt) return res.status(400).json({ error: 'Missing prompt' });
 
-    const response = await google_gemini.models.generateContent({ model: 'gemini-2.0-flash', contents: prompt });
+    const result = await google_gemini.models.generateContent({ model: 'gemini-1.5-flash', contents: prompt });
 
-    console.log("Gemini response:", response.text);
-    return res.json({ output: response.text });
+    return res.json(result.text); // get res.text and send as JSON object
   } catch (err) {
     console.error("Gemini error:", err);
     res.status(500).json({ error: 'Gemini API call failed.' });
