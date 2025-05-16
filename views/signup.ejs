@@ -1,72 +1,100 @@
 <%- include("templates/header") %>
-<link rel="stylesheet" href="/css/signup.css" /> 
 
-<!-- signup form container -->
-<div class="signup-container">
+  <div class="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+    <div class="w-full max-w-lg bg-white p-8 rounded-2xl shadow-lg">
+      <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">
+        Create an Account
+      </h1>
 
-  <h1 class="signup-title">Create an Account</h1>
+      <form id="signupForm" action="/signupSubmit" method="POST" novalidate class="space-y-5">
+        <!-- Name Row -->
+        <div class="space-y-4">
+          <input id="firstName" name="firstName" type="text" placeholder="First Name" required
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition" />
+          <input id="lastName" name="lastName" type="text" placeholder="Last Name" required
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition" />
+        </div>
 
-  <form id="signupForm" class="signup-form" method="POST" action="/signupSubmit" novalidate>
-    <div class="name-row">
-      <input type="text" name="firstName" placeholder="First Name" required />
-      <input type="text" name="lastName"  placeholder="Last Name"  required />
+        <!-- Email -->
+        <div>
+          <label for="email" class="sr-only">Email</label>
+          <input id="email" name="email" type="email" placeholder="Email" required
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition" />
+        </div>
+
+        <!-- Password -->
+        <div>
+          <label for="password" class="sr-only">Password</label>
+          <input id="password" name="password" type="password" placeholder="Password" required
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition" />
+        </div>
+
+        <!-- Terms Checkbox -->
+        <div class="flex items-center ml-1">
+          <input id="termsCheckbox" name="terms" type="checkbox" required
+            class="h-4 w-4 text-green-500 focus:ring-green-400 border-gray-300 rounded transition" />
+          <label for="termsCheckbox" class="ml-2 text-sm text-gray-600">
+            I agree to the Terms and Conditions
+          </label>
+        </div>
+
+        <!-- Role Toggle -->
+        <div class="space-y-2">
+          <!-- Hidden radios -->
+          <input id="roleBuyer" name="role" type="radio" value="buyer" required hidden />
+          <input id="roleSeller" name="role" type="radio" value="seller" hidden />
+
+          <div class="flex space-x-4">
+            <button type="button"
+              class="role-btn flex-1 px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-700 hover:bg-gray-50 focus:outline-none transition"
+              data-target="roleBuyer">
+              Buyer
+            </button>
+            <button type="button"
+              class="role-btn flex-1 px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-700 hover:bg-gray-50 focus:outline-none transition"
+              data-target="roleSeller">
+              Seller
+            </button>
+          </div>
+        </div>
+
+        <!-- Submit -->
+        <button id="signupBtn" type="submit" disabled
+          class="w-full py-2 mt-4 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 transition disabled:opacity-50 disabled:cursor-not-allowed">
+          Sign Up
+        </button>
+      </form>
     </div>
+  </div>
 
-    <input type="email"    name="email"    placeholder="Email"    required />
-    <input type="password" name="password" placeholder="Password" required />
+  <script>
+    const form = document.getElementById('signupForm');
+    const submitBtn = document.getElementById('signupBtn');
+    const roleButtons = document.querySelectorAll('.role-btn');
 
-    <label class="signup-checkbox">
-      <input type="checkbox" name="terms" required />
-      I agree to the Terms and Conditions
-    </label>
+    // Toggle button styles and radio checks
+    roleButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        roleButtons.forEach(b => {
+          b.classList.remove('bg-green-50', 'border-green-500', 'text-green-500');
+          b.classList.add('bg-white', 'border-gray-300', 'text-gray-700');
+        });
+        btn.classList.add('bg-green-50', 'border-green-500', 'text-green-500');
+        btn.classList.remove('bg-white', 'border-gray-300', 'text-gray-700');
 
-    <div class="role-toggle">
-      <!-- map buttons to hidden radio, which will enforce required -->
-      <input id="role-buyer"  type="radio" name="role" value="buyer"  required hidden>
-      <input id="role-seller" type="radio" name="role" value="seller"         hidden>
-
-      <button type="button" class="role-btn" data-target="role-buyer">Buyer</button>
-      <button type="button" class="role-btn" data-target="role-seller">Seller</button>
-    </div>
-
-    <!-- disable signup button until fields valid -->
-    <button id="signupBtn" type="submit" class="signup-btn" disabled>Sign Up</button>
-  </form>
-</div>
-
-<script>
-  document.querySelectorAll('.role-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      
-      // remove/reset the highlight from both buttons
-      document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
-
-      // only highlight the button that is clicked
-      // role-btn becomes role-btn.active
-      btn.classList.add('active');
-
-      /* check the matching radio */
-      const selectedRadio = btn.dataset.target;
-      document.getElementById(selectedRadio).checked = true;
-
-      /* check if form valid */
-      validateForm();
+        document.getElementById(btn.dataset.target).checked = true;
+        validateForm();
+      });
     });
-  });
-  
-  /* ==== enable submit when form valid ==== */
-  const form      = document.getElementById('signupForm');
-  const submitBtn = document.getElementById('signupBtn');
-  
-  // if form is invalid (false) then button disabled will be true
-  function validateForm() {
-    submitBtn.disabled = !form.checkValidity();
-  }
-  
-  /* run on every change */
-  form.addEventListener('input',  validateForm);
-  form.addEventListener('change', validateForm);
-  validateForm();            // initial state
-</script>
 
-<%- include("templates/footer") %>
+    // Enable submit when form is valid
+    function validateForm() {
+      submitBtn.disabled = !form.checkValidity();
+    }
+
+    form.addEventListener('input', validateForm);
+    form.addEventListener('change', validateForm);
+    validateForm();
+  </script>
+
+  <%- include("templates/footer") %>
