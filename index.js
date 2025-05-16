@@ -160,30 +160,11 @@ app.get('/', async (req, res) => {
         thumbSrc: `data:${doc.thumbnail.contentType};base64,${doc.thumbnail.data.toString('base64')}`,
       }));
 
-<<<<<<< HEAD
-            res.render("buyerHome", { 
-                title: "Buyer Home Page", 
-                mapboxToken: process.env.MAPBOX_API_TOKEN, 
-                postings: postings 
-            });
-
-            app.get("/cart", (req, res) => {
-                if (!req.session.authenticated || req.session.role !== "buyer") {
-                    return res.redirect("/login");
-                }
-                res.render("cart", { title: "Your Cart" });
-            });
-        } else {
-            // Should not happen if role is always set, but as a fallback:
-            res.redirect("/login");
-        }
-=======
       res.render("buyerHome", {
         title: "Buyer Home Page",
         mapboxToken: process.env.MAPBOX_API_TOKEN,
         postings: postings
       });
->>>>>>> 5b4da343b0512a59c91dfb2e7557e415dff18cea
     } else {
       // Should not happen if role is always set, but as a fallback:
       res.redirect("/login");
