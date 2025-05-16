@@ -104,9 +104,8 @@ app.get('/', async (req, res) => {
 
             res.render("sellerHome", {
                 title: 'My Postings',
-                postings: postings
-                // mapboxToken could be added here if sellerHome.ejs uses a map
-                // mapboxToken: process.env.MAPBOX_API_TOKEN
+                postings: postings,
+                mapboxToken: process.env.MAPBOX_API_TOKEN
             });
         } else if (req.session.role === 'buyer') {
             const docs = await postingCollection

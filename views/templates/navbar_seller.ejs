@@ -1,14 +1,50 @@
-<div class="bottom-navbar">
-    <a href="#addListing">
-        <img src="/img/plus-circle.svg" alt="Sell Icon" class="icon">
-        <br>Add
+<!-- templates/navbar_seller.ejs -->
+
+<!-- Include TailwindCSS (assuming it’s not already loaded in header) -->
+<script src="https://cdn.tailwindcss.com"></script>
+
+<body class="mb-24"> <!-- Add bottom margin equal to navbar height to prevent overlap -->
+
+  <!-- Fixed bottom navbar -->
+  <div
+    class="h-20 w-full bg-gray-300 fixed bottom-0 left-0 right-0
+           flex justify-around items-center"
+  >
+    <!-- Add Listing Button -->
+    <a href="/createPost" class="group flex flex-col items-center">
+      <img
+        src="/img/plus-circle.svg"
+        alt="Add Listing Icon"
+        class="h-8 w-8 transition group-hover:brightness-0 group-hover:invert"
+      />
+      <span class="text-sm mt-1 text-gray-900 group-hover:text-green-500 transition">
+        Add
+      </span>
     </a>
-    <a href="#chat">
-        <img src="/img/chat-bubble-empty.svg" alt="Chat Icon" class="icon">
-        <br>Chat
+
+    <!-- Chat Button -->
+    <a href="/chat" class="group flex flex-col items-center">
+      <img
+        src="/img/chat-bubble-empty.svg"
+        alt="Chat Icon"
+        class="h-8 w-8 transition group-hover:brightness-0 group-hover:invert"
+      />
+      <span class="text-sm mt-1 text-gray-900 group-hover:text-green-500 transition">
+        Chat
+      </span>
     </a>
-    <a href="#profile">
-        <img src="/img/profile-circle.svg" alt="Profile Icon" class="icon">
-        <br></bar>Profile
+
+    <!-- Profile Button -->
+    <a href="/profile" class="group flex flex-col items-center">
+      <img
+        src="/img/profile-circle.svg"
+        alt="Profile Icon"
+        class="h-8 w-8 transition group-hover:brightness-0 group-hover:invert"
+      />
+      <span class="text-sm mt-1 text-gray-900 group-hover:text-green-500 transition">
+        Profile
+      </span>
     </a>
-</div>
+  </div>
+
+</body>
