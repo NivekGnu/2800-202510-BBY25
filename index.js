@@ -22,7 +22,7 @@ const io = new Server(server, {
 });
 
 // Google Gemini API
-const { GoogleGenerativeAI  } = require('@google/generative-ai');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 // Set up the time of the duration of the session.
 // This code means that session expires after 1 hour.
@@ -154,15 +154,15 @@ app.get('/', async (req, res) => {
 // For Gemini Calls
 // Gemini API route
 app.post('/api/gemini', async (req, res) => {
-    try {    
+  try {
     const prompt = req.body.prompt;
     if (!prompt) return res.status(400).json({ error: 'Missing prompt' });
 
     const result = await geminiModel.generateContent(prompt);
-    const response = await result.response; 
-    const text = response.text();           
+    const response = await result.response;
+    const text = response.text();
 
-    return res.json({ text });   
+    return res.json({ text });
   } catch (err) {
     console.error("Gemini error:", err);
     res.status(500).json({ error: 'Gemini API call failed.' });
@@ -235,16 +235,19 @@ app.post("/signupSubmit", async (req, res) => {
     firstName: Joi.string().alphanum().min(1).max(50).required(),
     lastName: Joi.string().alphanum().min(1).max(50).required(),
     email: Joi.string().email().required(),
-    password: Joi.string().min(6).max(100).required(), // Min 6 char password
+    password: Joi.string().min(6).max(100).required(), 
     role: Joi.string().valid("buyer", "seller").required(),
   });
 
-  const validationResult = schema.validate(req.body);
-  if (validationResult.error) {
-    return res.status(400).send(
-      validationResult.error.details[0].message +
-      ' <a href="/signup">Try again</a>'
-    );
+  const { error } = schema.validate(
+    { firstName, lastName, email, password, role },
+    { abortEarly: false }
+  );
+
+  if (error) {
+    return res
+      .status(400)
+      .send(`${error.details[0].message} <a href="/signup">Try again</a>`);
   }
 
   try {
@@ -267,7 +270,7 @@ app.post("/signupSubmit", async (req, res) => {
     };
 
     const result = await userCollection.insertOne(newUser);
-    
+
     req.session.authenticated = true;
     req.session.firstName = firstName;
     req.session.lastName = lastName;
