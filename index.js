@@ -10,6 +10,9 @@ const Joi = require("joi");
 const { ObjectId } = require("mongodb");
 const http = require("http"); // Required for Socket.IO
 const { Server } = require("socket.io"); // Required for Socket.IO
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY); // required for Stripe
+const local_domain = 'http://localhost:3000'; // needed for Stripe redirect, later change to live site //TODO
+
 
 const saltRounds = 12;
 const app = express();
@@ -77,6 +80,26 @@ app.use(sessionMiddleware);
 // Share session middleware with Socket.IO
 io.use((socket, next) => {
   sessionMiddleware(socket.request, {}, next);
+});
+
+// endpoint for Stripe ---- MUST BE PLACED BEFORE EXPRESS.JSON()... REQUIRES RAW REQUEST BODY ---- 
+app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+    let event = stripe.webhooks.constructEvent(
+        req.body, req.headers['stripe-signature'], process.env.STRIPE_WEBHOOK_SECRET
+    );
+    if (event.type === 'checkout.session.completed') {
+        const session = event.data.object;
+        // Record the transaction
+        await database.db(mongodb_db).collection('transactions').insertOne({
+            buyerId: new ObjectId(session.metadata.buyerId),
+            sellerId: new ObjectId(session.metadata.sellerId),
+            transactionId: session.payment_intent,
+            amount: session.amount_total / 100,
+            currency: session.currency,
+            createdAt: new Date(session.created * 1000), // JS expects MS so multiply by 1000
+        });
+    }
+    res.sendStatus(200);
 });
 
 // Express middleware
@@ -280,8 +303,22 @@ app.post("/signupSubmit", async (req, res) => {
     // req.session.cookie.maxAge = expireTime; // Already set globally
 
     console.log("Signup successful for:", email);
+
     if (role === "seller") {
-      return res.redirect("/languages");
+        const account = await stripe.accounts.create({
+            type: 'express',
+            email,
+            business_type: 'individual',
+            capabilities: {transfers: { requested: true }}
+        });
+
+        // Save Stripe account ID in mongoDB
+        await userCollection.updateOne(
+            { _id: new ObjectId(req.session.userId) },
+            { $set: { stripeAccountId: account.id } }
+        );
+
+        return res.redirect("/languages");
     }
     return res.redirect("/");
   } catch (error) {
@@ -681,6 +718,54 @@ app.post("/api/chat/messages/image", upload.single("chatImage"), async (req, res
   }
 });
 
+// cart route
+app.get('/cart', (req,res) => {
+    if (req.session.authenticated && req.session.role === 'buyer') {
+        return res.render("cart", { title: "Cart"});
+    } else {
+        res.redirect("/");
+    }
+});
+
+//checkout route
+app.post('/checkout', async (req, res) => {
+    const { sellerId, cartItems } = req.body;
+
+    // get Stripe acc id for seller
+    const seller = await userCollection.findOne({ _id: new ObjectId(sellerId) });
+    if (!seller || !seller.stripeAccountId) {
+        return res.status(400).send('Invalid seller');
+    }
+
+    // map list of items in cart to Stripe line_items
+    const line_items = cartItems.map(item => ({
+        price_data: {
+            currency: 'cad',
+            product_data: { name: item.produce }, // name of item
+            unit_amount: Math.round(item.price * 100), // eg. $3.25 to 325 cents
+        },
+        quantity: item.quantity,                     
+    }));
+
+    // create the Checkout Session; create payment intent
+    const checkoutSession = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        line_items,
+        mode: 'payment',
+        payment_intent_data: {
+            application_fee_amount: 0,
+            transfer_data: { destination: seller.stripeAccountId }, // send money to seller's stripe acc 
+        },
+        success_url: `${local_domain}/checkout/success`, //change later
+        cancel_url: `${local_domain}/cartout/fail`, //change later
+        metadata: {
+            buyerId: req.session.userId,
+            sellerId: sellerId,
+        },
+    });
+
+    res.json({ url: checkoutSession.url });
+});
 
 // --- OTHER MISC ROUTES ---
 // Viewpage route
