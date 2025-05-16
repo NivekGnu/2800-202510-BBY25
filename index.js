@@ -85,56 +85,58 @@ app.use((req, res, next) => {
 
 // Root homepage
 app.get('/', async (req, res) => {
-    if (req.session.authenticated) {
-        if (req.session.role === 'seller') {
-            const docs = await postingCollection
-                .find({ sellerId: new ObjectId(req.session.userId) })
-                .sort({ createdAt: -1 })
-                .toArray();
+  if (req.session.authenticated) {
+    if (req.session.role === 'seller') {
+      const docs = await postingCollection
+        .find({ sellerId: new ObjectId(req.session.userId) })
+        .sort({ createdAt: -1 })
+        .toArray();
 
-            const postings = docs.map(doc => ({
-                produce: doc.produce,
-                quantity: doc.quantity,
-                price: doc.price,
-                description: doc.description,
-                createdAt: doc.createdAt,
-                imageSrc: `data:${doc.image.contentType};base64,${doc.image.data.toString('base64')}`,
-                thumbSrc: `data:${doc.thumbnail.contentType};base64,${doc.thumbnail.data.toString('base64')}`,
-            }));
+      const postings = docs.map(doc => ({
+        // For fetching the correct post, it needs the id of the post.
+        id: doc._id,
+        produce: doc.produce,
+        quantity: doc.quantity,
+        price: doc.price,
+        description: doc.description,
+        createdAt: doc.createdAt,
+        imageSrc: `data:${doc.image.contentType};base64,${doc.image.data.toString('base64')}`,
+        thumbSrc: `data:${doc.thumbnail.contentType};base64,${doc.thumbnail.data.toString('base64')}`,
+      }));
 
-            res.render("sellerHome", {
-                title: 'My Postings',
-                postings: postings,
-                mapboxToken: process.env.MAPBOX_API_TOKEN
-            });
-        } else if (req.session.role === 'buyer') {
-            const docs = await postingCollection
-                .find({})
-                .sort({ createdAt: -1 })
-                .toArray();
+      res.render("sellerHome", {
+        title: 'My Postings',
+        postings: postings,
+        mapboxToken: process.env.MAPBOX_API_TOKEN
+      });
+    } else if (req.session.role === 'buyer') {
+      const docs = await postingCollection
+        .find({})
+        .sort({ createdAt: -1 })
+        .toArray();
 
-            const postings = docs.map(doc => ({
-                produce: doc.produce,
-                quantity: doc.quantity,
-                price: doc.price,
-                description: doc.description,
-                createdAt: doc.createdAt,
-                imageSrc: `data:${doc.image.contentType};base64,${doc.image.data.toString('base64')}`,
-                thumbSrc: `data:${doc.thumbnail.contentType};base64,${doc.thumbnail.data.toString('base64')}`,
-            }));
+      const postings = docs.map(doc => ({
+        produce: doc.produce,
+        quantity: doc.quantity,
+        price: doc.price,
+        description: doc.description,
+        createdAt: doc.createdAt,
+        imageSrc: `data:${doc.image.contentType};base64,${doc.image.data.toString('base64')}`,
+        thumbSrc: `data:${doc.thumbnail.contentType};base64,${doc.thumbnail.data.toString('base64')}`,
+      }));
 
-            res.render("buyerHome", { 
-                title: "Buyer Home Page", 
-                mapboxToken: process.env.MAPBOX_API_TOKEN, 
-                postings: postings 
-            });
-        } else {
-            // Should not happen if role is always set, but as a fallback:
-            res.redirect("/login");
-        }
+      res.render("buyerHome", {
+        title: "Buyer Home Page",
+        mapboxToken: process.env.MAPBOX_API_TOKEN,
+        postings: postings
+      });
     } else {
-        res.render("landing", { title: "Landing" });
+      // Should not happen if role is always set, but as a fallback:
+      res.redirect("/login");
     }
+  } else {
+    res.render("landing", { title: "Landing" });
+  }
 });
 
 // Signup page
@@ -210,8 +212,8 @@ app.post("/signupSubmit", async (req, res) => {
   const validationResult = schema.validate(req.body);
   if (validationResult.error) {
     return res.status(400).send(
-        validationResult.error.details[0].message +
-        ' <a href="/signup">Try again</a>'
+      validationResult.error.details[0].message +
+      ' <a href="/signup">Try again</a>'
     );
   }
 
@@ -219,7 +221,7 @@ app.post("/signupSubmit", async (req, res) => {
     const emailExists = await userCollection.findOne({ email });
     if (emailExists) {
       return res.status(400).send(
-          'Email already registered. <a href="/login">Login</a> or <a href="/signup">try another email</a>.'
+        'Email already registered. <a href="/login">Login</a> or <a href="/signup">try another email</a>.'
       );
     }
 
@@ -322,7 +324,7 @@ app.post("/createPost", upload.single("image"), async (req, res) => {
   const { produce, quantity, price, description } = req.body;
   // Basic validation for other fields (Joi could be used here too for more robustness)
   if (!produce || !quantity || !price) {
-      return res.status(400).send("Missing required fields (produce, quantity, price). <a href='/createPost'>Try again</a>");
+    return res.status(400).send("Missing required fields (produce, quantity, price). <a href='/createPost'>Try again</a>");
   }
 
   try {
@@ -351,6 +353,85 @@ app.post("/createPost", upload.single("image"), async (req, res) => {
     console.error("Error creating post:", error);
     return res.status(500).send("Error processing your post. <a href='/createPost'>Try again</a>");
   }
+});
+
+// EDIT POST (Seller)
+app.get("/post/:id/edit", async (req, res) => {
+
+  if (!req.session.authenticated || req.session.role !== "seller") {
+    return res.redirect("/login");
+  }
+
+  const id = req.params.id;
+  if (!ObjectId.isValid(id)) {
+    return res.status(400).send("Invalid post ID");
+  }
+
+  const doc = await postingCollection.findOne({ _id: new ObjectId(id) });
+  if (!doc) {
+    return res.status(404).send("Post not found");
+  }
+
+  // Build a "currentPost" object just like in sellerHome
+  const currentPost = {
+    id: doc._id.toString(),
+    produce: doc.produce,
+    quantity: doc.quantity,
+    price: doc.price,
+    description: doc.description,
+    // show current full-size image for preview
+    imageUrl: `data:${doc.image.contentType};base64,${doc.image.data.toString("base64")}`
+  };
+
+  res.render("editPost", { title: "Edit Post", currentPost });
+});
+
+// POST updated data
+app.post("/post/:id/edit", upload.single("image"), async (req, res) => {
+
+  if (!req.session.authenticated || req.session.role !== "seller") {
+    return res.redirect("/login");
+  }
+
+  const id = req.params.id;
+  if (!ObjectId.isValid(id)) {
+    return res.status(400).send("Invalid post ID");
+  }
+
+  const { produce, quantity, price, description } = req.body;
+  const updateDoc = {
+    $set: {
+      produce,
+      quantity: parseInt(quantity, 10),
+      price: parseFloat(price),
+      description
+    }
+  };
+
+  // If seller uploads a new image, regenerate full image + thumbnail
+  if (req.file) {
+    const fullBuffer = await sharp(req.file.buffer)
+      .resize({ width: 1080, withoutEnlargement: true })
+      .jpeg({ quality: 80 })
+      // Runs the pipeline and returns a new Buffer containing the processed JPEG bytes
+      // Buffer is Node's way of representing a raw binary data
+      .toBuffer();
+
+    const thumbBuffer = await sharp(req.file.buffer)
+      .resize({ width: 400, withoutEnlargement: true })
+      .jpeg({ quality: 70 })
+      .toBuffer();
+
+    updateDoc.$set.image = { data: fullBuffer, contentType: "image/jpeg" };
+    updateDoc.$set.thumbnail = { data: thumbBuffer, contentType: "image/jpeg" };
+  }
+
+  await postingCollection.updateOne(
+    { _id: new ObjectId(id) },
+    updateDoc
+  );
+
+  res.redirect("/"); // Back to sellerHome
 });
 
 // --- CHAT ROUTES ---
@@ -383,9 +464,9 @@ app.get("/chat", async (req, res) => {
     if (!otherUser) {
       console.log("GET /chat - Other user not found:", otherUserIdString);
       return res.status(404).render("errorPage", {
-          title: "Chat Error",
-          errorMessage: "The user you are trying to chat with could not be found.",
-        });
+        title: "Chat Error",
+        errorMessage: "The user you are trying to chat with could not be found.",
+      });
     }
 
     const ids = [currentUserId, otherUserIdString].sort();
@@ -402,9 +483,9 @@ app.get("/chat", async (req, res) => {
   } catch (error) {
     console.error("GET /chat - CRITICAL ERROR setting up chat page:", error.stack);
     return res.status(500).render("errorPage", {
-        title: "Server Error",
-        errorMessage: "An internal error occurred while trying to load the chat page.",
-      });
+      title: "Server Error",
+      errorMessage: "An internal error occurred while trying to load the chat page.",
+    });
   }
 });
 
@@ -435,8 +516,8 @@ app.get("/api/chat/:chatId/messages", async (req, res) => {
       timestamp: msg.timestamp,
       messageText: msg.messageText || "",
       ...(msg.messageType === "image" && msg.image?.data && {
-          imageDataUri: `data:${msg.image.contentType};base64,${msg.image.data.toString("base64")}`,
-        }),
+        imageDataUri: `data:${msg.image.contentType};base64,${msg.image.data.toString("base64")}`,
+      }),
     }));
     console.log("GET /api/chat/:chatId/messages - Sending", messages.length, "messages.");
     return res.json(messages);
@@ -503,96 +584,96 @@ app.post("/api/chat/messages", async (req, res) => {
 });
 
 app.post("/api/chat/messages/image", upload.single("chatImage"), async (req, res) => {
-    console.log("POST /api/chat/messages/image RECEIVED. Session UserID:", req.session.userId, "Body:", req.body, "File:", req.file ? req.file.originalname : "No file");
-    if (!req.session.authenticated) {
-        return res.status(401).json({ error: "Unauthorized" });
+  console.log("POST /api/chat/messages/image RECEIVED. Session UserID:", req.session.userId, "Body:", req.body, "File:", req.file ? req.file.originalname : "No file");
+  if (!req.session.authenticated) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  try {
+    const { chatId, senderId, receiverId, caption } = req.body; // caption is optional
+    let errors = [];
+    if (!req.file) errors.push("No image file was uploaded.");
+    if (!chatId || typeof chatId !== "string" || !chatId.includes("-")) errors.push("Invalid or missing chatId.");
+    if (!senderId || senderId !== req.session.userId) errors.push("Invalid or mismatched senderId.");
+    if (!receiverId || typeof receiverId !== "string") errors.push("Invalid or missing receiverId.");
+    if (senderId && !ObjectId.isValid(senderId)) errors.push("SenderId is not a valid ObjectId format.");
+    if (receiverId && !ObjectId.isValid(receiverId)) errors.push("ReceiverId is not a valid ObjectId format.");
+
+    if (errors.length > 0) {
+      console.log("API /api/chat/messages/image - Validation Errors:", errors.join(" "));
+      return res.status(400).json({ error: "Invalid image message data.", details: errors.join(" ") });
     }
 
-    try {
-        const { chatId, senderId, receiverId, caption } = req.body; // caption is optional
-        let errors = [];
-        if (!req.file) errors.push("No image file was uploaded.");
-        if (!chatId || typeof chatId !== "string" || !chatId.includes("-")) errors.push("Invalid or missing chatId.");
-        if (!senderId || senderId !== req.session.userId) errors.push("Invalid or mismatched senderId.");
-        if (!receiverId || typeof receiverId !== "string") errors.push("Invalid or missing receiverId.");
-        if (senderId && !ObjectId.isValid(senderId)) errors.push("SenderId is not a valid ObjectId format.");
-        if (receiverId && !ObjectId.isValid(receiverId)) errors.push("ReceiverId is not a valid ObjectId format.");
-        
-        if (errors.length > 0) {
-            console.log("API /api/chat/messages/image - Validation Errors:", errors.join(" "));
-            return res.status(400).json({ error: "Invalid image message data.", details: errors.join(" ") });
-        }
-
-        const [user1, user2] = chatId.split("-");
-        if (user1 !== req.session.userId && user2 !== req.session.userId) {
-            return res.status(403).json({ error: "Forbidden: Not part of this chat." });
-        }
-
-        const imageBuffer = await sharp(req.file.buffer)
-            .resize({ width: 800, withoutEnlargement: true })
-            .jpeg({ quality: 75 })
-            .toBuffer();
-
-        const newMessageDocument = {
-            chatId,
-            senderId: new ObjectId(senderId),
-            receiverId: new ObjectId(receiverId),
-            messageText: caption || "", // caption for the image
-            image: { data: imageBuffer, contentType: "image/jpeg" },
-            messageType: "image",
-            timestamp: new Date(),
-        };
-
-        const result = await chatMessageCollection.insertOne(newMessageDocument);
-        const savedMessage = {
-            _id: result.insertedId.toString(),
-            chatId,
-            senderId: newMessageDocument.senderId.toString(),
-            receiverId: newMessageDocument.receiverId.toString(),
-            messageType: "image",
-            timestamp: newMessageDocument.timestamp,
-            messageText: newMessageDocument.messageText,
-            imageDataUri: `data:image/jpeg;base64,${imageBuffer.toString("base64")}`,
-        };
-
-        console.log("API /api/chat/messages/image - Image message saved. Emitting via Socket.IO to room:", chatId);
-        io.to(chatId).emit("newMessage", savedMessage);
-        return res.status(201).json(savedMessage);
-    } catch (error) {
-        console.error("CRITICAL ERROR in POST /api/chat/messages/image:", error.stack);
-        if (!res.headersSent) {
-            return res.status(500).json({ error: "Server error while sending image message.", details: error.message });
-        }
+    const [user1, user2] = chatId.split("-");
+    if (user1 !== req.session.userId && user2 !== req.session.userId) {
+      return res.status(403).json({ error: "Forbidden: Not part of this chat." });
     }
+
+    const imageBuffer = await sharp(req.file.buffer)
+      .resize({ width: 800, withoutEnlargement: true })
+      .jpeg({ quality: 75 })
+      .toBuffer();
+
+    const newMessageDocument = {
+      chatId,
+      senderId: new ObjectId(senderId),
+      receiverId: new ObjectId(receiverId),
+      messageText: caption || "", // caption for the image
+      image: { data: imageBuffer, contentType: "image/jpeg" },
+      messageType: "image",
+      timestamp: new Date(),
+    };
+
+    const result = await chatMessageCollection.insertOne(newMessageDocument);
+    const savedMessage = {
+      _id: result.insertedId.toString(),
+      chatId,
+      senderId: newMessageDocument.senderId.toString(),
+      receiverId: newMessageDocument.receiverId.toString(),
+      messageType: "image",
+      timestamp: newMessageDocument.timestamp,
+      messageText: newMessageDocument.messageText,
+      imageDataUri: `data:image/jpeg;base64,${imageBuffer.toString("base64")}`,
+    };
+
+    console.log("API /api/chat/messages/image - Image message saved. Emitting via Socket.IO to room:", chatId);
+    io.to(chatId).emit("newMessage", savedMessage);
+    return res.status(201).json(savedMessage);
+  } catch (error) {
+    console.error("CRITICAL ERROR in POST /api/chat/messages/image:", error.stack);
+    if (!res.headersSent) {
+      return res.status(500).json({ error: "Server error while sending image message.", details: error.message });
+    }
+  }
 });
 
 
 // --- OTHER MISC ROUTES ---
 // Viewpage route
 app.get('/viewpage', (req, res) => {
-    if (req.session.authenticated) {
-        // Using firstName as username was not explicitly set in session previously
-        res.render("viewpage", { 
-            title: "View Page", 
-            firstName: req.session.firstName, // Changed from username
-            mapboxToken: process.env.MAPBOX_API_TOKEN 
-        });
-    } else {
-        res.redirect('/login');
-    }
+  if (req.session.authenticated) {
+    // Using firstName as username was not explicitly set in session previously
+    res.render("viewpage", {
+      title: "View Page",
+      firstName: req.session.firstName, // Changed from username
+      mapboxToken: process.env.MAPBOX_API_TOKEN
+    });
+  } else {
+    res.redirect('/login');
+  }
 });
 
 // Contact page route
 app.get('/contact', (req, res) => {
-    if (req.session.authenticated) {
-         // Using firstName as username was not explicitly set in session previously
-        res.render("contact", { 
-            title: "Contact Page", // Corrected title
-            firstName: req.session.firstName // Changed from username
-        });
-    } else {
-        res.redirect('/login');
-    }
+  if (req.session.authenticated) {
+    // Using firstName as username was not explicitly set in session previously
+    res.render("contact", {
+      title: "Contact Page", // Corrected title
+      firstName: req.session.firstName // Changed from username
+    });
+  } else {
+    res.redirect('/login');
+  }
 });
 
 // Map page route
