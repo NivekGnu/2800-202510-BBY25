@@ -44,7 +44,7 @@
       <span id="city" class="font-medium">Detecting…</span>
     </p>
 
-    <%- include('templates/navbar_buyer') %>
+    <%- include('templates/navbar_seller') %>
 
     <section class="mt-8">
       <h2 class="text-2xl font-semibold mb-4">All Available Postings</h2>
@@ -52,41 +52,38 @@
       <% if (postings.length === 0) { %>
         <p class="text-gray-600">There are currently no postings yet.</p>
       <% } else { %>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="grid grid-cols-2 gap-6">
           <% postings.forEach(p => { %>
-            <a
-              href="/post/<%= p.id %>"
-              class="block bg-white shadow-lg rounded-lg overflow-hidden flex flex-col h-full"
-            >
+            <!-- card wrapper -->
+            <div class="bg-white shadow-lg rounded-lg overflow-hidden flex flex-col h-full">
+
               <!-- thumbnail -->
-              <div class="w-full h-48 bg-gray-100">
+              <div class="w-full aspect-square bg-gray-100 overflow-hidden">
                 <img
                   src="<%= p.thumbSrc %>"
                   alt="Thumbnail of <%= p.produce %>"
-                  class="object-cover w-full h-full"
+                  class="w-full h-full object-cover object-center"
                 >
               </div>
 
-              <!-- details -->
-              <div class="p-4 flex-1 flex flex-col">
-                <h3 class="text-xl font-medium mb-2 truncate"><%= p.produce %></h3>
-                <p class="text-gray-700 text-sm mb-1">
-                  Available: <span class="font-semibold"><%= p.quantity %></span>
-                </p>
-                <p class="text-gray-700 text-sm mb-2">
-                  Price: <span class="font-semibold">$<%= p.price %></span>
-                </p>
-                <p class="text-gray-500 text-xs mb-4">
-                  Posted on <%= p.createdAt.toLocaleDateString() %>
-                </p>
-                <p class="text-gray-800 text-sm mb-4 flex-1 line-clamp-3">
-                  <%= p.description %>
-                </p>
-                <span class="mt-auto text-blue-600 hover:underline text-sm">
-                  View Details
-                </span>
+              <!-- product name centered -->
+              <div class="flex-1 flex flex-col justify-center items-center p-4">
+                <h3 class="text-xl font-medium truncate"><%= p.produce %></h3>
               </div>
-            </a>
+
+              <!-- edit button -->
+              <!-- href: From the client’s (browser’s) perspective, it changes the URL and 
+                   at the same time issues a GET request to the server for that URL. 
+                   Which in this case, calls the route of app.get("/post/:id/edit"-->
+              <div class="px-4 pb-4">
+                <a
+                  href="/post/<%= p.id %>/edit"
+                  class="block w-full text-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
+                >
+                  Edit
+                </a>
+              </div>
+            </div>
           <% }) %>
         </div>
       <% } %>

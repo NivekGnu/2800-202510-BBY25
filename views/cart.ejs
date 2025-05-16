@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -86,3 +87,39 @@
 
 </body>
 </html>
+=======
+<%- include("templates/header") %>
+
+<button id="checkout">Click here to test checkout</button>
+
+<script>
+    document.getElementById("checkout")
+        .addEventListener('click', async () => {
+            const payload = {
+                sellerId: "6827313b146f2df7484f2735", // clinton's test seller account
+                cartItems: [
+                    { produce: "Apples",  price: 3.00, quantity: 4 },
+                    { produce: "Carrots", price: 1.50, quantity: 2 },
+                    { produce: "Kale", price: 2.25, quantity: 1 }
+                ]
+            };
+
+            try {
+                const res = await fetch('/checkout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+
+                const data = await res.json();
+                console.log('Stripe redirect URL:', data.url);
+
+                window.open(data.url);
+            } catch (err) {
+                console.error('Checkout error:', err);
+            }
+        });
+</script>
+
+<%- include("templates/footer") %>
+>>>>>>> 5b4da343b0512a59c91dfb2e7557e415dff18cea
