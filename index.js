@@ -253,7 +253,7 @@ app.post("/loginSubmit", async (req, res) => {
 
 // Signup submission
 app.post("/signupSubmit", async (req, res) => {
-  const { firstName, lastName, email, password, role } = req.body;
+  const { firstName, lastName, email, password, role, 'address address-search': address, city, province, postalCode } = req.body;
   const schema = Joi.object({
     firstName: Joi.string().alphanum().min(1).max(50).required(),
     lastName: Joi.string().alphanum().min(1).max(50).required(),
@@ -291,6 +291,10 @@ app.post("/signupSubmit", async (req, res) => {
       languages: role === "seller" ? [] : undefined, // Only sellers have languages initially
       createdAt: new Date(),
     };
+
+    if(newUser.role === "seller") {
+      newUser.address = {address, city, province, postalCode}
+    }
 
     const result = await userCollection.insertOne(newUser);
 
