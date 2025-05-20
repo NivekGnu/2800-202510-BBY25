@@ -1,182 +1,134 @@
+<%-/* views/viewpage.ejs */%>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Egg Product Page</title>
+    <title><%= post.produce || "Product Details" %></title>
     <script src="https://cdn.tailwindcss.com"></script>
-
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
+    <style>
+        body { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; }
+        .qty-button { min-width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; }
+        #item-quality { height: 36px; display: flex; align-items: center; padding-top: 0.25rem; padding-bottom: 0.25rem; }
+        #map { height: 100%; width: 100%; }
+        .map-container { height: 12rem; }
+        .seller-pfp-container { width: 3rem; height: 3rem; }
+    </style>
 </head>
-<body class="bg-neutral-900 font-sans">
+<body class="bg-neutral-100">
 
-  <div class="max-w-md mx-auto bg-white min-h-screen relative pb-24"> 
-
-    <!-- Header -->
-    <header class="flex justify-between items-center p-4 border-b border-gray-200">
-      <div class="w-6 h-6"> 
-        <img src="img/arrow.png" alt="Back" class="w-full h-full object-contain" onclick="window.history.back()">
-      </div>
-      <div class="w-6 h-6"> 
-        <img src="img/cart.png" alt="Cart" class="w-full h-full object-contain" onclick="testAlert()">
-      </div>
+  <div class="max-w-md mx-auto bg-white min-h-screen shadow-lg relative pb-28">
+    <header class="flex justify-between items-center p-4 border-b border-gray-200 sticky top-0 bg-white z-20">
+      <div class="w-6 h-6"><img src="/img/arrow.png" alt="Back" class="w-full h-full object-contain cursor-pointer" onclick="window.history.back()"></div>
+      <h1 class="text-xl font-semibold text-gray-900 truncate px-2"><%= post.produce %></h1>
+      <div class="w-6 h-6"><img src="/img/cart.png" alt="Cart" class="w-full h-full object-contain cursor-pointer" onclick="window.location.href='/cart'"></div>
     </header>
 
-    <!-- Main Content Area -->
     <main class="p-4">
-      <!-- Product Title & Meta -->
-      <div class="mb-4">
-        <h1 class="text-2xl font-bold text-gray-900">Egg</h1>
-        <div class="flex justify-between items-center text-xs text-gray-500 mt-1">
-          <div class="flex items-center space-x-1">
-            <span>Post made 2 days ago</span>
-            <span class="bg-gray-400 rounded-full w-1 h-1 mx-1"></span>
-            <span>Burnaby, BC</span>
-          </div>
-          <div class="flex items-center space-x-1 text-sm text-gray-600">
-            <div class="w-4 h-4"> 
-              <img src="img/star.png" alt="Rating star" class="w-full h-full object-contain">
-            </div>
-            <span>4.9 (610)</span>
-          </div>
+      <div class="flex justify-between items-center text-xs text-gray-500 mb-3">
+        <div class="flex items-center space-x-1">
+          <span>
+            <%
+              const datePosted = new Date(post.createdAt); const now = new Date(); const diffTime = Math.abs(now - datePosted);
+              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+              let postedAgo = `Posted ${datePosted.toLocaleDateString()}`;
+              if (diffDays <= 1) postedAgo = "Posted today"; else if (diffDays <= 30) postedAgo = `Posted ${diffDays} days ago`;
+            %><%= postedAgo %>
+          </span>
+          <span class="bg-gray-400 rounded-full w-1 h-1 mx-1"></span>
+          <span><% if (post.location) { %> <%= post.location %> <% } else if (post.seller && post.seller.location) { %> <%= post.seller.location %> <% } else { %> Location N/A <% } %></span>
+        </div>
+        <div class="flex items-center space-x-1 text-sm text-gray-600">
+          <div class="w-4 h-4"><img src="/img/star.png" alt="Rating star" class="w-full h-full object-contain"></div>
+          <span>4.9 (610)</span>
         </div>
       </div>
 
-      <!-- Image -->
-      <div class="h-64 w-full mb-4 rounded-lg overflow-hidden"> 
-        <img src="img/egg.jpeg" alt="Eggs" class="h-full w-full object-cover">
+      <div class="h-64 w-full mb-4 rounded-lg overflow-hidden bg-gray-200">
+        <img src="<%= post.imageSrc || '/img/egg.jpeg' %>" alt="Image of <%= post.produce %>" class="h-full w-full object-cover">
       </div>
 
-      <!-- Stock, Price, Qty, Seller -->
       <div class="mb-4">
         <div class="flex justify-between items-start">
-          <div>
-            <p class="text-xs text-green-600 font-semibold">IN STOCK</p>
-            <p id="priceOfItem" class="text-3xl font-bold text-gray-900 mt-1">$5</p>
-            <div class="flex items-center space-x-2 mt-3">
-              <span class="text-sm text-gray-700">Qty</span>
+          <div class="flex-grow mr-4">
+            <p class="text-xs <%= post.quantity > 0 ? 'text-green-600' : 'text-red-600' %> font-semibold">
+              <%= post.quantity > 0 ? `IN STOCK` : 'OUT OF STOCK' %>
+               <% if (post.quantity > 0) { %>(<%= post.quantity %> available)<% } %>
+            </p>
+            <p id="priceOfItem" class="text-3xl font-bold text-gray-900 mt-1">$<%= post.price.toFixed(2) %></p>
+            <div class="flex items-center space-x-1 mt-3 mb-4">
+              <span class="text-sm text-gray-700 mr-1">Qty</span>
               <div class="flex items-center border border-gray-300 rounded-md">
-                <button onclick="downButton()" class="px-3 py-1 text-gray-800 hover:bg-gray-100 rounded-l-md text-lg font-medium">-</button>
-                <span id="item-quality" class="px-4 py-1 border-l border-r border-gray-300 text-gray-900 font-semibold text-base">1</span>
-                <button onclick="upButton()" class="px-3 py-1 text-gray-800 hover:bg-gray-100 rounded-r-md text-lg font-medium">+</button>
+                <button id="qtyDownButton" class="qty-button px-3 text-gray-800 hover:bg-gray-100 rounded-l-md text-lg font-medium disabled:opacity-50" <%= post.quantity === 0 ? 'disabled' : '' %>>-</button>
+                <span id="item-quality" class="px-4 border-l border-r border-gray-300 text-gray-900 font-semibold text-base">1</span>
+                <button id="qtyUpButton" class="qty-button px-3 text-gray-800 hover:bg-gray-100 rounded-r-md text-lg font-medium disabled:opacity-50" <%= post.quantity === 0 ? 'disabled' : '' %>>+</button>
               </div>
             </div>
+            <% if (post.seller && post.seller._id && post.seller._id.toString() !== session.userId) { %>
+                <button id="addToCartButton" class="w-full bg-green-600 hover:bg-green-700 text-white py-2.5 px-6 rounded-md flex justify-center items-center text-md font-semibold disabled:opacity-50 disabled:cursor-not-allowed" <%= post.quantity === 0 ? 'disabled' : '' %>>
+                  Add to Cart - $<span id="totalPriceForCart"><%= post.price.toFixed(2) %></span>
+                </button>
+            <% } %>
           </div>
-          <div class="text-right flex-shrink-0 ml-4">
-            <div class="w-12 h-12 rounded-full mb-1 ml-auto overflow-hidden"> 
-              <img src="img/farmerpfp.png" alt="Seller John Doe" class="w-full h-full object-cover">
+          <% if (post.seller) { %>
+            <div class="text-right flex-shrink-0">
+                <div class="seller-pfp-container rounded-full mb-1 ml-auto overflow-hidden bg-gray-300">
+                    <img src="<%= post.seller.profilePictureUrl || '/img/farmerpfp.png' %>" alt="Seller: <%= post.seller.firstName %>" class="w-full h-full object-cover">
+                </div>
+                <p class="text-sm font-semibold text-gray-800"><%= post.seller.firstName || 'Seller' %> <%= post.seller.lastName || '' %></p>
+                <p class="text-xs text-gray-500">Seller's Detail</p>
             </div>
-            <p class="text-sm font-semibold text-gray-800">John Doe</p>
-            <p class="text-xs text-gray-500">Seller's Detail</p>
-          </div>
+          <% } else { /* ... Seller Unavailable ... */ } %>
         </div>
       </div>
-
       <hr class="my-4 border-gray-200">
-
-      <!-- Description -->
       <div class="mb-4">
         <h2 class="text-lg font-semibold text-gray-800 mb-2">Description</h2>
-        <p class="text-sm text-gray-700 leading-relaxed">
-          Farm-fresh eggs with rich yolks and smooth whites – perfect for breakfast, baking, or adding protein-packed goodness to any meal.
-        </p>
+        <p class="text-sm text-gray-700 leading-relaxed whitespace-pre-line"><%= post.description %></p>
       </div>
-
       <hr class="my-4 border-gray-200">
-
-      <!-- Map Placeholder -->
       <div class="mb-4">
-        <div id="map" class="h-48 w-128 z-0 rounded-lg"></div>
-
+        <h2 class="text-lg font-semibold text-gray-800 mb-2">Item Location</h2>
+        <%
+          let mapLatVPA, mapLngVPA, mapLocationStringVPA = "Item Location"; let hasSpecificCoordsVPA = false;
+          if (post.coordinates && typeof post.coordinates.latitude === 'number' && typeof post.coordinates.longitude === 'number') { mapLatVPA = post.coordinates.latitude; mapLngVPA = post.coordinates.longitude; mapLocationStringVPA = post.location || post.produce; hasSpecificCoordsVPA = true; }
+          else if (post.seller && post.seller.coordinates && typeof post.seller.coordinates.latitude === 'number' && typeof post.seller.coordinates.longitude === 'number') { mapLatVPA = post.seller.coordinates.latitude; mapLngVPA = post.seller.coordinates.longitude; mapLocationStringVPA = (post.seller.location || "Seller's Area"); hasSpecificCoordsVPA = true; }
+        %>
+        <div class="map-container w-full z-0 rounded-lg bg-gray-200 overflow-hidden">
+             <% if (!hasSpecificCoordsVPA) { %><div class="flex items-center justify-center h-full"><p class="text-gray-500">Map location not specified.</p></div><% } else { %>
+                <div id="map" data-latitude="<%= mapLatVPA %>" data-longitude="<%= mapLngVPA %>" data-product-name="<%= post.produce %>" data-location-string="<%= mapLocationStringVPA %>" data-has-coords="<%= hasSpecificCoordsVPA %>"></div>
+             <% } %>
         </div>
       </div>
-
     </main>
 
-    <!-- Sticky Chat Footer -->
-    <footer class="fixed bottom-0 left-0 right-0">
-      <div class="max-w-md mx-auto p-3">
-        <button class="bg-neutral-800 hover:bg-neutral-700 text-white py-3 px-6 rounded-md w-full flex justify-between items-center text-lg font-semibold" onclick="window.location.href='/contact'">
-          <span>Chat</span>
-          <div class="w-7 h-6 bg-white rounded-sm">
-          </div>
-        </button>
+    <footer class="fixed bottom-0 left-0 right-0 z-10">
+      <div class="max-w-md mx-auto p-3 bg-white border-t border-gray-200">
+        <% if (post.seller && post.seller._id && post.seller._id.toString() !== session.userId) { %>
+            <button class="bg-neutral-800 hover:bg-neutral-700 text-white py-3 px-6 rounded-md w-full flex justify-between items-center text-lg font-semibold" onclick="window.location.href='/chat?with=<%= post.seller._id.toString() %>'">
+              <span>Chat</span><div class="w-7 h-6 bg-white rounded-sm flex items-center justify-center"><img src="/img/chat-bubble-empty.svg" alt="Chat icon" class="w-5 h-5 filter invert brightness-0"></div>
+            </button>
+        <% } else if (post.seller && post.seller._id.toString() === session.userId) { %>
+            <p class="text-center text-gray-600 py-3">This is your own posting. You can <a href="/post/<%= post._id %>/edit" class="text-green-600 hover:underline font-semibold">edit it here</a>.</p>
+        <% } else { /* ... Chat Unavailable ... */ } %>
       </div>
     </footer>
-
   </div>
 
-  <!-- Leaflet library -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
   <script>
-  
-  let itemQuality = 1;
-  let itemPrice = 5;
-
-  function updatePrice() {
-    const totalPrice = (itemQuality * itemPrice).toFixed(2);
-    document.getElementById("priceOfItem").innerText = `$${totalPrice}`;
-  }
-
-  function upButton() {
-    itemQuality += 1;
-    document.getElementById("item-quality").innerText = itemQuality;
-    updatePrice(); // update price after increasing
-  }
-
-  function downButton() {
-    if (itemQuality > 1) {
-      itemQuality -= 1;
-      document.getElementById("item-quality").innerText = itemQuality;
-      updatePrice(); // update price after decreasing
-    }
-  }
-
-  
-
-  function testAlert() {
-    alert("This is a test alert!");
-  }
-
-</script>
-
-  <!-- Map Scripts -->
-  <script>
-    // Default Burnaby when loading in
-    const map = L.map('map').setView([49.24871980930831, -122.98067289034908], 12);
-
-    const accessToken = '<%= mapboxToken %>';
-
-    // We can change to "streets-v11", "outdoors-v11", "satellite-v9", etc for different map views
-    const mapboxStyle = 'mapbox/streets-v12';
-
-    L.tileLayer(`https://api.mapbox.com/styles/v1/${mapboxStyle}/tiles/{z}/{x}/{y}?access_token=${accessToken}`, {
-        tileSize: 512,
-        zoomOffset: -1,
-        attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-        accessToken: accessToken
-    }).addTo(map);
-
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const latitude = position.coords.latitude;
-          const longitude = position.coords.longitude;
-          console.log(`Latitude: ${latitude}, Longitude: ${longitude}`);
-
-          const marker = L.marker([latitude, longitude]).addTo(map);
-          marker.bindPopup("<b>Your current location</b>").openPopup();
-        },
-        (error) => {
-          console.error("Error getting location:", error.message);
-        }
-      );
-    } else {
-      console.error("Geolocation is not supported by this browser.");
-    }
+    const productConfig = { basePrice: parseFloat("<%= post.price %>"), maxQuantity: parseInt("<%= post.quantity %>"), id: "<%= post._id %>", produceName: "<%= post.produce %>", imageSrc: "<%= post.imageSrc %>", sellerId: "<%= post.seller ? post.seller._id.toString() : '' %>", sellerName: "<%= post.seller ? (post.seller.firstName + ' ' + (post.seller.lastName || '')).trim() : 'Unknown Seller' %>" };
+    let selectedQuantity = 1;
+    const priceDisplayElement = document.getElementById("priceOfItem"); const quantityDisplayElement = document.getElementById("item-quality");
+    const totalPriceForCartElement = document.getElementById("totalPriceForCart"); const addToCartButtonElement = document.getElementById("addToCartButton");
+    const qtyUpButtonElement = document.getElementById("qtyUpButton"); const qtyDownButtonElement = document.getElementById("qtyDownButton");
+    const mapContainerElement = document.getElementById('map');
+    function updateDisplayedPrices() { const currentTotalPrice = selectedQuantity * productConfig.basePrice; if (priceDisplayElement) { priceDisplayElement.innerText = `$${currentTotalPrice.toFixed(2)}`; } if (totalPriceForCartElement) { totalPriceForCartElement.innerText = currentTotalPrice.toFixed(2); } }
+    function initializeQuantityControls() { if (!qtyUpButtonElement || !qtyDownButtonElement || !quantityDisplayElement) return; qtyUpButtonElement.addEventListener('click', () => { if (selectedQuantity < productConfig.maxQuantity && productConfig.maxQuantity > 0) { selectedQuantity++; quantityDisplayElement.innerText = selectedQuantity; updateDisplayedPrices(); } }); qtyDownButtonElement.addEventListener('click', () => { if (selectedQuantity > 1 && productConfig.maxQuantity > 0) { selectedQuantity--; quantityDisplayElement.innerText = selectedQuantity; updateDisplayedPrices(); } }); if (productConfig.maxQuantity > 0) { updateDisplayedPrices(); } else { [qtyUpButtonElement, qtyDownButtonElement].forEach(btn => btn.disabled = true); quantityDisplayElement.innerText = '0'; if (totalPriceForCartElement) totalPriceForCartElement.innerText = "0.00"; } }
+    function initializeAddToCart() { if (!addToCartButtonElement) return; addToCartButtonElement.addEventListener('click', () => { if (productConfig.maxQuantity === 0) { alert("This item is out of stock."); return; } const cartItem = { id: productConfig.id, produce: productConfig.produceName, price: productConfig.basePrice, quantity: selectedQuantity, imageSrc: productConfig.imageSrc, sellerId: productConfig.sellerId, sellerName: productConfig.sellerName }; let cart = JSON.parse(localStorage.getItem('cart') || '{}'); if (!cart[cartItem.sellerId]) { cart[cartItem.sellerId] = { sellerName: cartItem.sellerName, items: [] }; } const existingItemIndex = cart[cartItem.sellerId].items.findIndex(item => item.id === cartItem.id); if (existingItemIndex > -1) { let newQuantity = cart[cartItem.sellerId].items[existingItemIndex].quantity + cartItem.quantity; if (newQuantity > productConfig.maxQuantity) { alert(`Max ${productConfig.maxQuantity} available.`); newQuantity = productConfig.maxQuantity; } cart[cartItem.sellerId].items[existingItemIndex].quantity = newQuantity; } else { if (cartItem.quantity > productConfig.maxQuantity) { alert(`Max ${productConfig.maxQuantity} available.`); cartItem.quantity = productConfig.maxQuantity; } cart[cartItem.sellerId].items.push(cartItem); } localStorage.setItem('cart', JSON.stringify(cart)); alert(`${selectedQuantity} x ${cartItem.produce} added/updated in cart!`); }); }
+    function initializeMap() { if (!mapContainerElement || mapContainerElement.dataset.hasCoords !== 'true') { return; } const defaultLatitude = 49.2487; const defaultLongitude = -122.9806; let latitude = parseFloat(mapContainerElement.dataset.latitude); let longitude = parseFloat(mapContainerElement.dataset.longitude); const productName = mapContainerElement.dataset.productName; const locationString = mapContainerElement.dataset.locationString; const initialLatitude = !isNaN(latitude) ? latitude : defaultLatitude; const initialLongitude = !isNaN(longitude) ? longitude : defaultLongitude; const initialZoom = !isNaN(latitude) ? 14 : 8; try { const mapInstance = L.map(mapContainerElement).setView([initialLatitude, initialLongitude], initialZoom); L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', { attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © <a href="http://openstreetmap.org/copyright">OpenStreetMap</a>', maxZoom: 18, id: 'mapbox/streets-v11', tileSize: 512, zoomOffset: -1, accessToken: '<%= mapboxToken %>' }).addTo(mapInstance); L.marker([initialLatitude, initialLongitude]).addTo(mapInstance).bindPopup(`<b>${productName}</b><br>${locationString || 'Item Location'}`).openPopup(); } catch (error) { console.error("Leaflet map error:", error); mapContainerElement.innerHTML = '<p class="text-center p-4">Map error.</p>'; } }
+    document.addEventListener('DOMContentLoaded', () => { initializeQuantityControls(); initializeAddToCart(); initializeMap(); });
   </script>
-
 </body>
 </html>
