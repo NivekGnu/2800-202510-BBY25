@@ -1,150 +1,152 @@
-<%-/* views/buyerHome.ejs */%>
 <%- include("templates/header") %>
 
 <div class="px-4 py-6 mx-auto max-w-4xl">
-    <div class="flex items-center justify-between mb-6">
-        <h1 class="text-3xl font-bold text-gray-800">BUYER HOME PAGE</h1>
-        <button id="signout" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition">
-            Sign out
-        </button>
+  <!-- Page header -->
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="text-3xl font-bold text-gray-800">BUYER HOME PAGE</h1>
+    <button
+      id="signout"
+      class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
+    >
+      Sign out
+    </button>
+  </div>
+
+  <!-- Location display -->
+  <p class="mb-4 text-gray-700">
+    Your current location:
+    <span id="city" class="font-medium">Detecting…</span>
+  </p>
+
+  <!-- Buyer nav bar -->
+  <%- include('templates/navbar_buyer') %>
+
+  <!-- Category Filter Dropdown -->
+  <div class="relative mb-6">
+    <!-- Toggle button -->
+    <button
+      id="filterBtn"
+      class="w-full flex justify-between items-center px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm text-left focus:outline-none focus:ring-2 focus:ring-indigo-500"
+    >
+      <span>
+        Category:
+        <strong>
+          <%= selectedCategory
+              ? selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)
+              : 'All' %>
+        </strong>
+      </span>
+      <!-- Down arrow -->
+      <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M19 9l-7 7-7-7" />
+      </svg>
+    </button>
+
+    <!-- Dropdown menu -->
+    <div
+      id="filterMenu"
+      class="hidden absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+    >
+      <!-- “All” option -->
+      <a
+        href="?category="
+        class="block px-4 py-2 text-sm hover:bg-gray-100
+               <%= selectedCategory === '' ? 'bg-indigo-100 text-indigo-700' : '' %>"
+      >
+        All
+      </a>
+      <!-- Dynamic category links -->
+      <% categories.forEach(cat => { %>
+        <a
+          href="?category=<%= cat %>"
+          class="block px-4 py-2 text-sm hover:bg-gray-100
+                 <%= selectedCategory === cat ? 'bg-indigo-100 text-indigo-700' : '' %>"
+        >
+          <%= cat.charAt(0).toUpperCase() + cat.slice(1) %>
+        </a>
+      <% }) %>
     </div>
+  </div>
+  <!-- End filter -->
 
-    <p class="mb-4 text-gray-700">Your current location: <span id="city" class="font-medium">Detecting…</span></p>
+  <!-- Listings -->
+  <section class="mt-8">
+    <h2 class="text-2xl font-semibold mb-4 text-gray-800">All Available Postings</h2>
 
-    <section class="mt-8">
-        <h2 class="text-2xl font-semibold mb-4 text-gray-800">All Available Postings</h2>
-
-        <% if (postings.length === 0) { %>
-            <p class="text-gray-600">There are currently no postings yet.</p>
-        <% } else { %>
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                <% postings.forEach(p => { %>
-                    <%# This is the crucial link to viewpage.ejs %>
-                    <a href="/viewpage?postId=<%= p._id %>" class="block group">
-                        <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300">
-                            <div class="w-full h-48 overflow-hidden">
-                                <%# p.thumbSrc is assumed to be a data URI or valid image path from index.js %>
-                                <img src="<%= p.thumbSrc %>" alt="Thumbnail of <%= p.produce %>" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
-                            </div>
-                            <div class="p-4">
-                                <h5 class="text-lg font-semibold text-gray-800 mb-1 truncate group-hover:text-green-600">
-                                    <%= p.produce %>
-                                </h5>
-                                <p class="text-sm text-gray-600 mb-1">
-                                    Qty: <%= p.quantity %> | Price: $<%= typeof p.price === 'number' ? p.price.toFixed(2) : p.price %>
-                                </p>
-                                <p class="text-xs text-gray-500 mb-2">
-                                    Posted: <%= new Date(p.createdAt).toLocaleDateString() %>
-                                </p>
-                                <p class="text-sm text-gray-700 h-10 overflow-hidden text-ellipsis">
-                                    <%= p.description %>
-                                </p>
-                                <%# The "View Full Image" link from the first version is omitted here %>
-                                <%# as clicking the card itself serves the purpose of viewing details. %>
-                            </div>
-                        </div>
-                    </a>
-                <% }) %>
+    <% if (postings.length === 0) { %>
+      <p class="text-gray-600">There are currently no postings yet.</p>
+    <% } else { %>
+      <!-- 2 columns on mobile, 3 on sm+ -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+        <% postings.forEach(p => { %>
+          <a href="/viewpage?postId=<%= p._id %>" class="block group">
+            <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300">
+              <div class="w-full h-48 overflow-hidden">
+                <img
+                  src="<%= p.thumbSrc %>"
+                  alt="Thumbnail of <%= p.produce %>"
+                  class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+              </div>
+              <div class="p-4">
+                <h5 class="text-lg font-semibold text-gray-800 mb-1 truncate group-hover:text-indigo-600">
+                  <%= p.produce %>
+                </h5>
+                <p class="text-sm text-gray-600 mb-1">
+                  Qty: <%= p.quantity %> | Price: $<%= typeof p.price === 'number' ? p.price.toFixed(2) : p.price %>
+                </p>
+                <p class="text-xs text-gray-500 mb-2">
+                  Posted: <%= new Date(p.createdAt).toLocaleDateString() %>
+                </p>
+                <p class="text-sm text-gray-700 h-10 overflow-hidden text-ellipsis">
+                  <%= p.description %>
+                </p>
+              </div>
             </div>
-        <% } %>
-    </section>
+          </a>
+        <% }) %>
+      </div>
+    <% } %>
+  </section>
 </div>
 
-<!-- AI BUTTON -->
-<button id="ai-helper-button"
-    class="fixed bottom-20 right-6 z-50 bg-green-600 hover:bg-green-700 text-white p-4 rounded-full shadow-lg flex items-center justify-center">
-    <img src="/img/glow-icon.svg" alt="AI Helper Icon" class="w-8 h-8">
-</button>
-
-<!-- AI modal -->
-<div id="ai-modal" class="fixed inset-0 z-[100] flex items-center justify-center bg-gray-900 bg-opacity-75 opacity-0 pointer-events-none transition-opacity duration-300 ease-out"
-    aria-labelledby="modal-title" role="dialog" aria-modal="true">
-    <div class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
-        <div class="bg-green-600 px-4 py-3 flex justify-between items-center">
-            <h3 id="modal-title" class="text-lg font-semibold text-white">Produce In Season</h3>
-            <button type="button" id="close-modal-icon" class="text-green-100 hover:text-white">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-            </button>
-        </div>
-        <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-            <div class="mt-2 max-h-60 overflow-y-auto"><p id="output" class="text-sm text-gray-700 whitespace-pre-line">Loading...</p></div>
-        </div>
-        <div class="bg-gray-100 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
-            <button type="button" id="close-modal-button" class="inline-flex w-full justify-center rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:ml-3 sm:w-auto">Close</button>
-        </div>
-    </div>
-</div>
-
-<script src="/scripts/gemini_scripts.js"></script> <%# Ensure this path is correct relative to your public folder %>
-<script>
-    // Combined and cleaned up JavaScript
-    document.addEventListener('DOMContentLoaded', () => {
-        // Signout Button
-        const signoutButton = document.getElementById("signout");
-        if (signoutButton) {
-            signoutButton.addEventListener("click", () => {
-                window.location.href = "/logout";
-            });
-        }
-
-        // Geolocation for City
-        const cityElement = document.getElementById('city');
-        if (navigator.geolocation && cityElement) {
-            navigator.geolocation.getCurrentPosition(async ({ coords }) => {
-                try {
-                    const res = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${coords.longitude},${coords.latitude}.json?access_token=<%= mapboxToken %>`);
-                    if (!res.ok) throw new Error(`Geocoding failed: ${res.status}`);
-                    const json = await res.json();
-                    const place = json.features.find(f => f.place_type.includes('place'));
-                    cityElement.textContent = place?.text || 'Unknown location';
-                } catch (error) {
-                    console.error("Error fetching city:", error);
-                    cityElement.textContent = 'Could not get location';
-                }
-            }, () => {
-                cityElement.textContent = 'Permission denied';
-            });
-        } else if (cityElement) {
-            cityElement.textContent = 'Geolocation not supported';
-        }
-
-        // AI Modal Logic
-        const aiHelperButton = document.getElementById('ai-helper-button');
-        const aiModal = document.getElementById('ai-modal');
-        const closeModalButton = document.getElementById('close-modal-button');
-        const closeModalIcon = document.getElementById('close-modal-icon');
-        const outputElement = document.getElementById('output');
-
-        function openAiModal() {
-            if (!aiModal || !outputElement) return;
-            aiModal.classList.remove('opacity-0', 'pointer-events-none');
-            aiModal.classList.add('opacity-100');
-            outputElement.textContent = 'Fetching seasonal produce suggestions...';
-            if (typeof gemini_run === 'function') {
-                gemini_run(outputElement, "What produce is generally in season in North America? Please provide a list.");
-            } else {
-                outputElement.textContent = 'AI helper script could not be loaded.';
-                console.error("gemini_run function is not defined. Make sure gemini_scripts.js is loaded and defines it.");
-            }
-        }
-
-        function closeAiModal() {
-            if (!aiModal) return;
-            aiModal.classList.add('opacity-0', 'pointer-events-none');
-            aiModal.classList.remove('opacity-100');
-        }
-
-        if (aiHelperButton) aiHelperButton.addEventListener('click', openAiModal);
-        if (closeModalButton) closeModalButton.addEventListener('click', closeAiModal);
-        if (closeModalIcon) closeModalIcon.addEventListener('click', closeAiModal);
-
-        document.addEventListener('keydown', (event) => {
-            if (event.key === 'Escape' && aiModal && aiModal.classList.contains('opacity-100')) {
-                closeAiModal();
-            }
-        });
-    });
-</script>
-
+<!-- Include footer/nav as before -->
 <%- include("templates/navbar_buyer") %>
 <%- include("templates/footer") %>
+
+<script src="/scripts/gemini_scripts.js"></script>
+<script>
+  // Sign-out
+  document.getElementById("signout")?.addEventListener("click", () => {
+    window.location.href = "/logout";
+  });
+
+  // Geolocation → city (unchanged)
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(async ({ coords }) => {
+      const { latitude, longitude } = coords;
+      const res = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/` +
+        `${longitude},${latitude}.json?access_token=<%= mapboxToken %>`
+      );
+      const json = await res.json();
+      const place = json.features.find(f => f.place_type.includes('place'));
+      document.getElementById('city').textContent = place?.text || 'Unknown';
+    }, () => {
+      document.getElementById('city').textContent = 'Permission denied';
+    });
+  } else {
+    document.getElementById('city').textContent = 'Geolocation not supported';
+  }
+
+  // Filter dropdown toggle
+  const filterBtn = document.getElementById('filterBtn');
+  const filterMenu = document.getElementById('filterMenu');
+  filterBtn.addEventListener('click', () => filterMenu.classList.toggle('hidden'));
+  document.addEventListener('click', e => {
+    if (!filterBtn.contains(e.target) && !filterMenu.contains(e.target)) {
+      filterMenu.classList.add('hidden');
+    }
+  });
+</script>

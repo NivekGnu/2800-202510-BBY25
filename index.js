@@ -141,13 +141,24 @@ app.get('/', async (req, res) => {
         mapboxToken: process.env.MAPBOX_API_TOKEN
       });
     } else if (req.session.role === 'buyer') {
-      const docs = await postingCollection
+      // 1) Load all distinct categories for the dropdown
+      const categories = await postingCollection.distinct('category');
+
+      // 2) Read the selected category from ?category=… (defaults to “all”)
+      const selectedCategory = req.query.category || '';
+
+      let docs = await postingCollection
         .find({}) // Find all posts for buyers
         .sort({ createdAt: -1 })
         .toArray();
+      if(selectedCategory) 
+      {
+        docs = docs.filter(doc => doc.category === selectedCategory);
+      }
 
+      // Map the selected posts to the view
       const postings = docs.map(doc => ({
-        _id: doc._id.toString(), // CRITICAL: Pass the _id for linking to viewpage
+        _id: doc._id.toString(), 
         produce: doc.produce,
         quantity: doc.quantity,
         price: doc.price,
@@ -160,7 +171,9 @@ app.get('/', async (req, res) => {
       res.render("buyerHome", {
         title: "Buyer Home Page",
         mapboxToken: process.env.MAPBOX_API_TOKEN,
-        postings: postings
+        postings: postings,
+        categories: categories,
+        selectedCategory: selectedCategory
       });
     } else {
       res.redirect("/login");
@@ -433,6 +446,7 @@ app.get("/post/:id/edit", async (req, res) => {
 
   const currentPost = {
     id: doc._id.toString(),
+    category: doc.category,
     produce: doc.produce,
     quantity: doc.quantity,
     price: doc.price,
@@ -453,6 +467,7 @@ app.post("/post/:id/edit", upload.single("image"), async (req, res) => {
   const { produce, quantity, price, description, location, latitude, longitude } = req.body;
   const updateDoc = {
     $set: {
+      category,
       produce,
       quantity: parseInt(quantity, 10),
       price: parseFloat(price),
