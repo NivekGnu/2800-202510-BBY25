@@ -141,6 +141,12 @@ app.get('/', async (req, res) => {
         mapboxToken: process.env.MAPBOX_API_TOKEN
       });
     } else if (req.session.role === 'buyer') {
+      // 1) Load all distinct categories for the dropdown
+      const categories = await postingCollection.distinct('category');
+
+      // 2) Read the selected category from ?category=… (defaults to “all”)
+      const selectedCategory = req.query.category || '';
+
       let docs = await postingCollection
         .find({}) // Find all posts for buyers
         .sort({ createdAt: -1 })
@@ -152,7 +158,7 @@ app.get('/', async (req, res) => {
 
       // Map the selected posts to the view
       const postings = docs.map(doc => ({
-        _id: doc._id.toString(), // CRITICAL: Pass the _id for linking to viewpage
+        _id: doc._id.toString(), 
         produce: doc.produce,
         quantity: doc.quantity,
         price: doc.price,
