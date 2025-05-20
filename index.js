@@ -403,7 +403,7 @@ app.post("/createPost", upload.single("image"), async (req, res) => {
       sellerId: new ObjectId(req.session.userId),
       createdAt: new Date(),
       location: location || null, // Store item's location string
-    };
+    });
     if (latitude && longitude && !isNaN(parseFloat(latitude)) && !isNaN(parseFloat(longitude))) {
         newPosting.coordinates = {
             latitude: parseFloat(latitude),
