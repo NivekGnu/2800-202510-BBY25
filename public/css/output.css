@@ -861,6 +861,10 @@ video {
   width: 100vw;
 }
 
+.min-w-\[100px\] {
+  min-width: 100px;
+}
+
 .max-w-2xl {
   max-width: 42rem;
 }
@@ -926,6 +930,10 @@ video {
   flex-direction: column;
 }
 
+.flex-wrap {
+  flex-wrap: wrap;
+}
+
 .items-start {
   align-items: flex-start;
 }
@@ -952,6 +960,10 @@ video {
 
 .justify-around {
   justify-content: space-around;
+}
+
+.gap-4 {
+  gap: 1rem;
 }
 
 .gap-6 {
