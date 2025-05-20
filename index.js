@@ -392,7 +392,7 @@ app.post("/createPost", upload.single("image"), async (req, res) => {
     return res.status(400).send("No image uploaded. <a href='/createPost'>Try again</a>");
   }
 
-  const { produce, quantity, price, description } = req.body;
+  const { category, produce, quantity, price, description } = req.body;
   // Basic validation for other fields (Joi could be used here too for more robustness)
   if (!produce || !quantity || !price) {
     return res.status(400).send("Missing required fields (produce, quantity, price). <a href='/createPost'>Try again</a>");
@@ -409,6 +409,7 @@ app.post("/createPost", upload.single("image"), async (req, res) => {
       .toBuffer();
 
     await postingCollection.insertOne({
+      category,
       produce,
       quantity: parseInt(quantity, 10),
       price: parseFloat(price),
