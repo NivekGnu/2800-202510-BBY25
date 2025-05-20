@@ -145,11 +145,23 @@ app.get('/', async (req, res) => {
         mapboxToken: process.env.MAPBOX_API_TOKEN
       });
     } else if (req.session.role === 'buyer') {
-      const docs = await postingCollection
+      // Fetch all the distinct categories from DB.
+      const categories = await postingCollection.distinct('category');
+
+      // Read the selected category from query
+      const selectedCategory = req.query.category || '';
+
+      // Get all the postings, then filter if the user had checked specific category
+      let docs = await postingCollection
         .find({})
         .sort({ createdAt: -1 })
         .toArray();
+      if(selectedCategory) 
+      {
+        docs = docs.filter(doc => doc.category === selectedCategory);
+      }
 
+      // Map the selected posts to the view
       const postings = docs.map(doc => ({
         produce: doc.produce,
         quantity: doc.quantity,
@@ -163,7 +175,9 @@ app.get('/', async (req, res) => {
       res.render("buyerHome", {
         title: "Buyer Home Page",
         mapboxToken: process.env.MAPBOX_API_TOKEN,
-        postings: postings
+        postings: postings,
+        categories: categories,
+        selectedCategory: selectedCategory
       });
     } else {
       // Should not happen if role is always set, but as a fallback:
@@ -447,6 +461,7 @@ app.get("/post/:id/edit", async (req, res) => {
   // Build a "currentPost" object just like in sellerHome
   const currentPost = {
     id: doc._id.toString(),
+    category: doc.category,
     produce: doc.produce,
     quantity: doc.quantity,
     price: doc.price,
@@ -470,9 +485,10 @@ app.post("/post/:id/edit", upload.single("image"), async (req, res) => {
     return res.status(400).send("Invalid post ID");
   }
 
-  const { produce, quantity, price, description } = req.body;
+  const { category, produce, quantity, price, description } = req.body;
   const updateDoc = {
     $set: {
+      category,
       produce,
       quantity: parseInt(quantity, 10),
       price: parseFloat(price),
