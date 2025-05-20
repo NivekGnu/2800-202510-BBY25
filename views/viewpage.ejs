@@ -26,22 +26,23 @@
     </header>
 
     <main class="p-4">
+       <!-- Product Meta -->
       <div class="flex justify-between items-center text-xs text-gray-500 mb-3">
         <div class="flex items-center space-x-1">
           <span>
-            <%
-              const datePosted = new Date(post.createdAt); const now = new Date(); const diffTime = Math.abs(now - datePosted);
-              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-              let postedAgo = `Posted ${datePosted.toLocaleDateString()}`;
-              if (diffDays <= 1) postedAgo = "Posted today"; else if (diffDays <= 30) postedAgo = `Posted ${diffDays} days ago`;
-            %><%= postedAgo %>
+            <%# Use toLocaleString() for a more complete date and time display from createdAt %>
+            Posted on <%= new Date(post.createdAt).toLocaleString() %>
           </span>
           <span class="bg-gray-400 rounded-full w-1 h-1 mx-1"></span>
-          <span><% if (post.location) { %> <%= post.location %> <% } else if (post.seller && post.seller.location) { %> <%= post.seller.location %> <% } else { %> Location N/A <% } %></span>
+          <span>
+            <% if (post.location) { %> <%= post.location %>
+            <% } else if (post.seller && post.seller.location) { %> <%= post.seller.location %>
+            <% } else { %> Location N/A <% } %>
+          </span>
         </div>
         <div class="flex items-center space-x-1 text-sm text-gray-600">
           <div class="w-4 h-4"><img src="/img/star.png" alt="Rating star" class="w-full h-full object-contain"></div>
-          <span>4.9 (610)</span>
+          <span>4.9 (610)</span> <%# Placeholder for ratings %>
         </div>
       </div>
 
