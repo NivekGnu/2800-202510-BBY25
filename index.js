@@ -194,7 +194,7 @@ app.post('/api/gemini', async (req, res) => {
 
 // Signup page
 app.get("/signup", (req, res) => {
-  res.render("signup", { title: "Sign Up" });
+  res.render("signup", { title: "Sign Up", mapboxToken: process.env.MAPBOX_API_TOKEN });
 });
 
 // Login page
