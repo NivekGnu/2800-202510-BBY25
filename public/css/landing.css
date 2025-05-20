@@ -1,0 +1,107 @@
+/* 0) Font imports already in HTML:
+   - "Edu AU VIC WA NT Guides"
+   - "Itim"
+   - "Oswald"
+*/
+
+/* 1) reset & box-sizing */
+*, *::before, *::after {
+    box-sizing: border-box;
+  }
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    background: #fff;
+    overflow-x: hidden;
+  }
+  
+  /* 2) Base font on <body> */
+  body {
+    padding: 0 16px;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    font-size: 16px;
+    line-height: 1.5;
+    color: #333;
+  }
+  
+  /* 3) Container */
+  .landing-container {
+    margin: 20px auto 0;
+    width: 100%;
+    max-width: 379px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  /* 4) Headline text */
+  .landing-header {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  .landing-header p {
+    margin: 0;
+    font-family: 'Itim', cursive;
+    font-size: 40px;
+    font-weight: 400;
+    line-height: 1.2;
+  }
+  
+  /* 5) Illustration */
+  .landing-image {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 24px;
+  }
+  .landing-image img {
+    width: 300px;
+    height: auto;
+  }
+  
+  /* 6) Buttons common */
+  .btn {
+    width: 60%;
+    height: 40px;
+    font-size: 16px;
+    font-weight: 500;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    border: none;
+    background: #ccc;
+    color: #fff;
+    display: block;
+    text-align: center;
+  }
+  .btn:active {
+    opacity: 0.8;
+  }
+  
+  /* 7) Login button */
+  .login-btn {
+    margin-bottom: 16px;
+  }
+  
+  /* 8) Sign-up button */
+  .signup-btn {
+    width: 60%;
+    margin-top: 0;
+  }
+  
+  /* 9) Sign-up prompt text */
+  .signup-prompt {
+    width: 100%;               /* ← make it span the full .landing-container */
+    display: flex;             /* stack text + button in a column */
+    flex-direction: column;
+    align-items: center;       /* center the button under the text */
+    margin-top: 8px;           /* gap from the login button */
+  }
+
+  /* add a little space between the text and the button */
+.signup-prompt span {
+    margin-bottom: 4px;
+  }
+  

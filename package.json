@@ -1,0 +1,40 @@
+{
+  "name": "comp2800",
+  "version": "1.0.0",
+  "description": "Team Name: BBY-25\nTeam Members: \n- Tommy Nguyen\n- Kevin Ung\n- Shawn Lee\n- Clinton Nguyen\n## More details to come\nTBA",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "build-css": "tailwindcss -i ./src/input.css -o ./public/css/output.css",
+    "watch-css": "tailwindcss -i ./src/input.css -o ./public/css/output.css --watch",
+    "dev-full": "concurrently \"npm run watch-css\" \"npm run dev\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@google/genai": "^0.14.1",
+    "@google/generative-ai": "^0.24.1",
+    "@stripe/stripe-js": "^7.3.0",
+    "@tailwindcss/vite": "^4.1.7",
+    "bcrypt": "^5.1.1",
+    "connect-mongo": "^5.1.0",
+    "dotenv": "^16.5.0",
+    "ejs": "^3.1.10",
+    "express": "^5.1.0",
+    "express-session": "^1.18.1",
+    "joi": "^17.13.3",
+    "multer": "^1.4.5-lts.2",
+    "sharp": "^0.34.1",
+    "socket.io": "^4.8.1",
+    "stripe": "^18.1.0"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.21",
+    "concurrently": "^8.2.2",
+    "nodemon": "^3.1.10",
+    "postcss": "^8.5.3",
+    "tailwindcss": "^3.4.17"
+  }
+}

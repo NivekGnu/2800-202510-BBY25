@@ -1,0 +1,52 @@
+<%- include("templates/header") %>
+
+<div class="min-h-screen flex items-center justify-center bg-gray-100 px-4">
+  <div class="w-full max-w-md bg-white p-8 rounded-2xl shadow-lg">
+    <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Welcome Back</h1>
+    <form action="/loginSubmit" method="post" class="space-y-4">
+      <div>
+        <label for="email" class="sr-only">Email</label>
+        <input
+          id="email"
+          type="email"
+          name="email"
+          placeholder="Email"
+          required
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition"
+        />
+      </div>
+      <div>
+        <label for="password" class="sr-only">Password</label>
+        <input
+          id="password"
+          type="password"
+          name="password"
+          placeholder="Password"
+          required
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition"
+        />
+      </div>
+      <div class="flex items-center ml-1">
+        <input
+          id="remember"
+          type="checkbox"
+          name="remember"
+          class="h-4 w-4 text-green-500 focus:ring-green-400 border-gray-300 rounded"
+        />
+        <label for="remember" class="ml-2 text-sm text-gray-600">Remember me</label>
+      </div>
+      <button
+        type="submit"
+        class="w-full py-2 mt-2 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 transition"
+      >
+        Login
+      </button>
+    </form>
+    <p class="mt-6 text-center text-sm text-gray-600">
+      Don’t have an account?
+      <a href="/signup" class="text-green-500 hover:underline">Sign up</a>
+    </p>
+  </div>
+</div>
+
+<%- include("templates/footer") %>
