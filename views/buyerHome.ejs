@@ -23,7 +23,6 @@
 
   <!-- Category Filter Dropdown -->
   <div class="relative mb-6">
-    <!-- Toggle button -->
     <button
       id="filterBtn"
       class="w-full flex justify-between items-center px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm text-left focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -36,27 +35,20 @@
               : 'All' %>
         </strong>
       </span>
-      <!-- Down arrow -->
       <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M19 9l-7 7-7-7" />
       </svg>
     </button>
-
-    <!-- Dropdown menu -->
     <div
       id="filterMenu"
       class="hidden absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto"
     >
-      <!-- “All” option -->
       <a
         href="?category="
         class="block px-4 py-2 text-sm hover:bg-gray-100
                <%= selectedCategory === '' ? 'bg-indigo-100 text-indigo-700' : '' %>"
-      >
-        All
-      </a>
-      <!-- Dynamic category links -->
+      >All</a>
       <% categories.forEach(cat => { %>
         <a
           href="?category=<%= cat %>"
@@ -68,16 +60,13 @@
       <% }) %>
     </div>
   </div>
-  <!-- End filter -->
 
   <!-- Listings -->
   <section class="mt-8">
     <h2 class="text-2xl font-semibold mb-4 text-gray-800">All Available Postings</h2>
-
     <% if (postings.length === 0) { %>
       <p class="text-gray-600">There are currently no postings yet.</p>
     <% } else { %>
-      <!-- 2 columns on mobile, 3 on sm+ -->
       <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
         <% postings.forEach(p => { %>
           <a href="/viewpage?postId=<%= p._id %>" class="block group">
@@ -111,7 +100,50 @@
   </section>
 </div>
 
-<!-- Include footer/nav as before -->
+<!-- AI HELPER BUTTON -->
+<button
+  id="ai-helper-button"
+  class="fixed bottom-20 right-6 z-50 bg-green-700 hover:bg-green-800 text-white p-3 rounded-full"
+>
+  <img src="/img/glow-icon.svg" alt="AI Helper Icon" class="w-10 h-10"/>
+</button>
+
+<!-- AI HELPER MODAL -->
+<div
+  id="ai-modal"
+  class="relative z-10 opacity-0 pointer-events-none transition-opacity duration-300 ease-out"
+  aria-labelledby="modal-title"
+  role="dialog"
+  aria-modal="true"
+>
+  <div class="fixed inset-0 bg-gray-500/75 transition-opacity" aria-hidden="true"></div>
+  <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
+    <div class="flex min-h-screen items-center justify-center p-4 text-center">
+      <div class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
+        <div class="bg-gray-500 px-4 py-3">
+          <h3 id="modal-title" class="text-lg text-center font-semibold text-black">
+            What are some produce in season right now?
+          </h3>
+        </div>
+        <div class="bg-white px-4 pt-2 pb-4 sm:p-6 sm:pb-4">
+          <div class="mt-2 max-h-60 overflow-y-auto">
+            <p id="output" class="text-sm text-gray-700"></p>
+          </div>
+        </div>
+        <div class="bg-gray-100 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+          <button
+            id="close-modal"
+            type="button"
+            class="inline-flex w-full justify-center rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white hover:bg-green-500 sm:ml-3 sm:w-auto"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <%- include("templates/navbar_buyer") %>
 <%- include("templates/footer") %>
 
@@ -122,13 +154,12 @@
     window.location.href = "/logout";
   });
 
-  // Geolocation → city (unchanged)
+  // Geolocation → city
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(async ({ coords }) => {
       const { latitude, longitude } = coords;
       const res = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/` +
-        `${longitude},${latitude}.json?access_token=<%= mapboxToken %>`
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=<%= mapboxToken %>`
       );
       const json = await res.json();
       const place = json.features.find(f => f.place_type.includes('place'));
@@ -148,5 +179,43 @@
     if (!filterBtn.contains(e.target) && !filterMenu.contains(e.target)) {
       filterMenu.classList.add('hidden');
     }
+  });
+
+  // AI helper logic
+  document.addEventListener('DOMContentLoaded', () => {
+    const aiBtn    = document.getElementById('ai-helper-button');
+    const aiModal  = document.getElementById('ai-modal');
+    const closeBtn = document.getElementById('close-modal');
+    const output   = document.getElementById('output');
+
+    aiBtn.addEventListener('click', async () => {
+      aiModal.classList.remove('opacity-0', 'pointer-events-none');
+      aiModal.classList.add('opacity-100');
+      output.textContent = 'Loading…';
+      try {
+        const res = await fetch('/api/gemini', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            prompt: 'What are some produce in season right now?'
+          })
+        });
+        const data = await res.json();
+        output.textContent = data.text || 'No response';
+      } catch (err) {
+        output.textContent = 'Error: ' + err.message;
+      }
+    });
+
+    closeBtn.addEventListener('click', () => {
+      aiModal.classList.add('opacity-0', 'pointer-events-none');
+      aiModal.classList.remove('opacity-100');
+    });
+
+    document.addEventListener('click', e => {
+      if (!aiModal.contains(e.target) && !aiBtn.contains(e.target)) {
+        aiModal.classList.add('opacity-0', 'pointer-events-none');
+      }
+    });
   });
 </script>
