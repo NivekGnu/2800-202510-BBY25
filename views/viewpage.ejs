@@ -26,23 +26,15 @@
     </header>
 
     <main class="p-4">
-       <!-- Product Meta -->
       <div class="flex justify-between items-center text-xs text-gray-500 mb-3">
         <div class="flex items-center space-x-1">
-          <span>
-            <%# Use toLocaleString() for a more complete date and time display from createdAt %>
-            Posted on <%= new Date(post.createdAt).toLocaleString() %>
-          </span>
+          <span>Posted on <%= new Date(post.createdAt).toLocaleString() %></span>
           <span class="bg-gray-400 rounded-full w-1 h-1 mx-1"></span>
-          <span>
-            <% if (post.location) { %> <%= post.location %>
-            <% } else if (post.seller && post.seller.location) { %> <%= post.seller.location %>
-            <% } else { %> Location N/A <% } %>
-          </span>
+          <span><% if (post.location) { %> <%= post.location %> <% } else if (post.seller && post.seller.location) { %> <%= post.seller.location %> <% } else { %> Location N/A <% } %></span>
         </div>
         <div class="flex items-center space-x-1 text-sm text-gray-600">
           <div class="w-4 h-4"><img src="/img/star.png" alt="Rating star" class="w-full h-full object-contain"></div>
-          <span>4.9 (610)</span> <%# Placeholder for ratings %>
+          <span>4.9 (610)</span>
         </div>
       </div>
 
@@ -80,7 +72,14 @@
                 <p class="text-sm font-semibold text-gray-800"><%= post.seller.firstName || 'Seller' %> <%= post.seller.lastName || '' %></p>
                 <p class="text-xs text-gray-500">Seller's Detail</p>
             </div>
-          <% } else { /* ... Seller Unavailable ... */ } %>
+          <% } else { %>
+             <div class="text-right flex-shrink-0">
+                <div class="seller-pfp-container rounded-full mb-1 ml-auto overflow-hidden bg-gray-300">
+                  <img src="/img/farmerpfp.png" alt="Seller N/A" class="w-full h-full object-cover">
+                </div>
+                <p class="text-sm font-semibold text-gray-800">Seller Info Missing</p> <%# Updated fallback text %>
+            </div>
+          <% } %>
         </div>
       </div>
       <hr class="my-4 border-gray-200">
@@ -112,163 +111,157 @@
             </button>
         <% } else if (post.seller && post.seller._id.toString() === session.userId) { %>
             <p class="text-center text-gray-600 py-3">This is your own posting. You can <a href="/post/<%= post._id %>/edit" class="text-green-600 hover:underline font-semibold">edit it here</a>.</p>
-        <% } else { /* ... Chat Unavailable ... */ } %>
+        <% } else { %>
+            <button class="bg-gray-400 text-gray-700 py-3 px-6 rounded-md w-full text-lg font-semibold cursor-not-allowed" disabled>Chat Unavailable</button>
+        <% } %>
       </div>
     </footer>
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
-  const productConfig = {
-    basePrice: parseFloat("<%= post.price %>"),
-    maxQuantity: parseInt("<%= post.quantity %>"),
-    id: "<%= post._id %>",
-    produceName: "<%= post.produce %>",
-    imageSrc: "<%= post.imageSrc %>",
-    sellerId: "<%= post.seller ? post.seller._id.toString() : '' %>",
-    sellerName: "<%= post.seller ? (post.seller.firstName + ' ' + (post.seller.lastName || '')).trim() : 'Unknown Seller' %>"
-  };
+  <script>
+    // --- Configuration & Initial Data (from EJS) ---
+    const productConfig = {
+        basePrice: parseFloat("<%= post.price %>"),
+        maxQuantity: parseInt("<%= post.quantity %>"),
+        id: "<%= post._id %>",
+        produceName: "<%= post.produce %>",
+        imageSrc: "<%= post.imageSrc %>",
 
-  let selectedQuantity = 1;
-  const priceDisplayElement = document.getElementById("priceOfItem");
-  const quantityDisplayElement = document.getElementById("item-quality");
-  const totalPriceForCartElement = document.getElementById("totalPriceForCart");
-  const addToCartButtonElement = document.getElementById("addToCartButton");
-  const qtyUpButtonElement = document.getElementById("qtyUpButton");
-  const qtyDownButtonElement = document.getElementById("qtyDownButton");
-  const mapContainerElement = document.getElementById('map');
+        // --- TESTING MODIFICATION ---
+        // This sellerId and sellerName will be used when adding to cart,
+        // overriding any dynamic seller data from the 'post' object for this specific test.
+        sellerId: "6827313b146f2df7484f2735", // Clinton's test seller ID
+        sellerName: "Clinton Test Seller"    // A name for this test seller
+        // --- END TESTING MODIFICATION ---
 
-  function updateDisplayedPrices() {
-    const currentTotalPrice = selectedQuantity * productConfig.basePrice;
-    if (priceDisplayElement) {
-      priceDisplayElement.innerText = `$${currentTotalPrice.toFixed(2)}`;
-    }
-    if (totalPriceForCartElement) {
-      totalPriceForCartElement.innerText = currentTotalPrice.toFixed(2);
-    }
-  }
+        // --- PRODUCTION VERSION (Comment out the testing block and uncomment this) ---
+        // sellerId: "<%= post.seller ? post.seller._id.toString() : 'UNKNOWN_SELLER' %>",
+        // sellerName: "<%= post.seller ? (post.seller.firstName + ' ' + (post.seller.lastName || '')).trim() : 'Unknown Seller' %>"
+        // --- END PRODUCTION VERSION ---
+    };
+    let selectedQuantity = 1;
 
-  function initializeQuantityControls() {
-    if (!qtyUpButtonElement || !qtyDownButtonElement || !quantityDisplayElement) return;
-    
-    qtyUpButtonElement.addEventListener('click', () => {
-      if (selectedQuantity < productConfig.maxQuantity && productConfig.maxQuantity > 0) {
-        selectedQuantity++;
-        quantityDisplayElement.innerText = selectedQuantity;
-        updateDisplayedPrices();
-      }
-    });
-    
-    qtyDownButtonElement.addEventListener('click', () => {
-      if (selectedQuantity > 1 && productConfig.maxQuantity > 0) {
-        selectedQuantity--;
-        quantityDisplayElement.innerText = selectedQuantity;
-        updateDisplayedPrices();
-      }
-    });
-    
-    if (productConfig.maxQuantity > 0) {
-      updateDisplayedPrices();
-    } else {
-      [qtyUpButtonElement, qtyDownButtonElement].forEach(btn => btn.disabled = true);
-      quantityDisplayElement.innerText = '0';
-      if (totalPriceForCartElement) totalPriceForCartElement.innerText = "0.00";
-    }
-  }
+    // --- DOM Elements ---
+    const priceDisplayElement = document.getElementById("priceOfItem");
+    const quantityDisplayElement = document.getElementById("item-quality");
+    const totalPriceForCartElement = document.getElementById("totalPriceForCart");
+    const addToCartButtonElement = document.getElementById("addToCartButton");
+    const qtyUpButtonElement = document.getElementById("qtyUpButton");
+    const qtyDownButtonElement = document.getElementById("qtyDownButton");
+    const mapContainerElement = document.getElementById('map');
 
-  function initializeAddToCart() {
-    if (!addToCartButtonElement) return;
-    
-    addToCartButtonElement.addEventListener('click', () => {
-      if (productConfig.maxQuantity === 0) {
-        alert("This item is out of stock.");
-        return;
-      }
-      
-      const cartItem = {
-        id: productConfig.id,
-        produce: productConfig.produceName,
-        price: productConfig.basePrice,
-        quantity: selectedQuantity,
-        imageSrc: productConfig.imageSrc,
-        sellerId: productConfig.sellerId,
-        sellerName: productConfig.sellerName
-      };
-      
-      let cart = JSON.parse(localStorage.getItem('cart') || '{}');
-      
-      if (!cart[cartItem.sellerId]) {
-        cart[cartItem.sellerId] = {
-          sellerName: cartItem.sellerName,
-          items: []
-        };
-      }
-      
-      const existingItemIndex = cart[cartItem.sellerId].items.findIndex(item => item.id === cartItem.id);
-      
-      if (existingItemIndex > -1) {
-        let newQuantity = cart[cartItem.sellerId].items[existingItemIndex].quantity + cartItem.quantity;
-        if (newQuantity > productConfig.maxQuantity) {
-          alert(`Max ${productConfig.maxQuantity} available.`);
-          newQuantity = productConfig.maxQuantity;
+    // --- Helper Functions ---
+    function updateDisplayedPrices() {
+        const currentTotalPrice = selectedQuantity * productConfig.basePrice;
+        if (priceDisplayElement) {
+            priceDisplayElement.innerText = `$${currentTotalPrice.toFixed(2)}`;
         }
-        cart[cartItem.sellerId].items[existingItemIndex].quantity = newQuantity;
-      } else {
-        if (cartItem.quantity > productConfig.maxQuantity) {
-          alert(`Max ${productConfig.maxQuantity} available.`);
-          cartItem.quantity = productConfig.maxQuantity;
+        if (totalPriceForCartElement) {
+            totalPriceForCartElement.innerText = currentTotalPrice.toFixed(2);
         }
-        cart[cartItem.sellerId].items.push(cartItem);
-      }
-      
-      localStorage.setItem('cart', JSON.stringify(cart));
-      alert(`${selectedQuantity} x ${cartItem.produce} added/updated in cart!`);
+    }
+
+    // --- Quantity Controls Logic ---
+    function initializeQuantityControls() {
+        if (!qtyUpButtonElement || !qtyDownButtonElement || !quantityDisplayElement) return;
+
+        qtyUpButtonElement.addEventListener('click', () => {
+            if (selectedQuantity < productConfig.maxQuantity && productConfig.maxQuantity > 0) {
+                selectedQuantity++;
+                quantityDisplayElement.innerText = selectedQuantity;
+                updateDisplayedPrices();
+            }
+        });
+
+        qtyDownButtonElement.addEventListener('click', () => {
+            if (selectedQuantity > 1 && productConfig.maxQuantity > 0) {
+                selectedQuantity--;
+                quantityDisplayElement.innerText = selectedQuantity;
+                updateDisplayedPrices();
+            }
+        });
+
+        if (productConfig.maxQuantity > 0) {
+            updateDisplayedPrices();
+        } else {
+            [qtyUpButtonElement, qtyDownButtonElement].forEach(btn => btn.disabled = true);
+            quantityDisplayElement.innerText = '0';
+            if (totalPriceForCartElement) totalPriceForCartElement.innerText = "0.00";
+        }
+    }
+
+    // --- Add to Cart Logic ---
+    function initializeAddToCart() {
+        if (!addToCartButtonElement) return;
+
+        addToCartButtonElement.addEventListener('click', () => {
+            if (productConfig.maxQuantity === 0) {
+                alert("This item is out of stock and cannot be added to cart.");
+                return;
+            }
+
+            const cartItem = {
+                id: productConfig.id,
+                produce: productConfig.produceName,
+                price: productConfig.basePrice,
+                quantity: selectedQuantity,
+                imageSrc: productConfig.imageSrc,
+                sellerId: productConfig.sellerId, // Uses the value from productConfig (test or dynamic)
+                sellerName: productConfig.sellerName // Uses the value from productConfig
+            };
+
+            let cart = JSON.parse(localStorage.getItem('cart') || '{}');
+            if (!cart[cartItem.sellerId]) {
+                cart[cartItem.sellerId] = { sellerName: cartItem.sellerName, items: [] };
+            }
+            const existingItemIndex = cart[cartItem.sellerId].items.findIndex(item => item.id === cartItem.id);
+            if (existingItemIndex > -1) {
+                let newQuantity = cart[cartItem.sellerId].items[existingItemIndex].quantity + cartItem.quantity;
+                if (newQuantity > productConfig.maxQuantity) {
+                    alert(`You can only add up to ${productConfig.maxQuantity} of this item. Cart updated to max.`);
+                    newQuantity = productConfig.maxQuantity;
+                }
+                cart[cartItem.sellerId].items[existingItemIndex].quantity = newQuantity;
+            } else {
+                if (cartItem.quantity > productConfig.maxQuantity) {
+                    alert(`You can only add up to ${productConfig.maxQuantity} of this item. Quantity set to max.`);
+                    cartItem.quantity = productConfig.maxQuantity;
+                }
+                cart[cartItem.sellerId].items.push(cartItem);
+            }
+            localStorage.setItem('cart', JSON.stringify(cart));
+            alert(`${selectedQuantity} x ${cartItem.produce} added/updated in cart!`);
+        });
+    }
+
+    // --- Map Initialization Logic ---
+    function initializeMap() {
+        if (!mapContainerElement || mapContainerElement.dataset.hasCoords !== 'true') { return; }
+        const defaultLatitude = 49.2487; const defaultLongitude = -122.9806;
+        let latitude = parseFloat(mapContainerElement.dataset.latitude);
+        let longitude = parseFloat(mapContainerElement.dataset.longitude);
+        const productName = mapContainerElement.dataset.productName;
+        const locationString = mapContainerElement.dataset.locationString;
+        const initialLatitude = !isNaN(latitude) ? latitude : defaultLatitude;
+        const initialLongitude = !isNaN(longitude) ? longitude : defaultLongitude;
+        const initialZoom = !isNaN(latitude) ? 14 : 8;
+        try {
+            const mapInstance = L.map(mapContainerElement).setView([initialLatitude, initialLongitude], initialZoom);
+            L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
+                attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © <a href="http://openstreetmap.org/copyright">OpenStreetMap</a>',
+                maxZoom: 18, id: 'mapbox/streets-v11', tileSize: 512, zoomOffset: -1, accessToken: '<%= mapboxToken %>'
+            }).addTo(mapInstance);
+            L.marker([initialLatitude, initialLongitude]).addTo(mapInstance).bindPopup(`<b>${productName}</b><br>${locationString || 'Item Location'}`).openPopup();
+        } catch (error) { console.error("Leaflet map error:", error); mapContainerElement.innerHTML = '<p class="text-center p-4">Map error.</p>'; }
+    }
+
+    // --- Initialize Page Scripts ---
+    document.addEventListener('DOMContentLoaded', () => {
+        initializeQuantityControls();
+        initializeAddToCart();
+        initializeMap();
     });
-  }
-
-  function initializeMap() {
-    if (!mapContainerElement || mapContainerElement.dataset.hasCoords !== 'true') {
-      return;
-    }
-    
-    const defaultLatitude = 49.2487;
-    const defaultLongitude = -122.9806;
-    let latitude = parseFloat(mapContainerElement.dataset.latitude);
-    let longitude = parseFloat(mapContainerElement.dataset.longitude);
-    const productName = mapContainerElement.dataset.productName;
-    const locationString = mapContainerElement.dataset.locationString;
-    
-    const initialLatitude = !isNaN(latitude) ? latitude : defaultLatitude;
-    const initialLongitude = !isNaN(longitude) ? longitude : defaultLongitude;
-    const initialZoom = !isNaN(latitude) ? 14 : 8;
-    
-    try {
-      const mapInstance = L.map(mapContainerElement).setView([initialLatitude, initialLongitude], initialZoom);
-      
-      L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
-        attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © <a href="http://openstreetmap.org/copyright">OpenStreetMap</a>',
-        maxZoom: 18,
-        id: 'mapbox/streets-v11',
-        tileSize: 512,
-        zoomOffset: -1,
-        accessToken: '<%= mapboxToken %>'
-      }).addTo(mapInstance);
-      
-      L.marker([initialLatitude, initialLongitude])
-        .addTo(mapInstance)
-        .bindPopup(`<b>${productName}</b><br>${locationString || 'Item Location'}`)
-        .openPopup();
-    } catch (error) {
-      console.error("Leaflet map error:", error);
-      mapContainerElement.innerHTML = '<p class="text-center p-4">Map error.</p>';
-    }
-  }
-
-  document.addEventListener('DOMContentLoaded', () => {
-    initializeQuantityControls();
-    initializeAddToCart();
-    initializeMap();
-  });
-</script>
+  </script>
 </body>
 </html>
