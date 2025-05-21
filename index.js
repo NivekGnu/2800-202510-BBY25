@@ -874,14 +874,90 @@ app.post('/profile', async (req, res) => {
 
 
 // --- OTHER MISC ROUTES ---
-app.get('/contact', (req, res) => { // Example, may not be used if chat is primary
-  if (req.session.authenticated) {
-    res.render("contact", { title: "Contact Page", firstName: req.session.firstName });
-  } else {
-    res.redirect('/login');
-  }
+app.get("/contacts", async (req, res) => {
+    if (!req.session.authenticated) {
+        return res.redirect("/login");
+    }
+
+    const currentUserIdString = req.session.userId;
+    const currentUserId = new ObjectId(currentUserIdString);
+
+    try {
+        // Find all chat messages where the current user is either the sender or receiver
+        // Then, get the distinct other user IDs from those messages.
+        const distinctSenderIds = await chatMessageCollection.distinct("senderId", { receiverId: currentUserId });
+        const distinctReceiverIds = await chatMessageCollection.distinct("receiverId", { senderId: currentUserId });
+
+        // Combine and get unique IDs, excluding the current user itself
+        const allInteractedUserIds = [...new Set([...distinctSenderIds, ...distinctReceiverIds])]
+            .filter(id => id.toString() !== currentUserIdString)
+            .map(id => new ObjectId(id)); // Convert back to ObjectId for DB query
+
+        let contacts = [];
+        if (allInteractedUserIds.length > 0) {
+            // Fetch user details for these distinct IDs
+            contacts = await userCollection.find(
+                { _id: { $in: allInteractedUserIds } },
+                { projection: { firstName: 1, lastName: 1, profilePictureUrl: 1, /* other relevant fields */ } }
+            ).toArray();
+
+            // Optionally, fetch the last message for each contact for preview (more complex query)
+            // For simplicity, we'll just list users for now.
+        }
+
+        res.render("contacts", {
+            title: "My Messages",
+            contacts: contacts, // Array of user objects
+            currentUserId: currentUserIdString
+        });
+
+    } catch (error) {
+        console.error("Error fetching contacts:", error);
+        res.status(500).render("errorPage", {
+            title: "Error",
+            errorMessage: "Could not load your messages."
+        });
+    }
 });
 
+
+// Your existing /chat route should mostly remain the same.
+// It's what the links from the contacts page will point to.
+app.get("/chat", async (req, res) => {
+  if (!req.session.authenticated) return res.redirect("/login");
+  const currentUserId = req.session.userId; // String
+  const otherUserIdString = req.query.with; // String
+
+  if (!otherUserIdString || !ObjectId.isValid(otherUserIdString) || currentUserId === otherUserIdString) {
+    return res.status(400).render("errorPage", { title: "Chat Error", errorMessage: "Invalid chat parameters." });
+  }
+  try {
+    // Fetch other user's details for the chat page header
+    const otherUser = await userCollection.findOne(
+        { _id: new ObjectId(otherUserIdString) },
+        { projection: { firstName: 1, lastName: 1 } }
+    );
+    if (!otherUser) {
+        return res.status(404).render("errorPage", { title: "Chat Error", errorMessage: "Chat partner not found." });
+    }
+
+    // Construct chatId consistently
+    const ids = [currentUserId, otherUserIdString].sort(); // Sort to ensure chatId is always the same for two users
+    const chatId = ids.join("-");
+
+    res.render("chat", { // This is your existing chat.ejs
+      title: `Chat with ${otherUser.firstName || 'User'}`,
+      currentUserId: currentUserId,
+      currentUserFirstName: req.session.firstName, // Assuming this is in session
+      otherUserId: otherUserIdString,
+      otherUserName: `${otherUser.firstName || ''} ${otherUser.lastName || ''}`.trim(),
+      chatId: chatId,
+    });
+  } catch (error) {
+    console.error("GET /chat error:", error);
+    res.status(500).render("errorPage", { title: "Server Error", errorMessage: "Error loading chat." });
+  }
+});
 app.get("/map", async (req, res) => { // General map page, if needed
   if (!req.session.authenticated) return res.redirect("/login");
 

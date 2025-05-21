@@ -1,0 +1,60 @@
+<%-/* views/contacts.ejs */%>
+<!DOCTYPE html>
+<html lang="en">
+<body class="bg-gray-100">
+
+    <%- include('templates/header') %> <%# Or your main app header/navbar %>
+
+    <div class="max-w-md mx-auto min-h-screen bg-white shadow-md">
+
+        <!-- Contacts List -->
+        <main class="flex-grow">
+            <% if (contacts && contacts.length > 0) { %>
+                <ul role="list" class="divide-y divide-gray-200">
+                    <% contacts.forEach(contact => { %>
+                        <li class="contact-item">
+                            <a href="/chat?with=<%= contact._id.toString() %>" class="block p-4">
+                                <div class="flex items-center space-x-4">
+                                    <div class="flex-shrink-0">
+                                        <% if (contact.profilePictureUrl) { %>
+                                            <img class="h-10 w-10 rounded-full object-cover" src="<%= contact.profilePictureUrl %>" alt="<%= contact.firstName %> profile">
+                                        <% } else { %>
+                                            <span class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-gray-400">
+                                                <span class="font-medium leading-none text-white">
+                                                    <%= (contact.firstName ? contact.firstName[0] : '') %><%= (contact.lastName ? contact.lastName[0] : '') %>
+                                                </span>
+                                            </span>
+                                        <% } %>
+                                    </div>
+                                    <div class="min-w-0 flex-1">
+                                        <p class="truncate text-sm font-medium text-gray-900">
+                                            <%= contact.firstName || 'User' %> <%= contact.lastName || '' %>
+                                        </p>
+                                        <p class="truncate text-sm text-gray-500">
+                                            <%# Placeholder for last message snippet or status - requires more complex query %>
+                                            Click to view chat
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <i class="fas fa-chevron-right text-gray-400"></i>
+                                    </div>
+                                </div>
+                            </a>
+                        </li>
+                    <% }) %>
+                </ul>
+            <% } else { %>
+                <div class="text-center text-gray-500 py-10 px-4">
+                    <i class="far fa-comments text-4xl mb-3 text-gray-400"></i>
+                    <p>You have no active conversations yet.</p>
+                    <p class="mt-2 text-sm">Start a chat by visiting a product page and contacting a seller!</p>
+                </div>
+            <% } %>
+        </main>
+    </div>
+
+<%- include("templates/navbar_buyer") %>
+    <%- include("templates/footer") %>
+
+</body>
+</html>
