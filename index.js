@@ -743,7 +743,7 @@ app.get('/profile', async (req, res) => {
     : 'buyerProfile';
 
   res.render(view, {
-    title: user.role === 'seller' ? 'Seller Profile' : 'Buyer Profile',
+    title: 'User Profile Settings',
     user
   });
 });
