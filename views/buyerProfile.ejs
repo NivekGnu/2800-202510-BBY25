@@ -1,7 +1,12 @@
 <%- include("templates/header") %>
 
 <div class="max-w-xl mx-auto p-6 bg-white rounded-2xl shadow-lg mt-12">
-  <h1 class="text-2xl font-bold text-gray-800 mb-6 text-center"><%= title %></h1>
+
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-bold text-gray-800"><%= title %></h1>
+    <button id="signout" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-full transition">Sign Out</button>
+  </div>
+      
   <form action="/profile" method="post" class="space-y-6">
     <div>
       <label class="block text-gray-700 font-medium mb-2" for="firstName">First Name</label>
@@ -42,11 +47,18 @@
         type="submit"
         class="px-6 py-2 bg-green-600 text-white font-semibold rounded-full shadow hover:bg-green-700 transition"
       >
-        Save Changes
+        Save
       </button>
     </div>
   </form>
 </div>
+
+<script>
+  document.getElementById("signout")
+      .addEventListener("click", () => {
+          window.location.href = "/logout"
+      });
+</script>
 
 <%- include("templates/footer") %>
 
