@@ -45,16 +45,37 @@
           <input id="roleSeller" name="role" type="radio" value="seller" hidden />
 
           <div class="flex space-x-4">
-            <button type="button"
+            <button type="button" id="buyerButton"
               class="role-btn flex-1 px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-700 hover:bg-gray-50 focus:outline-none transition"
               data-target="roleBuyer">
               Buyer
             </button>
-            <button type="button"
+            <button type="button" id="sellerButton"
               class="role-btn flex-1 px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-700 hover:bg-gray-50 focus:outline-none transition"
               data-target="roleSeller">
               Seller
             </button>
+          </div>
+        </div>
+
+        <!-- Seller address -->
+        <div id="addressInput" class="space-y-4 hidden text-center">
+
+          <small> Please enter the address where your products are available. </small>
+
+          <input name="address" data-property="address" placeholder="Street Address" type="text"
+            autocomplete="address-line1"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition" />
+
+          <div class="flex flex-wrap gap-4">
+            <input name="city" placeholder="City" type="text" autocomplete="address-level2"
+              class="flex-1 min-w-[100px] px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition" />
+
+            <input name="province" placeholder="Province" type="text" autocomplete="address-level1"
+              class="flex-1 min-w-[100px] px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition" />
+
+            <input name="postalCode" placeholder="Postal Code" type="text" autocomplete="postal-code"
+              class="flex-1 min-w-[100px] px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition" />
           </div>
         </div>
 
@@ -95,6 +116,22 @@
     form.addEventListener('input', validateForm);
     form.addEventListener('change', validateForm);
     validateForm();
+
+    // Autofill for seller's address
+    const addressScript = document.getElementById('search-js');
+    addressScript.onload = function () {
+      mapboxsearch.autofill({
+        accessToken: '<%= mapboxToken %>'
+      });
+    };
+
+    document.getElementById("buyerButton").addEventListener("click", () => {
+      document.getElementById("addressInput").classList.add("hidden");
+    });
+
+    document.getElementById("sellerButton").addEventListener("click", () => {
+      document.getElementById("addressInput").classList.remove("hidden");
+    });
   </script>
 
   <%- include("templates/footer") %>
