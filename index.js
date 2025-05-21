@@ -720,6 +720,77 @@ app.get('/checkout/success', async (req, res) => {
     res.render('checkoutSuccess', { title: 'Payment Successful' /*, session: session */});
 });
 
+// route for profile
+app.get('/profile', async (req, res) => {
+  if (!req.session.authenticated) {
+    return res.redirect('/');
+  }
+
+  // fetch all fields except password
+  const user = await userCollection.findOne(
+    { _id: new ObjectId(req.session.userId) },
+    { projection: { password: 0 } }
+  );
+
+  // edge case: session exists but user corrupt/null
+  if (!user) {
+    req.session.destroy();
+    return res.redirect('/');
+  }
+
+  const view = user.role === 'seller'
+    ? 'sellerProfile'
+    : 'buyerProfile';
+
+  res.render(view, {
+    title: user.role === 'seller' ? 'Seller Profile' : 'Buyer Profile',
+    user
+  });
+});
+
+// handle profile edits
+app.post('/profile', async (req, res) => {
+  if (!req.session.authenticated) {
+    return res.redirect('/');
+  }
+
+  // Validate incoming fields
+  const schema = Joi.object({
+    firstName: Joi.string().min(1).max(50).required(),
+    lastName:  Joi.string().min(1).max(50).required(),
+    email:     Joi.string().email().required()
+  });
+  
+  const { error, value } = schema.validate(req.body, { abortEarly: false });
+  if (error) {
+    const msgs = error.details.map(d => d.message).join('; ');
+    return res.status(400).send(msgs);
+  }
+
+  // ensure no one else is using this email
+  const existing = await userCollection.findOne({ email: value.email });
+  if (existing && existing._id.toString() !== req.session.userId) {
+    return res.status(400).send('That email is already in use by another account.');
+  }
+
+  // Build update object
+  const updates = {
+    firstName: value.firstName,
+    lastName:  value.lastName,
+    email:     value.email,
+  };
+
+  // Only sellers have languages, but they manage those elsewhere (/languages)
+  // So we don't touch languages here
+
+  await userCollection.updateOne(
+    { _id: new ObjectId(req.session.userId) },
+    { $set: updates }
+  );
+
+  res.redirect('/profile');
+});
+
 
 // --- OTHER MISC ROUTES ---
 app.get('/contact', (req, res) => { // Example, may not be used if chat is primary
