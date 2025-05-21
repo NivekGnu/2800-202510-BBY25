@@ -1,71 +1,103 @@
 <%- include("templates/header") %>
 
-<div class="max-w-xl mx-auto p-6 bg-white rounded-2xl shadow-lg mt-12">
-  <h1 class="text-2xl font-bold text-gray-800 mb-6 text-center"><%= title %></h1>
-  <form action="/profile" method="post" class="space-y-6">
-    <div>
-      <label class="block text-gray-700 font-medium mb-2" for="firstName">First Name</label>
-      <input
-        id="firstName"
-        name="firstName"
-        value="<%= user.firstName %>"
-        required
-        class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-      />
-    </div>
-
-    <div>
-      <label class="block text-gray-700 font-medium mb-2" for="lastName">Last Name</label>
-      <input
-        id="lastName"
-        name="lastName"
-        value="<%= user.lastName %>"
-        required
-        class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-      />
-    </div>
-
-    <div>
-      <label class="block text-gray-700 font-medium mb-2" for="email">Email</label>
-      <input
-        id="email"
-        name="email"
-        type="email"
-        value="<%= user.email %>"
-        required
-        class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-      />
-    </div>
-
-    <div>
-      <label class="block text-gray-700 font-medium mb-2" for="languages">Supported Languages</label>
-      <div class="flex flex-wrap gap-2">
-        <% if (user.languages && user.languages.length) { %>
-          <% user.languages.forEach(lang => { %>
-            <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm"><%= lang %></span>
-          <% }) %>
-        <% } else { %>
-          <span class="text-gray-500">None selected</span>
-        <% } %>
+  <div class="max-w-xl mx-auto p-6 bg-white rounded-2xl shadow-lg mt-12">
+    <h1 class="text-2xl font-bold text-gray-800 mb-6 text-center">
+      <%= title %>
+    </h1>
+    <form action="/profile" method="post" class="space-y-6">
+      <div>
+        <label class="block text-gray-700 font-medium mb-2" for="firstName">First Name</label>
+        <input id="firstName" name="firstName" value="<%= user.firstName %>" required
+          class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500" />
       </div>
-    </div>
 
-    <div>
-      <p class="text-gray-700">
-        To update your supported languages, go <a href="/languages" class="text-green-600 underline font-medium">here</a>.
-      </p>
-    </div>
+      <div>
+        <label class="block text-gray-700 font-medium mb-2" for="lastName">Last Name</label>
+        <input id="lastName" name="lastName" value="<%= user.lastName %>" required
+          class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500" />
+      </div>
 
-    <div class="text-center">
-      <button
-        type="submit"
-        class="px-6 py-2 bg-green-600 text-white font-semibold rounded-full shadow hover:bg-green-700 transition"
-      >
-        Save Changes
-      </button>
-    </div>
-  </form>
-</div>
+      <div>
+        <label class="block text-gray-700 font-medium mb-2" for="email">Email</label>
+        <input id="email" name="email" type="email" value="<%= user.email %>" required
+          class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500" />
+      </div>
 
-<%- include("templates/footer") %>
+      <div>
+        <label class="block text-gray-700 font-medium mb-2" for="languages">Supported Languages</label>
+        <div class="flex flex-wrap gap-2">
+          <% if (user.languages && user.languages.length) { %>
+            <% user.languages.forEach(lang=> { %>
+              <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
+                <%= lang %>
+              </span>
+              <% }) %>
+                <% } else { %>
+                  <span class="text-gray-500">None selected</span>
+                  <% } %>
+        </div>
+      </div>
 
+      <div>
+        <p class="text-gray-700">
+          To update your supported languages, go <a href="/languages"
+            class="text-green-600 underline font-medium">here</a>.
+        </p>
+      </div>
+
+      <!-- Seller address -->
+      <div id="addressInput" class="space-y-4">
+        <div>
+          <p>Address</p>
+          <input name="address" data-property="address" value="<%= user.address.address %>" type="text"
+            autocomplete="address-line1"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition address-search" />
+        </div>
+
+
+        <div class="flex flex-wrap gap-4">
+          <div>
+            <p>City</p>
+            <input name="city" value="<%= user.address.city %>" type="text" autocomplete="address-level2"
+              class="flex-1 min-w-[100px] px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition" />
+          </div>
+
+          <div>
+            <p>Province</p>
+            <input name="province" value="<%= user.address.province %>" type="text" autocomplete="address-level1"
+              class="flex-1 min-w-[100px] px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition" />
+          </div>
+
+          <div>
+            <p>Postal Code</p>
+            <input name="postalCode" value="<%= user.address.postalCode %>" type="text" autocomplete="postal-code"
+              class="flex-1 min-w-[100px] px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition" />
+          </div>
+
+        </div>
+      </div>
+
+      <div class="text-center">
+        <button type="submit" id="submit"
+          class="px-6 py-2 bg-green-600 text-white font-semibold rounded-full shadow hover:bg-green-700 transition">
+          Save Changes
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    // Autofill for seller's address
+    const addressScript = document.getElementById('search-js');
+    addressScript.onload = function () {
+      mapboxsearch.autofill({
+        accessToken: '<%= mapboxToken %>'
+      });
+    };
+
+    document.getElementById('submit').addEventListener('click', () => {
+      console.log(req.body);
+    });
+  </script>
+
+  <%- include("templates/footer") %>
