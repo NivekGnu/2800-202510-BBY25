@@ -399,7 +399,7 @@ app.post("/createPost", upload.single("image"), async (req, res) => {
     return res.status(400).send("No image uploaded. <a href='/createPost'>Try again</a>");
   }
 
-  const { produce, quantity, price, description } = req.body;
+  const { category, produce, quantity, price, description, location, latitude, longitude } = req.body;
   // Basic validation for other fields (Joi could be used here too for more robustness)
   if (!produce || !quantity || !price) {
     return res.status(400).send("Missing required fields (produce, quantity, price). <a href='/createPost'>Try again</a>");
@@ -409,7 +409,9 @@ app.post("/createPost", upload.single("image"), async (req, res) => {
     const fullBuffer = await sharp(req.file.buffer).resize({ width: 1080, withoutEnlargement: true }).jpeg({ quality: 80 }).toBuffer();
     const thumbBuffer = await sharp(req.file.buffer).resize({ width: 400, withoutEnlargement: true }).jpeg({ quality: 70 }).toBuffer();
 
-    await postingCollection.insertOne({
+    // build your post object
+    const newPosting = {
+      category,
       produce,
       quantity: parseInt(quantity, 10),
       price: parseFloat(price),
@@ -418,17 +420,23 @@ app.post("/createPost", upload.single("image"), async (req, res) => {
       thumbnail: { data: thumbBuffer, contentType: "image/jpeg" },
       sellerId: new ObjectId(req.session.userId),
       createdAt: new Date(),
-      location: location || null, // Store item's location string
-    });
-    if (latitude && longitude && !isNaN(parseFloat(latitude)) && !isNaN(parseFloat(longitude))) {
+      location: location || null,
+    };
+    // optional coordinates
+    if (
+      latitude && longitude &&
+      !isNaN(parseFloat(latitude)) &&
+      !isNaN(parseFloat(longitude))
+    ) {
       newPosting.coordinates = {
         latitude: parseFloat(latitude),
-        longitude: parseFloat(longitude)
+        longitude: parseFloat(longitude),
       };
     }
 
+    // Add the new posting in the DB.
+    postingCollection.insertOne(newPosting);
 
-    await postingCollection.insertOne(newPosting);
     console.log("New post created by:", req.session.email);
     return res.redirect("/");
   } catch (error) {
@@ -467,7 +475,7 @@ app.post("/post/:id/edit", upload.single("image"), async (req, res) => {
   const id = req.params.id;
   if (!ObjectId.isValid(id)) return res.status(400).send("Invalid post ID");
 
-  const { produce, quantity, price, description, location, latitude, longitude } = req.body;
+  const { category, produce, quantity, price, description, location, latitude, longitude } = req.body;
   const updateDoc = {
     $set: {
       category,
@@ -831,13 +839,13 @@ app.post('/profile', async (req, res) => {
 
   // Validate incoming fields
   const schema = Joi.object({
-    firstName:                Joi.string().min(1).max(50).required(),
-    lastName:                 Joi.string().min(1).max(50).required(),
-    email:                    Joi.string().email().required(),
+    firstName: Joi.string().min(1).max(50).required(),
+    lastName: Joi.string().min(1).max(50).required(),
+    email: Joi.string().email().required(),
     'address address-search': Joi.string().min(1).max(50).required(),
-    city:                     Joi.string().min(1).max(50).required(),
-    province:                 Joi.string().min(1).max(50).required(),
-    postalCode:               Joi.string().min(7).max(7).required()
+    city: Joi.string().min(1).max(50).required(),
+    province: Joi.string().min(1).max(50).required(),
+    postalCode: Joi.string().min(7).max(7).required()
   });
 
   const { error, value } = schema.validate(req.body, { abortEarly: false });
