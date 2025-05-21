@@ -78,30 +78,30 @@ io.use((socket, next) => {
 });
 
 app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
-    try {
-        const signature = req.headers['stripe-signature'];
-        let event = stripe.webhooks.constructEvent(
-            req.body, signature, process.env.STRIPE_WEBHOOK_SECRET
-        );
+  try {
+    const signature = req.headers['stripe-signature'];
+    let event = stripe.webhooks.constructEvent(
+      req.body, signature, process.env.STRIPE_WEBHOOK_SECRET
+    );
 
-        if (event.type === 'checkout.session.completed') {
-            const session = event.data.object;
-            await transactionCollection.insertOne({
-                buyerId: new ObjectId(session.metadata.buyerId),
-                sellerId: new ObjectId(session.metadata.sellerId),
-                transactionId: session.payment_intent,
-                amount: session.amount_total / 100,
-                currency: session.currency,
-                items: JSON.parse(session.metadata.cartItems || '[]'), // Store items
-                createdAt: new Date(session.created * 1000),
-            });
-            console.log('Transaction recorded for checkout session:', session.id);
-        }
-        res.sendStatus(200);
-    } catch (err) {
-        console.error('Error in Stripe webhook:', err.message);
-        res.status(400).send(`Webhook Error: ${err.message}`);
+    if (event.type === 'checkout.session.completed') {
+      const session = event.data.object;
+      await transactionCollection.insertOne({
+        buyerId: new ObjectId(session.metadata.buyerId),
+        sellerId: new ObjectId(session.metadata.sellerId),
+        transactionId: session.payment_intent,
+        amount: session.amount_total / 100,
+        currency: session.currency,
+        items: JSON.parse(session.metadata.cartItems || '[]'), // Store items
+        createdAt: new Date(session.created * 1000),
+      });
+      console.log('Transaction recorded for checkout session:', session.id);
     }
+    res.sendStatus(200);
+  } catch (err) {
+    console.error('Error in Stripe webhook:', err.message);
+    res.status(400).send(`Webhook Error: ${err.message}`);
+  }
 });
 
 app.use(express.urlencoded({ extended: false }));
@@ -151,14 +151,13 @@ app.get('/', async (req, res) => {
         .find({}) // Find all posts for buyers
         .sort({ createdAt: -1 })
         .toArray();
-      if(selectedCategory) 
-      {
+      if (selectedCategory) {
         docs = docs.filter(doc => doc.category === selectedCategory);
       }
 
       // Map the selected posts to the view
       const postings = docs.map(doc => ({
-        _id: doc._id.toString(), 
+        _id: doc._id.toString(),
         produce: doc.produce,
         quantity: doc.quantity,
         price: doc.price,
@@ -274,7 +273,7 @@ app.post("/signupSubmit", async (req, res) => {
 
   if (error) {
     return res.status(400).send(
-        `${error.details.map(d => d.message).join('<br>')} <a href="/signup">Try again</a>`
+      `${error.details.map(d => d.message).join('<br>')} <a href="/signup">Try again</a>`
     );
   }
 
@@ -315,24 +314,24 @@ app.post("/signupSubmit", async (req, res) => {
     console.log("Signup successful for:", email);
 
     if (role === "seller") {
-        try {
-            const account = await stripe.accounts.create({
-                type: 'express',
-                email: email,
-                business_type: 'individual',
-                capabilities: { transfers: { requested: true } }
-            });
+      try {
+        const account = await stripe.accounts.create({
+          type: 'express',
+          email: email,
+          business_type: 'individual',
+          capabilities: { transfers: { requested: true } }
+        });
 
-            await userCollection.updateOne(
-                { _id: newUserId },
-                { $set: { stripeAccountId: account.id } }
-            );
-             return res.redirect("/languages"); // Or redirect to Stripe onboarding if needed
-        } catch (stripeError) {
-            console.error("Stripe account creation/update error:", stripeError);
-            // Decide how to handle this - maybe let user proceed but log error
-            // Or show an error and ask to retry seller setup later
-        }
+        await userCollection.updateOne(
+          { _id: newUserId },
+          { $set: { stripeAccountId: account.id } }
+        );
+        return res.redirect("/languages"); // Or redirect to Stripe onboarding if needed
+      } catch (stripeError) {
+        console.error("Stripe account creation/update error:", stripeError);
+        // Decide how to handle this - maybe let user proceed but log error
+        // Or show an error and ask to retry seller setup later
+      }
     }
     return res.redirect("/");
   } catch (error) {
@@ -418,10 +417,10 @@ app.post("/createPost", upload.single("image"), async (req, res) => {
       location: location || null, // Store item's location string
     });
     if (latitude && longitude && !isNaN(parseFloat(latitude)) && !isNaN(parseFloat(longitude))) {
-        newPosting.coordinates = {
-            latitude: parseFloat(latitude),
-            longitude: parseFloat(longitude)
-        };
+      newPosting.coordinates = {
+        latitude: parseFloat(latitude),
+        longitude: parseFloat(longitude)
+      };
     }
 
 
@@ -478,8 +477,8 @@ app.post("/post/:id/edit", upload.single("image"), async (req, res) => {
 
   if (latitude && longitude && !isNaN(parseFloat(latitude)) && !isNaN(parseFloat(longitude))) {
     updateDoc.$set.coordinates = {
-        latitude: parseFloat(latitude),
-        longitude: parseFloat(longitude)
+      latitude: parseFloat(latitude),
+      longitude: parseFloat(longitude)
     };
   } else {
     updateDoc.$unset = { coordinates: "" }; // Remove coordinates if not provided or invalid
@@ -540,7 +539,7 @@ app.get("/api/chat/:chatId/messages", async (req, res) => {
     const messages = messagesFromDb.map(msg => ({
       ...msg,
       _id: msg._id.toString(), senderId: msg.senderId.toString(), receiverId: msg.receiverId.toString(),
-      ...(msg.messageType === "image" && msg.image?.data && { imageDataUri: `data:${msg.image.contentType};base64,${msg.image.data.toString("base64")}`}),
+      ...(msg.messageType === "image" && msg.image?.data && { imageDataUri: `data:${msg.image.contentType};base64,${msg.image.data.toString("base64")}` }),
     }));
     res.json(messages);
   } catch (error) {
@@ -572,31 +571,31 @@ app.post("/api/chat/messages", async (req, res) => {
 });
 
 app.post("/api/chat/messages/image", upload.single("chatImage"), async (req, res) => {
-    if (!req.session.authenticated) return res.status(401).json({ error: "Unauthorized" });
-    try {
-        const { chatId, senderId, receiverId, caption } = req.body;
-        if (!req.file) return res.status(400).json({ error: "No image file uploaded." });
-        if (senderId !== req.session.userId) return res.status(403).json({ error: "Mismatched sender." });
-         if (!chatId || !receiverId ) return res.status(400).json({ error: "Missing fields." });
+  if (!req.session.authenticated) return res.status(401).json({ error: "Unauthorized" });
+  try {
+    const { chatId, senderId, receiverId, caption } = req.body;
+    if (!req.file) return res.status(400).json({ error: "No image file uploaded." });
+    if (senderId !== req.session.userId) return res.status(403).json({ error: "Mismatched sender." });
+    if (!chatId || !receiverId) return res.status(400).json({ error: "Missing fields." });
 
 
-        const imageBuffer = await sharp(req.file.buffer).resize({ width: 800, withoutEnlargement: true }).jpeg({ quality: 75 }).toBuffer();
-        const newMessageDocument = {
-            chatId, senderId: new ObjectId(senderId), receiverId: new ObjectId(receiverId),
-            messageText: caption || "", image: { data: imageBuffer, contentType: "image/jpeg" },
-            messageType: "image", timestamp: new Date(),
-        };
-        const result = await chatMessageCollection.insertOne(newMessageDocument);
-        const savedMessage = {
-             _id: result.insertedId.toString(), chatId, senderId, receiverId, messageType: "image", timestamp: newMessageDocument.timestamp, messageText: newMessageDocument.messageText,
-            imageDataUri: `data:image/jpeg;base64,${imageBuffer.toString("base64")}`,
-        };
-        io.to(chatId).emit("newMessage", savedMessage);
-        res.status(201).json(savedMessage);
-    } catch (error) {
-        console.error("Error sending image message:", error);
-        res.status(500).json({ error: "Server error sending image." });
-    }
+    const imageBuffer = await sharp(req.file.buffer).resize({ width: 800, withoutEnlargement: true }).jpeg({ quality: 75 }).toBuffer();
+    const newMessageDocument = {
+      chatId, senderId: new ObjectId(senderId), receiverId: new ObjectId(receiverId),
+      messageText: caption || "", image: { data: imageBuffer, contentType: "image/jpeg" },
+      messageType: "image", timestamp: new Date(),
+    };
+    const result = await chatMessageCollection.insertOne(newMessageDocument);
+    const savedMessage = {
+      _id: result.insertedId.toString(), chatId, senderId, receiverId, messageType: "image", timestamp: newMessageDocument.timestamp, messageText: newMessageDocument.messageText,
+      imageDataUri: `data:image/jpeg;base64,${imageBuffer.toString("base64")}`,
+    };
+    io.to(chatId).emit("newMessage", savedMessage);
+    res.status(201).json(savedMessage);
+  } catch (error) {
+    console.error("Error sending image message:", error);
+    res.status(500).json({ error: "Server error sending image." });
+  }
 });
 
 
@@ -651,73 +650,73 @@ app.get('/viewpage', async (req, res) => {
   }
 });
 
-app.get('/cart', (req,res) => {
-    if (req.session.authenticated && req.session.role === 'buyer') {
-        // Here you might fetch cart items from session or database if you persist them
-        // For now, just rendering the page. Cart logic is client-side in this example.
-        res.render("cart", { title: "Cart"});
-    } else {
-        res.redirect("/");
-    }
+app.get('/cart', (req, res) => {
+  if (req.session.authenticated && req.session.role === 'buyer') {
+    // Here you might fetch cart items from session or database if you persist them
+    // For now, just rendering the page. Cart logic is client-side in this example.
+    res.render("cart", { title: "Cart" });
+  } else {
+    res.redirect("/");
+  }
 });
 
 app.post('/checkout', async (req, res) => {
-    if (!req.session.authenticated || req.session.role !== 'buyer') {
-        return res.status(403).json({ error: 'Unauthorized' });
+  if (!req.session.authenticated || req.session.role !== 'buyer') {
+    return res.status(403).json({ error: 'Unauthorized' });
+  }
+  const { sellerId, cartItems } = req.body;
+  if (!sellerId || !cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
+    return res.status(400).json({ error: 'Invalid checkout data' });
+  }
+
+  try {
+    const seller = await userCollection.findOne({ _id: new ObjectId(sellerId) });
+    if (!seller || !seller.stripeAccountId) {
+      return res.status(400).json({ error: 'Seller not configured for payments' });
     }
-    const { sellerId, cartItems } = req.body;
-    if (!sellerId || !cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
-        return res.status(400).json({ error: 'Invalid checkout data' });
-    }
 
-    try {
-        const seller = await userCollection.findOne({ _id: new ObjectId(sellerId) });
-        if (!seller || !seller.stripeAccountId) {
-            return res.status(400).json({ error: 'Seller not configured for payments' });
-        }
+    const line_items = cartItems.map(item => ({
+      price_data: {
+        currency: 'cad',
+        product_data: { name: item.produce, images: [item.imageSrc] }, // Assuming imageSrc is available and a public URL or data URI
+        unit_amount: Math.round(parseFloat(item.price) * 100),
+      },
+      quantity: parseInt(item.quantity, 10),
+    }));
 
-        const line_items = cartItems.map(item => ({
-            price_data: {
-                currency: 'cad',
-                product_data: { name: item.produce, images: [item.imageSrc] }, // Assuming imageSrc is available and a public URL or data URI
-                unit_amount: Math.round(parseFloat(item.price) * 100),
-            },
-            quantity: parseInt(item.quantity, 10),
-        }));
+    // Calculate application fee (e.g., 5%)
+    const subtotal = line_items.reduce((sum, item) => sum + (item.price_data.unit_amount * item.quantity), 0);
+    const application_fee_amount = Math.round(subtotal * 0.05); // 5% platform fee
 
-        // Calculate application fee (e.g., 5%)
-        const subtotal = line_items.reduce((sum, item) => sum + (item.price_data.unit_amount * item.quantity), 0);
-        const application_fee_amount = Math.round(subtotal * 0.05); // 5% platform fee
-
-        const checkoutSession = await stripe.checkout.sessions.create({
-            payment_method_types: ['card'],
-            line_items,
-            mode: 'payment',
-            payment_intent_data: {
-                application_fee_amount: application_fee_amount, // Platform fee
-                transfer_data: { destination: seller.stripeAccountId },
-            },
-            success_url: `${LIVE_DOMAIN}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${LIVE_DOMAIN}/cart`, // Redirect back to cart on cancel
-            metadata: {
-                buyerId: req.session.userId,
-                sellerId: sellerId,
-                cartItems: JSON.stringify(cartItems.map(i => ({produce: i.produce, quantity: i.quantity, price: i.price }))) // Store simplified cart items
-            },
-        });
-        res.json({ url: checkoutSession.url });
-    } catch (error) {
-        console.error("Stripe checkout error:", error);
-        res.status(500).json({ error: 'Failed to create checkout session' });
-    }
+    const checkoutSession = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items,
+      mode: 'payment',
+      payment_intent_data: {
+        application_fee_amount: application_fee_amount, // Platform fee
+        transfer_data: { destination: seller.stripeAccountId },
+      },
+      success_url: `${LIVE_DOMAIN}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${LIVE_DOMAIN}/cart`, // Redirect back to cart on cancel
+      metadata: {
+        buyerId: req.session.userId,
+        sellerId: sellerId,
+        cartItems: JSON.stringify(cartItems.map(i => ({ produce: i.produce, quantity: i.quantity, price: i.price }))) // Store simplified cart items
+      },
+    });
+    res.json({ url: checkoutSession.url });
+  } catch (error) {
+    console.error("Stripe checkout error:", error);
+    res.status(500).json({ error: 'Failed to create checkout session' });
+  }
 });
 
 app.get('/checkout/success', async (req, res) => {
-    if (!req.session.authenticated) return res.redirect('/login');
-    // You can optionally fetch the session to display more details
-    // const sessionId = req.query.session_id;
-    // const session = await stripe.checkout.sessions.retrieve(sessionId);
-    res.render('checkoutSuccess', { title: 'Payment Successful' /*, session: session */});
+  if (!req.session.authenticated) return res.redirect('/login');
+  // You can optionally fetch the session to display more details
+  // const sessionId = req.query.session_id;
+  // const session = await stripe.checkout.sessions.retrieve(sessionId);
+  res.render('checkoutSuccess', { title: 'Payment Successful' /*, session: session */ });
 });
 
 
@@ -730,7 +729,7 @@ app.get('/contact', (req, res) => { // Example, may not be used if chat is prima
   }
 });
 
-app.get("/map", (req, res) => { // General map page, if needed
+app.get("/map", async (req, res) => { // General map page, if needed
   if (!req.session.authenticated) return res.redirect("/login");
 
   const sellers = await userCollection.find({ role: "seller" }).toArray();
@@ -740,7 +739,6 @@ app.get("/map", (req, res) => { // General map page, if needed
     mapboxToken: process.env.MAPBOX_API_TOKEN,
     sellers: sellers
   });
-  res.render("map", { title: "Map", mapboxToken: process.env.MAPBOX_API_TOKEN });
 });
 
 // --- SOCKET.IO ---
