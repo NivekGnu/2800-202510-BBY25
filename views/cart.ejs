@@ -1,312 +1,284 @@
-<%- include("templates/header") %>
-<style>
-  body {
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-      Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue",
-      sans-serif;
-  }
-  .qty-button-cart {
-    min-width: 28px;
-    height: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .qty-display-cart {
-    height: 28px;
-    display: flex;
-    align-items: center;
-  }
-</style>
-
-<div class="bg-gray-100">
-  
-  <!-- Changed background for better contrast with white cards -->
-
-  <div class="max-w-sm mx-auto min-h-screen flex flex-col bg-white shadow-md">
-    <!-- Header -->
-    <header
-      class="py-4 px-4 flex items-center justify-between border-b border-gray-300 sticky top-0 bg-white z-10"
-    >
-      <button
-        class="text-2xl text-gray-700 hover:text-green-600"
-        onclick="window.history.back();"
-      >
-        <!-- Back button -->
-        <i class="fas fa-chevron-left"></i>
-      </button>
-      <h1 class="text-xl font-semibold text-gray-800">Shopping Cart</h1>
-      <div class="w-6 h-6"><!-- Spacer to balance header --></div>
-    </header>
-
-    <!-- Cart Items - This will be populated by JavaScript -->
-    <main id="cart-items-container" class="flex-grow p-4 space-y-6">
-      <!-- Cart items will be injected here -->
-      <div id="empty-cart-message" class="text-center text-gray-500 py-10">
-        <i class="fas fa-shopping-cart text-4xl mb-3 text-gray-400"></i>
-        <p>Your cart is empty.</p>
-        <a
-          href="/"
-          class="mt-4 inline-block text-green-600 hover:text-green-700 font-semibold"
-          >Continue Shopping</a
-        >
-      </div>
-    </main>
-
-    <!-- Footer / Checkout Button -->
-    <footer
-      id="cart-footer"
-      class="p-4 sticky bottom-0 bg-white border-t border-gray-200 hidden"
-    >
-      <button
-        id="checkout-button"
-        class="w-full bg-green-600 text-white py-3 px-4 rounded-lg flex justify-between items-center text-lg font-semibold hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        <span id="cart-total-price">$0.00</span>
-        <div class="flex items-center">
-          <span>Checkout</span>
-          <i class="fas fa-arrow-right ml-2"></i>
-        </div>
-      </button>
-    </footer>
-  </div>
-</div>
-
-<script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const cartItemsContainer = document.getElementById(
-      "cart-items-container"
-    );
-    const cartFooter = document.getElementById("cart-footer");
-    const cartTotalPriceElement =
-      document.getElementById("cart-total-price");
-    const checkoutButton = document.getElementById("checkout-button");
-    const emptyCartMessage = document.getElementById("empty-cart-message");
-
-    let overallCartTotal = 0;
-    let cartDataForCheckout = {}; // To store data grouped by seller for checkout
-
-    function loadCart() {
-      cartItemsContainer.innerHTML = ""; // Clear existing items (except empty message placeholder)
-      overallCartTotal = 0;
-      cartDataForCheckout = {};
-      const cart = JSON.parse(localStorage.getItem("cart") || "{}");
-      const sellerIds = Object.keys(cart);
-
-      if (sellerIds.length === 0) {
-        emptyCartMessage.style.display = "block";
-        cartFooter.classList.add("hidden");
-        return;
+<%-/* views/cart.ejs */%>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Shopping Cart</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue",
+          sans-serif;
       }
+      .qty-button-cart {
+        min-width: 28px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 1; /* Helps with icon vertical alignment */
+      }
+      .qty-display-cart {
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center; /* Center the number */
+      }
+    </style>
+  </head>
+  <body class="bg-gray-100">
+    <%- include("templates/header") %>
 
-      emptyCartMessage.style.display = "none";
-      cartFooter.classList.remove("hidden");
+    <div class="max-w-sm mx-auto min-h-screen flex flex-col bg-white shadow-md">
+      <!-- Header -->
+      <header
+        class="py-4 px-4 flex items-center justify-between border-b border-gray-300 sticky top-0 bg-white z-10"
+      >
+        <button
+          class="text-2xl text-gray-700 hover:text-green-600 p-2 -ml-2"
+          onclick="window.history.back();"
+        >
+          <i class="fas fa-chevron-left"></i>
+        </button>
+        <h1 class="text-xl font-semibold text-gray-800">Shopping Cart</h1>
+        <div class="w-6 h-6"></div>
+      </header>
 
-      sellerIds.forEach((sellerId) => {
-        const sellerData = cart[sellerId];
-        if (
-          !sellerData ||
-          !sellerData.items ||
-          sellerData.items.length === 0
-        ) {
-          // Clean up empty seller entries if they somehow occur
-          delete cart[sellerId];
-          localStorage.setItem("cart", JSON.stringify(cart));
-          return; // Skip this seller
-        }
+      <!-- Cart Items - This will be populated by JavaScript -->
+      <main id="cart-items-container" class="flex-grow p-4 space-y-6">
+        <!-- Cart items will be injected here -->
+          <!-- {/* Initially hidden, JS will show if needed */} -->
+        <div id="empty-cart-message" class="text-center text-gray-500 py-10" style="display: none;">
+          <i class="fas fa-shopping-cart text-4xl mb-3 text-gray-400"></i>
+          <p>Your cart is empty.</p>
+          <a
+            href="/"
+            class="mt-4 inline-block text-green-600 hover:text-green-700 font-semibold"
+            >Continue Shopping</a
+          >
+        </div>
+      </main>
 
-        cartDataForCheckout[sellerId] = {
-          sellerName: sellerData.sellerName,
-          items: [],
-        };
+      <!-- Footer / Checkout Button -->
+      <footer
+        id="cart-footer"
+        class="p-4 sticky bottom-0 bg-white border-t border-gray-200 hidden"
+      >
+        <button
+          id="checkout-button"
+          class="w-full bg-green-600 text-white py-3 px-4 rounded-lg flex justify-between items-center text-lg font-semibold hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <span id="cart-total-price">$0.00</span>
+          <div class="flex items-center">
+            <span>Checkout</span>
+            <i class="fas fa-arrow-right ml-2"></i>
+          </div>
+        </button>
+      </footer>
+    </div>
 
-        // Create a container for this seller's items
-        const sellerSection = document.createElement("div");
-        sellerSection.className =
-          "mb-6 border border-gray-200 rounded-lg p-1 shadow-sm"; // Added p-1 for slight inset
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const cartItemsContainer = document.getElementById("cart-items-container");
+        const cartFooter = document.getElementById("cart-footer");
+        const cartTotalPriceElement = document.getElementById("cart-total-price");
+        const checkoutButton = document.getElementById("checkout-button");
+        const emptyCartMessage = document.getElementById("empty-cart-message");
 
-        const sellerHeader = document.createElement("h3");
-        sellerHeader.className =
-          "text-md font-semibold text-gray-700 mb-2 px-3 pt-3"; // Added padding
-        sellerHeader.textContent = `Items from ${
-          sellerData.sellerName || "Unknown Seller"
-        }`;
-        sellerSection.appendChild(sellerHeader);
+        let cartDataForCheckout = {}; // Used to prepare data for the checkout payload
 
-        sellerData.items.forEach((item, index) => {
-          const itemTotalPrice = item.price * item.quantity;
-          overallCartTotal += itemTotalPrice;
-          cartDataForCheckout[sellerId].items.push({
-            id: item.id, // Keep product ID if needed for anything else
-            produce: item.produce,
-            price: item.price,
-            quantity: item.quantity
-            // imageSrc: item.imageSrc, // For Stripe product data -- REMOVED; LOAD TOO LARGE
-          });
+        function loadCart() {
+          // console.log("loadCart() called");
 
-          const itemElement = document.createElement("div");
-          itemElement.className =
-            "bg-gray-100 rounded-lg p-3 flex items-center shadow-sm mb-2 last:mb-0"; // Added last:mb-0
-          itemElement.innerHTML = `
-                    <div class="w-16 h-16 sm:w-20 sm:h-20 bg-gray-300 rounded mr-3 flex-shrink-0 overflow-hidden">
-                        <img src="${
-                          item.imageSrc || "/img/placeholder-thumb.png"
-                        }" alt="${
-            item.produce
-          }" class="w-full h-full object-cover">
-                    </div>
-                    <div class="flex-grow">
-                        <h2 class="text-sm sm:text-md font-semibold text-gray-800">${
-                          item.produce
-                        }</h2>
-                        <p class="text-xs sm:text-sm font-bold text-gray-700">$${item.price.toFixed(
-                          2
-                        )}</p>
-                        <div class="flex items-center mt-1">
-                            <span class="text-xs text-gray-600 mr-2">Qty</span>
-                            <div class="flex items-center bg-white rounded-md border border-gray-300">
-                                <button class="qty-button-cart px-2 py-0.5 text-xs sm:text-sm text-gray-700" data-seller-id="${sellerId}" data-item-id="${
-            item.id
-          }" data-action="decrease">
-                                    <i class="fas fa-minus"></i>
-                                </button>
-                                <span class="qty-display-cart px-2 sm:px-3 py-0.5 text-xs sm:text-sm font-medium text-gray-800">${
-                                  item.quantity
-                                }</span>
-                                <button class="qty-button-cart px-2 py-0.5 text-xs sm:text-sm text-gray-700" data-seller-id="${sellerId}" data-item-id="${
-            item.id
-          }" data-action="increase">
-                                    <i class="fas fa-plus"></i>
-                                </button>
-                            </div>
+          // Clear only dynamically added seller sections
+          const sellerSections = cartItemsContainer.querySelectorAll('div[data-seller-section="true"]');
+          sellerSections.forEach(section => section.remove());
+
+          let currentOverallCartTotal = 0;
+          cartDataForCheckout = {}; // Reset for this load
+          const cart = JSON.parse(localStorage.getItem("cart") || "{}");
+          const sellerIds = Object.keys(cart);
+          let hasItemsInCart = false;
+
+          sellerIds.forEach((sellerId) => {
+            const sellerData = cart[sellerId];
+            if (!sellerData || !sellerData.items || sellerData.items.length === 0) {
+              delete cart[sellerId];
+              localStorage.setItem("cart", JSON.stringify(cart));
+              return;
+            }
+
+            hasItemsInCart = true;
+            cartDataForCheckout[sellerId] = {
+              sellerName: sellerData.sellerName,
+              items: [],
+            };
+
+            const sellerSection = document.createElement("div");
+            sellerSection.className = "mb-6 border border-gray-200 rounded-lg p-1 shadow-sm";
+            sellerSection.setAttribute('data-seller-section', 'true');
+
+            const sellerHeader = document.createElement("h3");
+            sellerHeader.className = "text-md font-semibold text-gray-700 mb-2 px-3 pt-3";
+            sellerHeader.textContent = `Items from ${sellerData.sellerName || "Unknown Seller"}`;
+            sellerSection.appendChild(sellerHeader);
+
+            sellerData.items.forEach((item) => {
+              const itemPrice = parseFloat(item.price);
+              const itemQuantity = parseInt(item.quantity, 10);
+
+              if (isNaN(itemPrice) || isNaN(itemQuantity) || itemPrice < 0 || itemQuantity < 0) {
+                  console.error("Invalid price or quantity for item in localStorage:", item);
+                  // Optionally remove this corrupted item from cart or skip
+                  return; 
+              }
+
+              const itemTotalPrice = itemPrice * itemQuantity;
+              currentOverallCartTotal += itemTotalPrice;
+
+              cartDataForCheckout[sellerId].items.push({
+                id: item.id,
+                produce: item.produce,
+                price: itemPrice,
+                quantity: itemQuantity,
+                // imageSrc: item.imageSrc // Only include if Stripe needs it and it's a public URL
+              });
+
+              const itemElement = document.createElement("div");
+              itemElement.className = "bg-gray-100 rounded-lg p-3 flex items-center shadow-sm mb-2 last:mb-0";
+              itemElement.innerHTML = `
+                <div class="w-16 h-16 sm:w-20 sm:h-20 bg-gray-300 rounded mr-3 flex-shrink-0 overflow-hidden">
+                    <img src="${item.imageSrc || "/img/placeholder-thumb.png"}" alt="${item.produce}" class="w-full h-full object-cover">
+                </div>
+                <div class="flex-grow">
+                    <h2 class="text-sm sm:text-md font-semibold text-gray-800">${item.produce}</h2>
+                    <p class="text-xs sm:text-sm font-bold text-gray-700">$${itemPrice.toFixed(2)}</p>
+                    <div class="flex items-center mt-1">
+                        <span class="text-xs text-gray-600 mr-2">Qty</span>
+                        <div class="flex items-center bg-white rounded-md border border-gray-300">
+                            <button class="qty-button-cart px-2 py-0.5 text-xs sm:text-sm text-gray-700 hover:bg-gray-200" data-seller-id="${sellerId}" data-item-id="${item.id}" data-action="decrease">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            <span class="qty-display-cart px-2 sm:px-3 py-0.5 text-xs sm:text-sm font-medium text-gray-800">${itemQuantity}</span>
+                            <button class="qty-button-cart px-2 py-0.5 text-xs sm:text-sm text-gray-700 hover:bg-gray-200" data-seller-id="${sellerId}" data-item-id="${item.id}" data-action="increase">
+                                <i class="fas fa-plus"></i>
+                            </button>
                         </div>
                     </div>
-                    <button class="ml-2 sm:ml-4 text-md sm:text-xl text-gray-500 hover:text-red-600 flex-shrink-0" data-seller-id="${sellerId}" data-item-id="${
-            item.id
-          }" data-action="remove">
-                        <i class="fas fa-trash-alt"></i>
-                    </button>
-                `;
-          sellerSection.appendChild(itemElement);
-        });
-        cartItemsContainer.appendChild(sellerSection);
-      });
-
-      if (cartTotalPriceElement) {
-        cartTotalPriceElement.textContent = `$${overallCartTotal.toFixed(
-          2
-        )}`;
-      }
-      checkoutButton.disabled = overallCartTotal === 0;
-    }
-
-    function updateCartItemQuantity(sellerId, itemId, newQuantity) {
-      let cart = JSON.parse(localStorage.getItem("cart") || "{}");
-      if (cart[sellerId] && cart[sellerId].items) {
-        const itemIndex = cart[sellerId].items.findIndex(
-          (i) => i.id === itemId
-        );
-        if (itemIndex > -1) {
-          if (newQuantity <= 0) {
-            // Remove item if quantity is 0 or less
-            cart[sellerId].items.splice(itemIndex, 1);
-            if (cart[sellerId].items.length === 0) {
-              // Remove seller if no items left
-              delete cart[sellerId];
+                </div>
+                <button class="ml-2 sm:ml-4 text-md sm:text-xl text-gray-500 hover:text-red-600 flex-shrink-0 p-1" data-seller-id="${sellerId}" data-item-id="${item.id}" data-action="remove">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+              `;
+              sellerSection.appendChild(itemElement);
+            });
+            if (cartItemsContainer) { // Ensure container exists before appending
+                cartItemsContainer.appendChild(sellerSection);
             }
+          });
+
+          if (hasItemsInCart) {
+            if(emptyCartMessage) emptyCartMessage.style.display = "none";
+            if(cartFooter) cartFooter.classList.remove("hidden");
           } else {
-            // Here, we don't have direct access to maxAvailableQuantity from viewpage.
-            // This implies cart quantity adjustment is simpler, or max stock check happens at checkout.
-            // For a robust solution, maxAvailableQuantity should be part of the item data in localStorage.
-            // For now, we'll just update.
-            cart[sellerId].items[itemIndex].quantity = newQuantity;
+            if(emptyCartMessage) emptyCartMessage.style.display = "block";
+            if(cartFooter) cartFooter.classList.add("hidden");
           }
-          localStorage.setItem("cart", JSON.stringify(cart));
-          loadCart(); // Reload cart to reflect changes
+
+          if (cartTotalPriceElement) {
+            cartTotalPriceElement.textContent = `$${currentOverallCartTotal.toFixed(2)}`;
+            // console.log("Updated cart total price to:", cartTotalPriceElement.textContent);
+          }
+          
+          if (checkoutButton) {
+            checkoutButton.disabled = currentOverallCartTotal === 0 || !hasItemsInCart;
+          }
         }
-      }
-    }
 
-    cartItemsContainer.addEventListener("click", (event) => {
-      const button = event.target.closest("button[data-action]");
-      if (!button) return;
+        function updateCartItemQuantity(sellerId, itemId, newQuantity) {
+          // console.log(`updateCartItemQuantity for seller: ${sellerId}, item: ${itemId}, newQty: ${newQuantity}`);
+          let cart = JSON.parse(localStorage.getItem("cart") || "{}");
+          if (cart[sellerId] && cart[sellerId].items) {
+            const itemIndex = cart[sellerId].items.findIndex(i => i.id === itemId);
+            if (itemIndex > -1) {
+              if (newQuantity <= 0) {
+                cart[sellerId].items.splice(itemIndex, 1);
+                if (cart[sellerId].items.length === 0) {
+                  delete cart[sellerId];
+                }
+              } else {
+                // Potentially add max stock check here if maxAvailableQuantity is stored with item
+                cart[sellerId].items[itemIndex].quantity = newQuantity;
+              }
+              localStorage.setItem("cart", JSON.stringify(cart));
+              loadCart(); 
+            }
+          }
+        }
 
-      const action = button.dataset.action;
-      const sellerId = button.dataset.sellerId;
-      const itemId = button.dataset.itemId;
+        if (cartItemsContainer) {
+            cartItemsContainer.addEventListener("click", (event) => {
+                const button = event.target.closest("button[data-action]");
+                if (!button) return;
 
-      let cart = JSON.parse(localStorage.getItem("cart") || "{}");
-      const currentItem = cart[sellerId]?.items.find(
-        (i) => i.id === itemId
-      );
-      if (!currentItem) return;
+                const action = button.dataset.action;
+                const sellerId = button.dataset.sellerId;
+                const itemId = button.dataset.itemId;
+                
+                let cart = JSON.parse(localStorage.getItem("cart") || "{}");
+                const currentItem = cart[sellerId]?.items.find(i => i.id === itemId);
+                
+                if (!currentItem) return;
 
-      if (action === "increase") {
-        updateCartItemQuantity(sellerId, itemId, currentItem.quantity + 1);
-      } else if (action === "decrease") {
-        updateCartItemQuantity(sellerId, itemId, currentItem.quantity - 1);
-      } else if (action === "remove") {
-        updateCartItemQuantity(sellerId, itemId, 0); // Set quantity to 0 to remove
-      }
-    });
+                if (action === "increase") {
+                    updateCartItemQuantity(sellerId, itemId, currentItem.quantity + 1);
+                } else if (action === "decrease") {
+                    updateCartItemQuantity(sellerId, itemId, currentItem.quantity - 1);
+                } else if (action === "remove") {
+                    updateCartItemQuantity(sellerId, itemId, 0); 
+                }
+            });
+        }
 
         if (checkoutButton) {
           checkoutButton.addEventListener("click", async () => {
             if (Object.keys(cartDataForCheckout).length === 0) {
-              alert(
-                "Your cart is empty or something went wrong with preparing items for checkout."
-              );
-              return;
+              alert("Your cart is empty or there was an issue preparing items."); return;
             }
             const firstSellerId = Object.keys(cartDataForCheckout)[0];
-            if (!firstSellerId) {
-              alert("No items to checkout.");
-              return;
-            }
+            if (!firstSellerId) { alert("No items to checkout."); return; }
 
-        const payload = {
-          sellerId: firstSellerId, // Using the actual sellerId from the cart item
-          cartItems: cartDataForCheckout[firstSellerId].items.map(
-            (item) => ({
-              produce: item.produce,
-              price: item.price,
-              quantity: item.quantity,
-              imageSrc: item.imageSrc, // Pass image for Stripe checkout display
-            })
-          ),
-        };
-
-        console.log("Checkout payload:", payload);
-
-        try {
-          const res = await fetch("/checkout", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
+            const payload = {
+              sellerId: firstSellerId,
+              cartItems: cartDataForCheckout[firstSellerId].items.map(item => ({
+                produce: item.produce,
+                price: item.price,
+                quantity: item.quantity,
+                // imageSrc: item.imageSrc // Include if needed by Stripe & it's a public URL
+              })),
+            };
+            // console.log("Checkout payload:", payload);
+            try {
+              const res = await fetch("/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+              if (!res.ok) { const errorData = await res.json(); throw new Error(errorData.error || `Checkout failed: ${res.status}`); }
+              const data = await res.json();
+              if (data.url) { window.location.href = data.url; }
+              else { throw new Error("Stripe URL not received."); }
+            } catch (err) { console.error("Checkout error:", err); alert(`Checkout error: ${err.message}`); }
           });
-
-          if (!res.ok) {
-            const errorData = await res.json();
-            throw new Error(
-              errorData.error ||
-                `Checkout failed with status: ${res.status}`
-            );
-          }
-
-          const data = await res.json();
-          if (data.url) {
-            window.location.href = data.url; // Redirect to Stripe
-          } else {
-            throw new Error("Stripe URL not received.");
-          }
-        } catch (err) {
-          console.error("Checkout error:", err);
-          alert(`Checkout error: ${err.message}`);
         }
+        
+        // Initial load of the cart
+        loadCart();
       });
-    }
-    // Initial load
-    loadCart();
-  });
-</script>
-<%- include("templates/footer") %>
+    </script>
+
+    <%- include("templates/footer") %>
+  </body>
+</html>
