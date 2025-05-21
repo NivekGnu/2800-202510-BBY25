@@ -34,7 +34,7 @@
         </div>
         <div class="flex items-center space-x-1 text-sm text-gray-600">
           <div class="w-4 h-4"><img src="/img/star.png" alt="Rating star" class="w-full h-full object-contain"></div>
-          <span>4.9 (610)</span>
+          <span>4.9 (610)</span> <%# Placeholder %>
         </div>
       </div>
 
@@ -77,7 +77,7 @@
                 <div class="seller-pfp-container rounded-full mb-1 ml-auto overflow-hidden bg-gray-300">
                   <img src="/img/farmerpfp.png" alt="Seller N/A" class="w-full h-full object-cover">
                 </div>
-                <p class="text-sm font-semibold text-gray-800">Seller Info Missing</p> <%# Updated fallback text %>
+                <p class="text-sm font-semibold text-gray-800">Seller Information Unavailable</p>
             </div>
           <% } %>
         </div>
@@ -128,16 +128,11 @@
         produceName: "<%= post.produce %>",
         imageSrc: "<%= post.imageSrc %>",
 
-        // --- TESTING MODIFICATION ---
-        // This sellerId and sellerName will be used when adding to cart,
-        // overriding any dynamic seller data from the 'post' object for this specific test.
-        sellerId: "6827313b146f2df7484f2735", // Clinton's test seller ID
-        sellerName: "Clinton Test Seller"    // A name for this test seller
-        // --- END TESTING MODIFICATION ---
-
-        // --- PRODUCTION VERSION (Comment out the testing block and uncomment this) ---
-        // sellerId: "<%= post.seller ? post.seller._id.toString() : 'UNKNOWN_SELLER' %>",
-        // sellerName: "<%= post.seller ? (post.seller.firstName + ' ' + (post.seller.lastName || '')).trim() : 'Unknown Seller' %>"
+        // --- PRODUCTION VERSION ---
+        // These now dynamically use the 'post.seller' object passed from index.js
+        // It's crucial that 'post.seller' contains '_id', 'firstName', and 'lastName'
+        sellerId: "<%= post.seller && post.seller._id ? post.seller._id.toString() : 'UNKNOWN_SELLER_ID' %>",
+        sellerName: "<%= post.seller && post.seller.firstName ? (post.seller.firstName + ' ' + (post.seller.lastName || '')).trim() : 'Unknown Seller' %>"
         // --- END PRODUCTION VERSION ---
     };
     let selectedQuantity = 1;
@@ -200,6 +195,10 @@
                 alert("This item is out of stock and cannot be added to cart.");
                 return;
             }
+            if (productConfig.sellerId === 'UNKNOWN_SELLER_ID') {
+                alert("Seller information is missing for this product. Cannot add to cart.");
+                return;
+            }
 
             const cartItem = {
                 id: productConfig.id,
@@ -207,8 +206,8 @@
                 price: productConfig.basePrice,
                 quantity: selectedQuantity,
                 imageSrc: productConfig.imageSrc,
-                sellerId: productConfig.sellerId, // Uses the value from productConfig (test or dynamic)
-                sellerName: productConfig.sellerName // Uses the value from productConfig
+                sellerId: productConfig.sellerId,
+                sellerName: productConfig.sellerName
             };
 
             let cart = JSON.parse(localStorage.getItem('cart') || '{}');
