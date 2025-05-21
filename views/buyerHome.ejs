@@ -34,10 +34,10 @@
         <div id="filterMenu"
           class="hidden absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
           <a href="?category=" class="block px-4 py-2 text-sm hover:bg-gray-100
-               <%= selectedCategory === '' ? 'bg-indigo-100 text-indigo-700' : '' %>">All</a>
+             <%= selectedCategory === '' ? 'bg-indigo-100 text-indigo-700' : '' %>">All</a>
           <% categories.forEach(cat=> { %>
             <a href="?category=<%= cat %>" class="block px-4 py-2 text-sm hover:bg-gray-100
-                 <%= selectedCategory === cat ? 'bg-indigo-100 text-indigo-700' : '' %>">
+             <%= selectedCategory === cat ? 'bg-indigo-100 text-indigo-700' : '' %>">
               <%= cat.charAt(0).toUpperCase() + cat.slice(1) %>
             </a>
             <% }) %>
