@@ -816,7 +816,8 @@ app.get('/profile', async (req, res) => {
 
   res.render(view, {
     title: 'User Profile Settings',
-    user
+    user,
+    mapboxToken: process.env.MAPBOX_API_TOKEN
   });
 });
 
