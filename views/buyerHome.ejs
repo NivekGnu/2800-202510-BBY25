@@ -3,9 +3,7 @@
   <div class="font-sans antialiased px-4 py-6 pb-24 mx-auto max-w-4xl">
     <!-- Page header -->
     <div class="mb-6 text-center">
-      <h1 class="text-4xl font-bold text-gray-900 tracking-tight uppercase">
-        BUYER HOME PAGE
-      </h1>
+      <h1 class="text-3xl font-bold text-gray-800">BUYER HOME</h1>
     </div>
 
     <!-- Location display -->
@@ -34,10 +32,10 @@
         <div id="filterMenu"
           class="hidden absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
           <a href="?category=" class="block px-4 py-2 text-sm hover:bg-gray-100
-             <%= selectedCategory === '' ? 'bg-indigo-100 text-indigo-700' : '' %>">All</a>
+               <%= selectedCategory === '' ? 'bg-indigo-100 text-indigo-700' : '' %>">All</a>
           <% categories.forEach(cat=> { %>
             <a href="?category=<%= cat %>" class="block px-4 py-2 text-sm hover:bg-gray-100
-             <%= selectedCategory === cat ? 'bg-indigo-100 text-indigo-700' : '' %>">
+                 <%= selectedCategory === cat ? 'bg-indigo-100 text-indigo-700' : '' %>">
               <%= cat.charAt(0).toUpperCase() + cat.slice(1) %>
             </a>
             <% }) %>
@@ -55,23 +53,19 @@
                 <a href="/viewpage?postId=<%= p._id %>" class="block group">
                   <div
                     class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300">
-                    <div class="w-full h-40 overflow-hidden">
+                    <div class="w-full h-48 overflow-hidden">
                       <img src="<%= p.thumbSrc %>" alt="Thumbnail of <%= p.produce %>"
                         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                     </div>
-                    <div class="p-3">
-                      <!-- Emphasized product name -->
-                      <h5 class="text-xl font-bold text-gray-900 mb-2 truncate group-hover:text-indigo-600">
+                    <div class="p-4">
+                      <h5 class="text-xl font-bold text-indigo-600 mb-2 truncate
+                   group-hover:text-indigo-800 transition-colors duration-200">
                         <%= p.produce %>
                       </h5>
-                      <!-- Highlighted quantity and price (stacked on mobile, row on ≥sm) -->
-                      <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-2">
-                        <span class="text-base font-medium text-gray-800">Quantity: <%= p.quantity %></span>
-                        <span class="text-base font-semibold text-indigo-600">Price: $<%= typeof p.price==='number' ?
-                            p.price.toFixed(2) : p.price %></span>
-                      </div>
-                      <!-- Less prominent posted date -->
-                      <p class="text-xs text-gray-400">
+                      <p class="text-sm font-medium text-gray-900 mb-2">
+                        Qty: <%= p.quantity %> | Price: $<%= typeof p.price==='number' ? p.price.toFixed(2) : p.price %>
+                      </p>
+                      <p class="text-xs text-gray-500">
                         Posted: <%= new Date(p.createdAt).toLocaleDateString() %>
                       </p>
                     </div>
@@ -165,7 +159,9 @@
               const res = await fetch('/api/gemini', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt: 'What are some produce in season right now?' })
+                body: JSON.stringify({
+                  prompt: 'What are some produce in season right now?'
+                })
               });
               const data = await res.json();
               output.textContent = data.text || 'No response';
