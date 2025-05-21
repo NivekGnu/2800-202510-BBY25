@@ -1,91 +1,78 @@
 <%- include('templates/header') %>
 
-<div class="max-w-2xl mx-auto p-6 bg-white rounded-2xl shadow-lg">
-  <h1 class="text-3xl font-bold mb-6 text-center"><%= title %></h1>
-  <form action="/createPost" method="POST" enctype="multipart/form-data" class="space-y-6">
-    <!-- 1) Name of the Product -->
-    <div>
-      <label for="produce" class="block text-sm font-medium text-gray-700 mb-1">Produce</label>
-      <input
-        type="text"
-        id="produce"
-        name="produce"
-        required
-        value="<%= listing ? listing.produce : '' %>"
-        placeholder="Enter produce"
-        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-      />
-    </div>
+  <div class="max-w-2xl mx-auto p-6 bg-white rounded-2xl shadow-lg">
+    <h1 class="text-3xl font-bold mb-6 text-center">
+      <%= title %>
+    </h1>
+    <form action="/createPost" method="POST" enctype="multipart/form-data" class="space-y-6">
 
-    <!-- 2) Quantity -->
-    <div>
-      <label for="quantity" class="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
-      <input
-        type="number"
-        id="quantity"
-        name="quantity"
-        required
-        value="<%= listing ? listing.quantity : '' %>"
-        placeholder="Enter quantity"
-        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-      />
-    </div>
+      <!-- 1) Category -->
+      <div>
+        <label for="category" class="block text-sm font-medium text-gray-700 mb-1">
+          Category
+        </label>
+        <select id="category" name="category" required
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <option value="" disabled selected>Select a category</option>
+          <option value="fruits" <%=listing?.category==='fruits' ? 'selected' : '' %>>Fruits</option>
+          <option value="vegetables" <%=listing?.category==='vegetables' ? 'selected' : '' %>>Vegetables</option>
+          <option value="dairy" <%=listing?.category==='dairy' ? 'selected' : '' %>>Dairy</option>
+          <option value="grains" <%=listing?.category==='grains' ? 'selected' : '' %>>Grains</option>
+          <option value="others" <%=listing?.category==='others' ? 'selected' : '' %>>Others</option>
+        </select>
+      </div>
 
-    <!-- 3) Price -->
-    <div>
-      <label for="price" class="block text-sm font-medium text-gray-700 mb-1">Price (per item/weight)</label>
-      <input
-        type="text"
-        id="price"
-        name="price"
-        required
-        value="<%= listing ? listing.price : '' %>"
-        placeholder="Enter price (per item/weight)"
-        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-      />
-    </div>
+      <!-- 2) Name of the Product -->
+      <div>
+        <label for="produce" class="block text-sm font-medium text-gray-700 mb-1">Produce</label>
+        <input type="text" id="produce" name="produce" required value="<%= listing ? listing.produce : '' %>"
+          placeholder="Enter produce"
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+      </div>
 
-    <!-- 4) Description -->
-    <div>
-      <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-      <textarea
-        id="description"
-        name="description"
-        rows="4"
-        maxlength="200"
-        placeholder="Enter produce descriptions (max 200 characters)"
-        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-      ><%= listing ? listing.description : '' %></textarea>
-    </div>
+      <!-- 3) Quantity -->
+      <div>
+        <label for="quantity" class="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
+        <input type="number" id="quantity" name="quantity" required value="<%= listing ? listing.quantity : '' %>"
+          placeholder="Enter quantity"
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+      </div>
 
-    <!-- 5) Image Upload -->
-    <div>
-      <label for="image" class="block text-sm font-medium text-gray-700 mb-1">Image Upload</label>
-      <input
-        type="file"
-        id="image"
-        name="image"
-        accept="image/*"
-        capture="environment"
-        required
-        class="block w-full text-sm text-gray-600 file:py-2 file:px-4 file:border file:border-gray-300 file:rounded-lg file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
-      />
-      <% if (listing && listing.imageUrl) { %>
-        <p class="mt-2 text-sm text-gray-600">Current posted image:</p>
-        <img src="<%= listing.imageUrl %>" alt="listing image" class="mt-1 rounded-md" style="max-width:150px;" />
-      <% } %>
-    </div>
+      <!-- 4) Price -->
+      <div>
+        <label for="price" class="block text-sm font-medium text-gray-700 mb-1">Price (per item/weight)</label>
+        <input type="text" id="price" name="price" required value="<%= listing ? listing.price : '' %>"
+          placeholder="Enter price (per item/weight)"
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+      </div>
 
-    <!-- Submit Button -->
-    <div class="text-center">
-      <button
-        type="submit"
-        class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-6 rounded-lg transition"
-      >
-        Submit
-      </button>
-    </div>
-  </form>
-</div>
+      <!-- 5) Description -->
+      <div>
+        <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+        <textarea id="description" name="description" rows="4" maxlength="200"
+          placeholder="Enter produce descriptions (max 200 characters)"
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"><%= listing ? listing.description : '' %></textarea>
+      </div>
 
-<%- include('templates/footer') %>
+      <!-- 6) Image Upload -->
+      <div>
+        <label for="image" class="block text-sm font-medium text-gray-700 mb-1">Image Upload</label>
+        <input type="file" id="image" name="image" accept="image/*" capture="environment" required
+          class="block w-full text-sm text-gray-600 file:py-2 file:px-4 file:border file:border-gray-300 file:rounded-lg file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200" />
+        <% if (listing && listing.imageUrl) { %>
+          <p class="mt-2 text-sm text-gray-600">Current posted image:</p>
+          <img src="<%= listing.imageUrl %>" alt="listing image" class="mt-1 rounded-md" style="max-width:150px;" />
+          <% } %>
+      </div>
+
+      <!-- Submit Button -->
+      <div class="text-center">
+        <button type="submit"
+          class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-6 rounded-lg transition">
+          Submit
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <%- include('templates/footer') %>

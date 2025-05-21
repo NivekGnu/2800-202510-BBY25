@@ -1,165 +1,221 @@
 <%- include("templates/header") %>
 
-    <div class="px-4 py-6">
-        <div class="flex items-center justify-between mb-6">
-            <h1 class="text-3xl font-bold">BUYER HOME PAGE</h1>
-            <button id="signout" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition">
-                Sign out
-            </button>
-        </div>
-
-        <p class="mb-4">Your current location: <span id="city" class="font-medium">Detecting…</span>.</p>
-
-        <section class="mt-8">
-            <h2 class="text-2xl font-semibold mb-4">All Available Postings</h2>
-
-            <% if (postings.length===0) { %>
-                <p>There are currently no postings yet.</p>
-                <% } else { %>
-                    <% postings.forEach(p=> { %>
-                        <div class="card mb-3" style="max-width: 540px;">
-                            <div class="row no-gutters">
-                                <div class="col-md-4">
-                                    <!-- Print thumbnail image -->
-                                    <img src="<%= p.thumbSrc %>" class="card-img" alt="Thumbnail of <%= p.produce %>">
-                                </div>
-                                <div class="col-md-8">
-                                    <div class="card-body">
-                                        <h5 class="card-title">
-                                            <%= p.produce %>
-                                        </h5>
-                                        <p class="card-text">
-                                            Avaiable Quantity: <%= p.quantity %><br>
-                                                Price: <%= p.price %>
-                                        </p>
-                                        <p class="card-text"><small class="text-muted">
-                                                Posted on <%= p.createdAt.toLocaleString() %>
-                                            </small></p>
-                                        <p class="card-text">
-                                            <%= p.description %>
-                                        </p>
-                                        <!-- Original image -->
-                                        <a href="<%= p.imageSrc %>" target="_blank"
-                                            class="btn btn-sm btn-outline-primary">
-                                            View Full Image
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <% }) %>
-                            <% } %>
-    </div>
-
-    <!-- AI BUTTON -->
-    <button id="ai-helper-button"
-        class="fixed bottom-20 right-6 z-50 bg-green-700 hover:bg-green-800 text-white p-3 rounded-full ">
-        <img src="/img/glow-icon.svg" alt="AI Helper Icon" class="w-10 h-10">
+<div class="px-4 py-6 mx-auto max-w-4xl">
+  <!-- Page header -->
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="text-3xl font-bold text-gray-800">BUYER HOME PAGE</h1>
+    <button
+      id="signout"
+      class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
+    >
+      Sign out
     </button>
+  </div>
 
-    <!-- AI modal; default hidden -->
-    <div id="ai-modal" class="relative z-10 opacity-0 pointer-events-none transition-opacity duration-300 ease-out"
-        aria-labelledby="modal-title" role="dialog" aria-modal="true">
+  <!-- Location display -->
+  <p class="mb-4 text-gray-700">
+    Your current location:
+    <span id="city" class="font-medium">Detecting…</span>
+  </p>
 
-        <div class="fixed inset-0 bg-gray-500/75 transition-opacity" aria-hidden="true"></div>
+  <!-- Buyer nav bar -->
+  <%- include('templates/navbar_buyer') %>
 
-        <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
-            <div class="flex min-h-screen items-center justify-center p-4 text-center">
-                <div
-                    class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
-
-                    <!-- GREEN HEADER BAR -->
-                    <div class="bg-gray-500 px-4 py-3">
-                        <h3 id="modal-title" class="text-lg text-center font-semibold text-black">
-                            What are some produce in season right now?
-                        </h3>
-                    </div>
-
-                    <!-- MAIN CONTENT -->
-                    <div class="bg-white px-4 pt-2 pb-4 sm:p-6 sm:pb-4">
-                        <div class="sm:flex sm:items-start">
-                            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-                                <div class="mt-2 max-h-60 overflow-y-auto">
-                                    <p id="output" class="text-sm text-gray-700"></p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- FOOTER BUTTON -->
-                    <div class="bg-gray-100 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
-                        <button type="button" id="close-modal"
-                            class="inline-flex w-full justify-center rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-green-500 sm:ml-3 sm:w-auto">Close</button>
-                    </div>
-                </div>
-            </div>
-        </div>
+  <!-- Category Filter Dropdown -->
+  <div class="relative mb-6">
+    <button
+      id="filterBtn"
+      class="w-full flex justify-between items-center px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm text-left focus:outline-none focus:ring-2 focus:ring-indigo-500"
+    >
+      <span>
+        Category:
+        <strong>
+          <%= selectedCategory
+              ? selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)
+              : 'All' %>
+        </strong>
+      </span>
+      <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M19 9l-7 7-7-7" />
+      </svg>
+    </button>
+    <div
+      id="filterMenu"
+      class="hidden absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+    >
+      <a
+        href="?category="
+        class="block px-4 py-2 text-sm hover:bg-gray-100
+               <%= selectedCategory === '' ? 'bg-indigo-100 text-indigo-700' : '' %>"
+      >All</a>
+      <% categories.forEach(cat => { %>
+        <a
+          href="?category=<%= cat %>"
+          class="block px-4 py-2 text-sm hover:bg-gray-100
+                 <%= selectedCategory === cat ? 'bg-indigo-100 text-indigo-700' : '' %>"
+        >
+          <%= cat.charAt(0).toUpperCase() + cat.slice(1) %>
+        </a>
+      <% }) %>
     </div>
+  </div>
 
-    <script src="scripts/gemini_scripts.js"></script>
+  <!-- Listings -->
+  <section class="mt-8">
+    <h2 class="text-2xl font-semibold mb-4 text-gray-800">All Available Postings</h2>
+    <% if (postings.length === 0) { %>
+      <p class="text-gray-600">There are currently no postings yet.</p>
+    <% } else { %>
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+        <% postings.forEach(p => { %>
+          <a href="/viewpage?postId=<%= p._id %>" class="block group">
+            <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300">
+              <div class="w-full h-48 overflow-hidden">
+                <img
+                  src="<%= p.thumbSrc %>"
+                  alt="Thumbnail of <%= p.produce %>"
+                  class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+              </div>
+              <div class="p-4">
+                <h5 class="text-lg font-semibold text-gray-800 mb-1 truncate group-hover:text-indigo-600">
+                  <%= p.produce %>
+                </h5>
+                <p class="text-sm text-gray-600 mb-1">
+                  Qty: <%= p.quantity %> | Price: $<%= typeof p.price === 'number' ? p.price.toFixed(2) : p.price %>
+                </p>
+                <p class="text-xs text-gray-500 mb-2">
+                  Posted: <%= new Date(p.createdAt).toLocaleDateString() %>
+                </p>
+                <p class="text-sm text-gray-700 h-10 overflow-hidden text-ellipsis">
+                  <%= p.description %>
+                </p>
+              </div>
+            </div>
+          </a>
+        <% }) %>
+      </div>
+    <% } %>
+  </section>
+</div>
 
-    <script>
-        document.getElementById("signout")
-            .addEventListener("click", () => {
-                window.location.href = "/logout"
-            });
+<!-- AI HELPER BUTTON -->
+<button
+  id="ai-helper-button"
+  class="fixed bottom-20 right-6 z-50 bg-green-700 hover:bg-green-800 text-white p-3 rounded-full"
+>
+  <img src="/img/glow-icon.svg" alt="AI Helper Icon" class="w-10 h-10"/>
+</button>
 
-        // check if browser supports geolocation
-        // if yes, geolocation object exists
-        if (navigator.geolocation) {
-            // ask user for permission
-            navigator.geolocation.getCurrentPosition(async ({ coords }) => { // permission granted callback
-                // extract latitude and longitude from coords and store them
-                const { latitude, longitude } = coords;
-                // get the response object for reverse geocoding (coordinates -> place)
-                const res = await fetch(
-                    `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=<%= mapboxToken %>`
-                );
-                // since response object is raw, parse as JSON
-                const json = await res.json();
-                // in features, find object whose place_type is "place" aka city in mapbox
-                const place = json.features.find(f => f.place_type.includes('place'));
-                // place?.text only gets text if place exists
-                document.getElementById('city').textContent = place?.text || 'Unknown';
-            }, () => { // permission denied callback
-                document.getElementById('city').textContent = 'Permission denied';
-            });
-        } else { // browser does not support geolocation
-            document.getElementById('city').textContent = 'Geolocation not supported';
-        }
-    </script>
+<!-- AI HELPER MODAL -->
+<div
+  id="ai-modal"
+  class="relative z-10 opacity-0 pointer-events-none transition-opacity duration-300 ease-out"
+  aria-labelledby="modal-title"
+  role="dialog"
+  aria-modal="true"
+>
+  <div class="fixed inset-0 bg-gray-500/75 transition-opacity" aria-hidden="true"></div>
+  <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
+    <div class="flex min-h-screen items-center justify-center p-4 text-center">
+      <div class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
+        <div class="bg-gray-500 px-4 py-3">
+          <h3 id="modal-title" class="text-lg text-center font-semibold text-black">
+            What are some produce in season right now?
+          </h3>
+        </div>
+        <div class="bg-white px-4 pt-2 pb-4 sm:p-6 sm:pb-4">
+          <div class="mt-2 max-h-60 overflow-y-auto">
+            <p id="output" class="text-sm text-gray-700"></p>
+          </div>
+        </div>
+        <div class="bg-gray-100 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+          <button
+            id="close-modal"
+            type="button"
+            class="inline-flex w-full justify-center rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white hover:bg-green-500 sm:ml-3 sm:w-auto"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
-    <script>
-        document.getElementById("signout")
-            .addEventListener("click", () => {
-                window.location.href = "/logout"
-            });
+<%- include("templates/navbar_buyer") %>
+<%- include("templates/footer") %>
 
-        // check if browser supports geolocation
-        // if yes, geolocation object exists
-        if (navigator.geolocation) {
-            // ask user for permission
-            navigator.geolocation.getCurrentPosition(async ({ coords }) => { // permission granted callback
-                // extract latitude and longitude from coords and store them
-                const { latitude, longitude } = coords;
-                // get the response object for reverse geocoding (coordinates -> place)
-                const res = await fetch(
-                    `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=<%= mapboxToken %>`
-                );
-                // since response object is raw, parse as JSON
-                const json = await res.json();
-                // in features, find object whose place_type is "place" aka city in mapbox
-                const place = json.features.find(f => f.place_type.includes('place'));
-                // place?.text only gets text if place exists
-                document.getElementById('city').textContent = place?.text || 'Unknown';
-            }, () => { // permission denied callback
-                document.getElementById('city').textContent = 'Permission denied';
-            });
-        } else { // browser does not support geolocation
-            document.getElementById('city').textContent = 'Geolocation not supported';
-        }
-    </script>
+<script src="/scripts/gemini_scripts.js"></script>
+<script>
+  // Sign-out
+  document.getElementById("signout")?.addEventListener("click", () => {
+    window.location.href = "/logout";
+  });
 
-    <%- include("templates/navbar_buyer") %>
-        <%- include("templates/navbar_buyer") %>
-            <%- include("templates/footer") %>
+  // Geolocation → city
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(async ({ coords }) => {
+      const { latitude, longitude } = coords;
+      const res = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=<%= mapboxToken %>`
+      );
+      const json = await res.json();
+      const place = json.features.find(f => f.place_type.includes('place'));
+      document.getElementById('city').textContent = place?.text || 'Unknown';
+    }, () => {
+      document.getElementById('city').textContent = 'Permission denied';
+    });
+  } else {
+    document.getElementById('city').textContent = 'Geolocation not supported';
+  }
+
+  // Filter dropdown toggle
+  const filterBtn = document.getElementById('filterBtn');
+  const filterMenu = document.getElementById('filterMenu');
+  filterBtn.addEventListener('click', () => filterMenu.classList.toggle('hidden'));
+  document.addEventListener('click', e => {
+    if (!filterBtn.contains(e.target) && !filterMenu.contains(e.target)) {
+      filterMenu.classList.add('hidden');
+    }
+  });
+
+  // AI helper logic
+  document.addEventListener('DOMContentLoaded', () => {
+    const aiBtn    = document.getElementById('ai-helper-button');
+    const aiModal  = document.getElementById('ai-modal');
+    const closeBtn = document.getElementById('close-modal');
+    const output   = document.getElementById('output');
+
+    aiBtn.addEventListener('click', async () => {
+      aiModal.classList.remove('opacity-0', 'pointer-events-none');
+      aiModal.classList.add('opacity-100');
+      output.textContent = 'Loading…';
+      try {
+        const res = await fetch('/api/gemini', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            prompt: 'What are some produce in season right now?'
+          })
+        });
+        const data = await res.json();
+        output.textContent = data.text || 'No response';
+      } catch (err) {
+        output.textContent = 'Error: ' + err.message;
+      }
+    });
+
+    closeBtn.addEventListener('click', () => {
+      aiModal.classList.add('opacity-0', 'pointer-events-none');
+      aiModal.classList.remove('opacity-100');
+    });
+
+    document.addEventListener('click', e => {
+      if (!aiModal.contains(e.target) && !aiBtn.contains(e.target)) {
+        aiModal.classList.add('opacity-0', 'pointer-events-none');
+      }
+    });
+  });
+</script>
