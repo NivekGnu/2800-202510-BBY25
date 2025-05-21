@@ -300,6 +300,10 @@ app.post("/signupSubmit", async (req, res) => {
       // coordinates: null,
     };
 
+    if(role === "seller"){
+      newUserDocument.address = {address, city, province, postalCode};
+    }
+
     const result = await userCollection.insertOne(newUserDocument);
     const newUserId = result.insertedId;
 
