@@ -1,4 +1,4 @@
-<%-/* views/cart.ejs */%>
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -34,6 +34,7 @@
   </head>
   <body class="bg-gray-100">
     <%- include("templates/header") %>
+    <%- include("templates/footer") %>
 
     <div class="max-w-sm mx-auto min-h-screen flex flex-col bg-white shadow-md">
       <!-- Header -->
@@ -278,7 +279,5 @@
         loadCart();
       });
     </script>
-
-    <%- include("templates/footer") %>
   </body>
 </html>
