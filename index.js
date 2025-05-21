@@ -300,8 +300,8 @@ app.post("/signupSubmit", async (req, res) => {
       // coordinates: null,
     };
 
-    if(role === "seller"){
-      newUserDocument.address = {address, city, province, postalCode};
+    if (role === "seller") {
+      newUserDocument.address = { address, city, province, postalCode };
     }
 
     const result = await userCollection.insertOne(newUserDocument);
@@ -665,131 +665,131 @@ app.get('/cart', (req, res) => {
 });
 
 app.post('/checkout', async (req, res) => {
-    if (!req.session.authenticated || req.session.role !== 'buyer') {
-        console.log("Checkout attempt by unauthenticated or non-buyer user.");
-        return res.status(403).json({ error: 'Unauthorized' });
+  if (!req.session.authenticated || req.session.role !== 'buyer') {
+    console.log("Checkout attempt by unauthenticated or non-buyer user.");
+    return res.status(403).json({ error: 'Unauthorized' });
+  }
+
+  const { sellerId, cartItems } = req.body;
+
+  console.log("--- /checkout ROUTE HIT ---");
+  console.log("Timestamp:", new Date().toISOString());
+  console.log("Session UserID (Buyer):", req.session.userId);
+  console.log("Received sellerId:", sellerId);
+  console.log("Received cartItems (raw):", JSON.stringify(cartItems, null, 2));
+
+  if (!sellerId || !ObjectId.isValid(sellerId)) { // Added ObjectId validation for sellerId
+    console.error("Validation Error: Invalid or missing sellerId.");
+    return res.status(400).json({ error: 'Invalid seller ID' });
+  }
+  if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
+    console.error("Validation Error: Invalid or missing cartItems.");
+    return res.status(400).json({ error: 'Invalid cart items' });
+  }
+
+  try {
+    const seller = await userCollection.findOne({ _id: new ObjectId(sellerId) });
+
+    console.log("Seller found in DB:", seller ? JSON.stringify({ _id: seller._id, stripeAccountId: seller.stripeAccountId, firstName: seller.firstName }) : "null");
+
+    if (!seller || !seller.stripeAccountId) {
+      console.error(`Error: Seller ${sellerId} not found or has no stripeAccountId. Seller data: ${JSON.stringify(seller)}`);
+      return res.status(400).json({ error: 'Seller not configured for payments or not found' });
+    }
+    console.log("Using Seller Stripe Account ID:", seller.stripeAccountId);
+
+    const line_items = cartItems.map(item => {
+      const parsedPrice = parseFloat(item.price);
+      const parsedQuantity = parseInt(item.quantity, 10);
+
+      if (isNaN(parsedPrice) || parsedPrice <= 0) {
+        throw new Error(`Invalid price for item "${item.produce}": ${item.price}`);
+      }
+      if (isNaN(parsedQuantity) || parsedQuantity <= 0) {
+        throw new Error(`Invalid quantity for item "${item.produce}": ${item.quantity}`);
+      }
+
+      const unitAmount = Math.round(parsedPrice * 100);
+      if (unitAmount < 50) { // Stripe's typical minimum (e.g., $0.50 USD/CAD)
+        console.warn(`Warning: Item "${item.produce}" has unit_amount ${unitAmount} cents, which might be below Stripe's minimum. This could cause issues.`);
+      }
+
+      // --- IMAGE HANDLING ---
+      let productImages = [];
+      if (item.imageSrc && !item.imageSrc.startsWith('data:')) {
+        // If it's not a data URI, assume it's a public URL and pass it.
+        productImages.push(item.imageSrc);
+      } else if (item.imageSrc && item.imageSrc.startsWith('data:')) {
+        console.warn(`Item "${item.produce}" has a data URI image. Stripe Checkout requires public URLs for images. Image will be omitted.`);
+        // Do not add data URIs to productImages
+      }
+      // --- END IMAGE HANDLING ---
+
+      return {
+        price_data: {
+          currency: 'cad', // Ensure this matches your Stripe account's default or supported currencies
+          product_data: {
+            name: item.produce,
+            ...(productImages.length > 0 && { images: productImages }) // Conditionally add images
+          },
+          unit_amount: unitAmount,
+        },
+        quantity: parsedQuantity,
+      };
+    });
+
+    console.log("Formatted line_items for Stripe:", JSON.stringify(line_items, null, 2));
+
+    const subtotal = line_items.reduce((sum, item) => sum + (item.price_data.unit_amount * item.quantity), 0);
+    // Application fee must be an integer. It also cannot exceed the total amount.
+    const application_fee_amount = Math.max(0, Math.min(subtotal, Math.round(subtotal * 0.05))); // 5% fee, ensure non-negative and not > subtotal
+
+    console.log("Subtotal (cents):", subtotal);
+    console.log("Application Fee Amount (cents):", application_fee_amount);
+
+    if (subtotal === 0 && line_items.length > 0) {
+      console.error("Error: Cart subtotal is 0, cannot create payment session.");
+      return res.status(400).json({ error: 'Cart total is zero.' });
     }
 
-    const { sellerId, cartItems } = req.body;
 
-    console.log("--- /checkout ROUTE HIT ---");
-    console.log("Timestamp:", new Date().toISOString());
-    console.log("Session UserID (Buyer):", req.session.userId);
-    console.log("Received sellerId:", sellerId);
-    console.log("Received cartItems (raw):", JSON.stringify(cartItems, null, 2));
+    const checkoutSessionPayload = {
+      payment_method_types: ['card'],
+      line_items,
+      mode: 'payment',
+      payment_intent_data: {
+        application_fee_amount: application_fee_amount,
+        transfer_data: {
+          destination: seller.stripeAccountId,
+        },
+      },
+      success_url: `${LIVE_DOMAIN}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${LIVE_DOMAIN}/cart`,
+      metadata: {
+        buyerId: req.session.userId,
+        sellerId: sellerId, // Already a string
+        cartItems: JSON.stringify(cartItems.map(i => ({ produce: i.produce, quantity: i.quantity, price: i.price })))
+      },
+    };
 
-    if (!sellerId || !ObjectId.isValid(sellerId)) { // Added ObjectId validation for sellerId
-        console.error("Validation Error: Invalid or missing sellerId.");
-        return res.status(400).json({ error: 'Invalid seller ID' });
-    }
-    if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
-        console.error("Validation Error: Invalid or missing cartItems.");
-        return res.status(400).json({ error: 'Invalid cart items' });
-    }
+    console.log("Final payload for Stripe checkoutSession.create:", JSON.stringify(checkoutSessionPayload, null, 2));
 
-    try {
-        const seller = await userCollection.findOne({ _id: new ObjectId(sellerId) });
+    const checkoutSession = await stripe.checkout.sessions.create(checkoutSessionPayload);
 
-        console.log("Seller found in DB:", seller ? JSON.stringify({ _id: seller._id, stripeAccountId: seller.stripeAccountId, firstName: seller.firstName }) : "null");
+    console.log("Stripe Checkout Session created successfully, ID:", checkoutSession.id);
+    res.json({ url: checkoutSession.url });
 
-        if (!seller || !seller.stripeAccountId) {
-            console.error(`Error: Seller ${sellerId} not found or has no stripeAccountId. Seller data: ${JSON.stringify(seller)}`);
-            return res.status(400).json({ error: 'Seller not configured for payments or not found' });
-        }
-        console.log("Using Seller Stripe Account ID:", seller.stripeAccountId);
-
-        const line_items = cartItems.map(item => {
-            const parsedPrice = parseFloat(item.price);
-            const parsedQuantity = parseInt(item.quantity, 10);
-
-            if (isNaN(parsedPrice) || parsedPrice <= 0) {
-                throw new Error(`Invalid price for item "${item.produce}": ${item.price}`);
-            }
-            if (isNaN(parsedQuantity) || parsedQuantity <= 0) {
-                throw new Error(`Invalid quantity for item "${item.produce}": ${item.quantity}`);
-            }
-
-            const unitAmount = Math.round(parsedPrice * 100);
-            if (unitAmount < 50) { // Stripe's typical minimum (e.g., $0.50 USD/CAD)
-                console.warn(`Warning: Item "${item.produce}" has unit_amount ${unitAmount} cents, which might be below Stripe's minimum. This could cause issues.`);
-            }
-
-            // --- IMAGE HANDLING ---
-            let productImages = [];
-            if (item.imageSrc && !item.imageSrc.startsWith('data:')) {
-                // If it's not a data URI, assume it's a public URL and pass it.
-                productImages.push(item.imageSrc);
-            } else if (item.imageSrc && item.imageSrc.startsWith('data:')) {
-                console.warn(`Item "${item.produce}" has a data URI image. Stripe Checkout requires public URLs for images. Image will be omitted.`);
-                // Do not add data URIs to productImages
-            }
-            // --- END IMAGE HANDLING ---
-
-            return {
-                price_data: {
-                    currency: 'cad', // Ensure this matches your Stripe account's default or supported currencies
-                    product_data: {
-                        name: item.produce,
-                        ...(productImages.length > 0 && { images: productImages }) // Conditionally add images
-                    },
-                    unit_amount: unitAmount,
-                },
-                quantity: parsedQuantity,
-            };
-        });
-
-        console.log("Formatted line_items for Stripe:", JSON.stringify(line_items, null, 2));
-
-        const subtotal = line_items.reduce((sum, item) => sum + (item.price_data.unit_amount * item.quantity), 0);
-        // Application fee must be an integer. It also cannot exceed the total amount.
-        const application_fee_amount = Math.max(0, Math.min(subtotal, Math.round(subtotal * 0.05))); // 5% fee, ensure non-negative and not > subtotal
-
-        console.log("Subtotal (cents):", subtotal);
-        console.log("Application Fee Amount (cents):", application_fee_amount);
-
-        if (subtotal === 0 && line_items.length > 0) {
-            console.error("Error: Cart subtotal is 0, cannot create payment session.");
-            return res.status(400).json({ error: 'Cart total is zero.' });
-        }
-
-
-        const checkoutSessionPayload = {
-            payment_method_types: ['card'],
-            line_items,
-            mode: 'payment',
-            payment_intent_data: {
-                application_fee_amount: application_fee_amount,
-                transfer_data: {
-                    destination: seller.stripeAccountId,
-                },
-            },
-            success_url: `${LIVE_DOMAIN}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${LIVE_DOMAIN}/cart`,
-            metadata: {
-                buyerId: req.session.userId,
-                sellerId: sellerId, // Already a string
-                cartItems: JSON.stringify(cartItems.map(i => ({ produce: i.produce, quantity: i.quantity, price: i.price })))
-            },
-        };
-
-        console.log("Final payload for Stripe checkoutSession.create:", JSON.stringify(checkoutSessionPayload, null, 2));
-
-        const checkoutSession = await stripe.checkout.sessions.create(checkoutSessionPayload);
-
-        console.log("Stripe Checkout Session created successfully, ID:", checkoutSession.id);
-        res.json({ url: checkoutSession.url });
-
-    } catch (error) {
-        console.error("--- STRIPE CHECKOUT ERROR ---");
-        console.error("Timestamp:", new Date().toISOString());
-        console.error("Error Type:", error.type); // Stripe error type if available
-        console.error("Error Code:", error.code); // Stripe error code if available
-        console.error("Error Message:", error.message);
-        console.error("Error Param:", error.param); // Parameter causing the issue
-        console.error("Full Stripe Error Object:", JSON.stringify(error, null, 2)); // Log the whole error
-        console.error("--- END STRIPE CHECKOUT ERROR ---");
-        res.status(500).json({ error: 'Failed to create checkout session', stripeError: error.message, stripeErrorCode: error.code });
-    }
+  } catch (error) {
+    console.error("--- STRIPE CHECKOUT ERROR ---");
+    console.error("Timestamp:", new Date().toISOString());
+    console.error("Error Type:", error.type); // Stripe error type if available
+    console.error("Error Code:", error.code); // Stripe error code if available
+    console.error("Error Message:", error.message);
+    console.error("Error Param:", error.param); // Parameter causing the issue
+    console.error("Full Stripe Error Object:", JSON.stringify(error, null, 2)); // Log the whole error
+    console.error("--- END STRIPE CHECKOUT ERROR ---");
+    res.status(500).json({ error: 'Failed to create checkout session', stripeError: error.message, stripeErrorCode: error.code });
+  }
 });
 
 // route for profile
@@ -827,13 +827,19 @@ app.post('/profile', async (req, res) => {
     return res.redirect('/');
   }
 
+  const { 'address address-search': address, city, province, postalCode } = req.body;
+
   // Validate incoming fields
   const schema = Joi.object({
-    firstName: Joi.string().min(1).max(50).required(),
-    lastName:  Joi.string().min(1).max(50).required(),
-    email:     Joi.string().email().required()
+    firstName:                Joi.string().min(1).max(50).required(),
+    lastName:                 Joi.string().min(1).max(50).required(),
+    email:                    Joi.string().email().required(),
+    'address address-search': Joi.string().min(1).max(50).required(),
+    city:                     Joi.string().min(1).max(50).required(),
+    province:                 Joi.string().min(1).max(50).required(),
+    postalCode:               Joi.string().min(7).max(7).required()
   });
-  
+
   const { error, value } = schema.validate(req.body, { abortEarly: false });
   if (error) {
     const msgs = error.details.map(d => d.message).join('; ');
@@ -849,9 +855,11 @@ app.post('/profile', async (req, res) => {
   // Build update object
   const updates = {
     firstName: value.firstName,
-    lastName:  value.lastName,
-    email:     value.email,
+    lastName: value.lastName,
+    email: value.email
   };
+
+  updates.address = { address, city, province, postalCode };
 
   // Only sellers have languages, but they manage those elsewhere (/languages)
   // So we don't touch languages here
