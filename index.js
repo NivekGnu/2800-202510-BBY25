@@ -800,11 +800,15 @@ app.get('/contact', (req, res) => {
 });
 
 // Map page route
-app.get("/map", (req, res) => {
+app.get("/map", async (req, res) => {
   if (!req.session.authenticated) return res.redirect("/login");
+
+  const sellers = await userCollection.find({ role: "seller" }).toArray();
+
   res.render("map", {
     title: "Map",
     mapboxToken: process.env.MAPBOX_API_TOKEN,
+    sellers: sellers
   });
 });
 
