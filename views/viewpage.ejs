@@ -29,12 +29,6 @@
       <div class="flex justify-between items-center text-xs text-gray-500 mb-3">
         <div class="flex items-center space-x-1">
           <span>Posted on <%= new Date(post.createdAt).toLocaleString() %></span>
-          <span class="bg-gray-400 rounded-full w-1 h-1 mx-1"></span>
-          <span><% if (post.location) { %> <%= post.location %> <% } else if (post.seller && post.seller.location) { %> <%= post.seller.location %> <% } else { %> Location N/A <% } %></span>
-        </div>
-        <div class="flex items-center space-x-1 text-sm text-gray-600">
-          <div class="w-4 h-4"><img src="/img/star.png" alt="Rating star" class="w-full h-full object-contain"></div>
-          <span>4.9 (610)</span> <%# Placeholder %>
         </div>
       </div>
 
