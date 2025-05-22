@@ -606,6 +606,41 @@ app.post("/post/:id/edit", upload.single("image"), async (req, res) => {
   res.redirect("/");
 });
 
+// DELETE a post by ID
+app.post("/post/:id/delete", async (req, res) => {
+  // 1. Only allow authenticated sellers
+  if (!req.session.authenticated || req.session.role !== "seller") {
+    return res.redirect("/login");
+  }
+
+  const id = req.params.id;
+  // 2. Validate that the provided ID is a valid ObjectId
+  if (!ObjectId.isValid(id)) {
+    return res.status(400).send("Invalid post ID");
+  }
+
+  try {
+    // 3. Attempt to delete the post, but only if it belongs to this seller
+    const result = await postingCollection.deleteOne({
+      _id: new ObjectId(id),
+      sellerId: new ObjectId(req.session.userId),
+    });
+
+    // 4. If no document was deleted, either it didn’t exist or they didn’t own it
+    if (result.deletedCount === 0) {
+      return res
+        .status(403)
+        .send("Cannot delete post: not found or insufficient permissions");
+    }
+
+    // 5. Redirect back to "/" (which renders your sellerHome with the updated list)
+    res.redirect("/");
+  } catch (err) {
+    console.error("Error deleting post:", err);
+    res.status(500).send("Server error while deleting post");
+  }
+});
+
 // --- CHAT ROUTES (Simplified for brevity, assuming they are mostly working) ---
 app.get("/chat", async (req, res) => {
   if (!req.session.authenticated) return res.redirect("/login");
