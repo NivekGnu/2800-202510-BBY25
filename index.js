@@ -1381,8 +1381,14 @@ io.on("connection", (socket) => {
 });
 
 // --- 404 AND ERROR HANDLER ---
-app.use((req, res, next) => {
-  res.status(404).render("404", { title: "Page Not Found" });
+app.use(async (req, res, next) => {
+  // fetch only user role
+  const user = await userCollection.findOne(
+    { _id: new ObjectId(req.session.userId) },
+    { projection: { role: 1 } }
+  );
+
+  res.status(404).render("404", { title: "Page Not Found", user});
 });
 
 app.use((err, req, res, next) => {

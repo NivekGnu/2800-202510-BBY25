@@ -9,5 +9,10 @@
     <a href="/" class="text-blue-500 hover:underline">Go back to homepage</a>
 </div>
 
-<%- include("templates/navbar_buyer") %>
-<%- include("templates/footer") %> 
+<% if (user.role === 'buyer') { %>
+    <%- include("templates/navbar_buyer") %>
+<% } else if (user.role === 'seller') { %>
+    <%- include("templates/navbar_seller") %>
+<% } %>
+
+<%- include("templates/footer") %>
