@@ -7,6 +7,8 @@
     <title><%= post.produce || "Product Details" %></title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- ADDED SWEETALERT2 SCRIPT -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         body { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; }
         .qty-button { min-width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; }
@@ -103,10 +105,9 @@
             hasSpecificCoordsVPA = true;
           }
           
-          // Check for address for geocoding, regardless of direct coordinates (can be fallback)
           if (post.seller && post.seller.address && post.seller.address.address && post.seller.address.city) {
             hasSellerAddressForGeocodingVPA = true;
-            if (!hasSpecificCoordsVPA) { // If no direct coords, use seller's general location for mapLocationStringVPA
+            if (!hasSpecificCoordsVPA) { 
                  mapLocationStringVPA = post.seller.location || (post.seller.firstName ? post.seller.firstName + "'s General Area" : "Seller's General Area");
             }
           }
@@ -173,7 +174,6 @@
     const addToCartButtonElement = document.getElementById("addToCartButton");
     const qtyUpButtonElement = document.getElementById("qtyUpButton");
     const qtyDownButtonElement = document.getElementById("qtyDownButton");
-    // mapContainerElement will be fetched inside initializeMap
 
     // --- Helper Functions ---
     function updateDisplayedPrices() {
@@ -207,64 +207,101 @@
         });
 
         if (productConfig.maxQuantity > 0) {
-            updateDisplayedPrices(); // Initial price update based on default quantity 1
+            updateDisplayedPrices(); 
         } else {
             [qtyUpButtonElement, qtyDownButtonElement].forEach(btn => btn.disabled = true);
             quantityDisplayElement.innerText = '0';
             if (priceDisplayElement) priceDisplayElement.innerText = `$${(0 * productConfig.basePrice).toFixed(2)}`;
             if (totalPriceForCartElement) totalPriceForCartElement.innerText = "0.00";
         }
-         // Set initial quantity display if stock is available
         if (productConfig.maxQuantity > 0) {
             quantityDisplayElement.innerText = selectedQuantity;
         }
     }
 
-    // --- Add to Cart Logic ---
+    // --- Add to Cart Logic (MODIFIED TO USE SWEETALERT) ---
     function initializeAddToCart() {
         if (!addToCartButtonElement) return;
 
         addToCartButtonElement.addEventListener('click', () => {
             if (productConfig.maxQuantity === 0) {
-                alert("This item is out of stock and cannot be added to cart.");
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Out of Stock',
+                    text: 'This item is out of stock and cannot be added to cart.',
+                });
                 return;
             }
             if (productConfig.sellerId === 'UNKNOWN_SELLER_ID') {
-                alert("Seller information is missing for this product. Cannot add to cart.");
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Missing Information',
+                    text: 'Seller information is missing for this product. Cannot add to cart.',
+                });
                 return;
             }
 
-            const cartItem = {
+            const cartItemData = {
                 id: productConfig.id,
                 produce: productConfig.produceName,
                 price: productConfig.basePrice,
-                quantity: selectedQuantity,
+                quantity: selectedQuantity, // Quantity user intends to add in this operation
                 imageSrc: productConfig.imageSrc,
                 sellerId: productConfig.sellerId,
                 sellerName: productConfig.sellerName
             };
 
             let cart = JSON.parse(localStorage.getItem('cart') || '{}');
-            if (!cart[cartItem.sellerId]) {
-                cart[cartItem.sellerId] = { sellerName: cartItem.sellerName, items: [] };
+            if (!cart[cartItemData.sellerId]) {
+                cart[cartItemData.sellerId] = { sellerName: cartItemData.sellerName, items: [] };
             }
-            const existingItemIndex = cart[cartItem.sellerId].items.findIndex(item => item.id === cartItem.id);
-            if (existingItemIndex > -1) {
-                let newQuantity = cart[cartItem.sellerId].items[existingItemIndex].quantity + cartItem.quantity;
-                if (newQuantity > productConfig.maxQuantity) {
-                    alert(`You can only add up to ${productConfig.maxQuantity} of this item. Cart updated to max available (${productConfig.maxQuantity}).`);
-                    newQuantity = productConfig.maxQuantity;
+            
+            const existingItemIndex = cart[cartItemData.sellerId].items.findIndex(item => item.id === cartItemData.id);
+            let quantityWasAdjusted = false;
+            let finalCartQuantityForItem; // The total quantity of this item in the cart after the operation
+
+            if (existingItemIndex > -1) { // Item already in cart, updating quantity
+                let currentCartQty = cart[cartItemData.sellerId].items[existingItemIndex].quantity;
+                let newTotalDesiredQuantity = currentCartQty + cartItemData.quantity;
+
+                if (newTotalDesiredQuantity > productConfig.maxQuantity) {
+                    quantityWasAdjusted = true;
+                    finalCartQuantityForItem = productConfig.maxQuantity;
+                } else {
+                    finalCartQuantityForItem = newTotalDesiredQuantity;
                 }
-                cart[cartItem.sellerId].items[existingItemIndex].quantity = newQuantity;
-            } else {
-                if (cartItem.quantity > productConfig.maxQuantity) {
-                    alert(`You can only add up to ${productConfig.maxQuantity} of this item. Quantity set to max available (${productConfig.maxQuantity}).`);
-                    cartItem.quantity = productConfig.maxQuantity;
+                cart[cartItemData.sellerId].items[existingItemIndex].quantity = finalCartQuantityForItem;
+            } else { // New item to cart
+                let quantityToAdd = cartItemData.quantity;
+                if (quantityToAdd > productConfig.maxQuantity) {
+                    quantityWasAdjusted = true;
+                    quantityToAdd = productConfig.maxQuantity;
                 }
-                cart[cartItem.sellerId].items.push(cartItem);
+                const newItemForCart = { ...cartItemData, quantity: quantityToAdd };
+                cart[cartItemData.sellerId].items.push(newItemForCart);
+                finalCartQuantityForItem = quantityToAdd;
             }
+            
             localStorage.setItem('cart', JSON.stringify(cart));
-            alert(`${selectedQuantity} x ${cartItem.produce} added/updated in cart!`);
+
+            if (quantityWasAdjusted) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Quantity Adjusted & Cart Updated',
+                    html: `You attempted to add ${selectedQuantity} unit(s) of <strong>${cartItemData.produce}</strong>.
+                           However, the maximum available stock is ${productConfig.maxQuantity}.<br><br>
+                           Your cart has been updated, and now contains <strong>${finalCartQuantityForItem}</strong> unit(s) of this item.`,
+                });
+            } else {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Cart Updated!',
+                    text: `${selectedQuantity} x ${cartItemData.produce} ${existingItemIndex > -1 ? 'quantity updated in' : 'added to'} cart. Total in cart for this item: ${finalCartQuantityForItem}.`,
+                    timer: 2500, // Auto-close after 2.5 seconds
+                    showConfirmButton: false
+                    // Removed toast: true and position: 'top-end' to make it a centered modal
+                });
+            }
         });
     }
 
@@ -272,8 +309,6 @@
     function initializeMap() {
         const mapContainerElement = document.getElementById('map');
         if (!mapContainerElement) {
-            // This means the EJS determined no map should be shown (no coords, no address)
-            // console.log("Map element not rendered, skipping map initialization.");
             return;
         }
 
@@ -284,21 +319,21 @@
             return;
         }
 
-        const defaultViewLat = 49.2487; // e.g., BCIT Burnaby or a sensible default for your app
+        const defaultViewLat = 49.2487; 
         const defaultViewLng = -122.9806;
         let initialView = [defaultViewLat, defaultViewLng];
-        let initialZoom = 8; // Zoom out if no specific point, or geocoding fails
+        let initialZoom = 8; 
 
         const productName = mapContainerElement.dataset.productName || "Item";
-        let itemLocationString = mapContainerElement.dataset.locationString || "Location"; // General location from EJS
+        let itemLocationString = mapContainerElement.dataset.locationString || "Location"; 
 
         try {
-            const mapInstance = L.map(mapContainerElement); // Initialize map on the div
+            const mapInstance = L.map(mapContainerElement); 
 
             L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
                 attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © <a href="http://openstreetmap.org/copyright">OpenStreetMap</a>',
                 maxZoom: 18,
-                id: 'mapbox/streets-v12', // Or 'mapbox/outdoors-v11', 'mapbox/satellite-v9'
+                id: 'mapbox/streets-v12', 
                 tileSize: 512,
                 zoomOffset: -1,
                 accessToken: mapboxToken
@@ -315,7 +350,7 @@
 
                 if (!isNaN(latitude) && !isNaN(longitude)) {
                     initialView = [latitude, longitude];
-                    initialZoom = 14; // Zoom in for specific coordinates
+                    initialZoom = 14; 
                     mapInstance.setView(initialView, initialZoom);
                     L.marker(initialView).addTo(mapInstance)
                         .bindPopup(`<b>${productName}</b><br>${itemLocationString}`)
@@ -326,8 +361,7 @@
                 }
             }
             
-            // If no specific coords OR if geocoding should also be attempted (e.g. to refine or always show seller address)
-            if (!itemMarkerPlaced && sellerAddressData) { // Only geocode if no marker was placed via direct coords
+            if (!itemMarkerPlaced && sellerAddressData) { 
                 try {
                     const sellerAddress = JSON.parse(sellerAddressData);
                     const sellerInfo = sellerInfoData ? JSON.parse(sellerInfoData) : {firstName: "Seller", lastName: ""};
@@ -340,7 +374,7 @@
                             .then(data => {
                                 if (data.features && data.features.length > 0) {
                                     const [lng, lat] = data.features[0].center;
-                                    initialView = [lat, lng]; // Update view to geocoded location
+                                    initialView = [lat, lng]; 
                                     initialZoom = 14;
                                     mapInstance.setView(initialView, initialZoom);
 
@@ -358,7 +392,7 @@
                                     itemMarkerPlaced = true;
                                 } else {
                                     console.warn("Geocoding did not find a location for address:", addressString);
-                                    mapInstance.setView(initialView, initialZoom); // Use default or previously set view/zoom
+                                    mapInstance.setView(initialView, initialZoom); 
                                 }
                             })
                             .catch(err => {
@@ -366,19 +400,16 @@
                                 mapInstance.setView(initialView, initialZoom);
                             });
                     } else {
-                         mapInstance.setView(initialView, initialZoom); // Set to default if address parts missing
+                         mapInstance.setView(initialView, initialZoom); 
                     }
                 } catch (e) {
                     console.error("Error parsing seller address data for map:", e);
                     mapInstance.setView(initialView, initialZoom);
                 }
             } else if (!itemMarkerPlaced) {
-                // No specific coords, no address to geocode, or geocoding already attempted if itemMarkerPlaced still false
                 mapInstance.setView(initialView, initialZoom);
             }
 
-
-            // Add Buyer's current location marker (optional)
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
@@ -386,12 +417,6 @@
                         const userLng = position.coords.longitude;
                         const userMarker = L.marker([userLat, userLng]).addTo(mapInstance);
                         userMarker.bindPopup(`<b>Your Current Location</b>`);
-
-                        // Optionally, if an item marker was placed, fit both markers in view
-                        // if (itemMarkerPlaced) {
-                        //     const bounds = L.latLngBounds(initialView, [userLat, userLng]);
-                        //     mapInstance.fitBounds(bounds.pad(0.2)); // Add some padding
-                        // }
                     },
                     (error) => {
                         console.warn("Could not get user's location for map:", error.message);
@@ -401,7 +426,7 @@
 
         } catch (error) {
             console.error("Leaflet map initialization critical error:", error);
-            if (mapContainerElement) { // Check again in case error was before mapInstance creation
+            if (mapContainerElement) { 
                  mapContainerElement.innerHTML = '<p class="text-center p-4 text-red-500">Map failed to load.</p>';
             }
         }

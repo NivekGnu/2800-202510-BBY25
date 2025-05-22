@@ -47,17 +47,6 @@
         console.error("Geocoding failed for:", addressString, err);
       });
     });
-
-    // BCIT test marker
-    const marker = L.marker([49.249999, -123.001]).addTo(map);
-    marker.bindPopup(`
-      <a href="https://www.bcit.ca/" target="_blank" style="text-decoration: none; color: inherit; display: block;">
-        <div style="padding: 4px;">
-        <b>Burnaby</b><br>
-        Home of BCIT.
-        </div>
-      </a>
-    `).openPopup();
   
     // Buyer's current location; may need their permission for geolocation
     if (navigator.geolocation) {
