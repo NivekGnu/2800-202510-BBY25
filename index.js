@@ -1227,10 +1227,11 @@ app.get("/contacts", async (req, res) => {
 
   const currentUserIdString = req.session.userId;
   const currentUserId = new ObjectId(currentUserIdString);
+  const currentUserRole = req.session.role; // Get the role from the session
 
   try {
-    // Find all chat messages where the current user is either the sender or receiver
-    // Then, get the distinct other user IDs from those messages.
+    // ... (your existing logic to fetch distinctSenderIds, distinctReceiverIds, allInteractedUserIds) ...
+
     const distinctSenderIds = await chatMessageCollection.distinct("senderId", {
       receiverId: currentUserId,
     });
@@ -1239,14 +1240,12 @@ app.get("/contacts", async (req, res) => {
       { senderId: currentUserId }
     );
 
-    // Combine and get unique IDs, excluding the current user itself
     const allInteractedUserIds = [
       ...new Set([...distinctSenderIds, ...distinctReceiverIds]),
     ]
       .filter((id) => id.toString() !== currentUserIdString)
-      .map((id) => new ObjectId(id)); // Convert back to ObjectId for DB query
+      .map((id) => new ObjectId(id));
 
-    // ...
     let contacts = [];
     if (allInteractedUserIds.length > 0) {
       contacts = await userCollection
@@ -1254,17 +1253,26 @@ app.get("/contacts", async (req, res) => {
           { _id: { $in: allInteractedUserIds } },
           {
             projection: {
-              /* ... */
+              firstName: 1,
+              lastName: 1,
+              profilePictureUrl: 1,
+              image: 1
             },
           }
         )
+        .map(user => ({
+          ...user,
+          _id: user._id.toString(),
+          profilePictureUrl: user.profilePictureUrl || (user.image && user.image.data ? `data:${user.image.contentType};base64,${user.image.data.toString("base64")}` : '/img/farmerpfp.png')
+        }))
         .toArray();
     }
 
     res.render("contacts", {
       title: "My Messages",
-      contacts: contacts, // 'contacts' will be an empty array if no interactions
+      contacts: contacts,
       currentUserId: currentUserIdString,
+      userRole: currentUserRole, // Pass the role to the template
     });
   } catch (error) {
     console.error("Error fetching contacts:", error);
@@ -1373,8 +1381,14 @@ io.on("connection", (socket) => {
 });
 
 // --- 404 AND ERROR HANDLER ---
-app.use((req, res, next) => {
-  res.status(404).render("404", { title: "Page Not Found" });
+app.use(async (req, res, next) => {
+  // fetch only user role
+  const user = await userCollection.findOne(
+    { _id: new ObjectId(req.session.userId) },
+    { projection: { role: 1 } }
+  );
+
+  res.status(404).render("404", { title: "Page Not Found", user});
 });
 
 app.use((err, req, res, next) => {

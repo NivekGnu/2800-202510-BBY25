@@ -5,7 +5,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title><%= title %></title>
-    <%# Make sure 'title' is passed from index.js %> <%# Tailwind CSS %>
+    <%# Make sure 'title' is passed from index.js %>
+    <%# Tailwind CSS %>
     <script src="https://cdn.tailwindcss.com"></script>
 
     <%# Font Awesome for icons %>
@@ -18,77 +19,101 @@
         font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
           Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue",
           sans-serif;
+        display: flex; /* Added for flex layout */
+        flex-direction: column; /* Added for flex layout */
+        min-height: 100vh; /* Added for flex layout */
       }
       .contact-item:hover {
         background-color: #f9fafb; /* Tailwind's gray-50 for hover */
       }
-      /* You can add more specific styles here if needed */
+      /* Ensure main content can grow and push footer down */
+      main {
+        flex-grow: 1;
+      }
     </style>
   </head>
-  <!-- Contacts List -->
+  <body class="bg-gray-100"> <%# Added a body class for consistency and flex layout %>
     <%- include("templates/header") %>
 
-
-  <main class="flex-grow">
-    <% if (contacts && contacts.length > 0) { %>
-    <ul role="list" class="divide-y divide-gray-200">
-      <% contacts.forEach(contact => { %>
-      <li class="contact-item">
-        <a href="/chat?with=<%= contact._id.toString() %>" class="block p-4">
-          <div class="flex items-center space-x-4">
-            <div class="flex-shrink-0">
-              <% if (contact.profilePictureUrl) { %>
-              <img
-                class="h-10 w-10 rounded-full object-cover"
-                src="<%= contact.profilePictureUrl %>"
-                alt="<%= contact.firstName %> profile"
-              />
-              <% } else { %>
-              <span
-                class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-gray-400"
-              >
-                <span class="font-medium leading-none text-white">
-                  <%= (contact.firstName ? contact.firstName[0] : '') %><%=
-                  (contact.lastName ? contact.lastName[0] : '') %>
+    <main class="flex-grow"> <%# flex-grow will make this section take available space %>
+      <% if (contacts && contacts.length > 0) { %>
+      <ul role="list" class="divide-y divide-gray-200 bg-white shadow-sm"> <%# Added bg-white and shadow for better list presentation %>
+        <% contacts.forEach(contact => { %>
+        <li class="contact-item">
+          <a href="/chat?with=<%= contact._id.toString() %>" class="block p-4">
+            <div class="flex items-center space-x-4">
+              <div class="flex-shrink-0">
+                <% if (contact.profilePictureUrl && contact.profilePictureUrl !== '/img/farmerpfp.png') { %> <%# Check if it's not the default placeholder explicitly if needed %>
+                <img
+                  class="h-10 w-10 rounded-full object-cover"
+                  src="<%= contact.profilePictureUrl %>"
+                  alt="<%= contact.firstName %> profile"
+                />
+                <% } else { %>
+                <span
+                  class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-gray-400"
+                >
+                  <span class="font-medium leading-none text-white">
+                    <%= (contact.firstName ? contact.firstName[0].toUpperCase() : '') %><%=
+                    (contact.lastName ? contact.lastName[0].toUpperCase() : '') %>
+                  </span>
                 </span>
-              </span>
-              <% } %>
+                <% } %>
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="truncate text-sm font-medium text-gray-900">
+                  <%= contact.firstName || 'User' %> <%= contact.lastName || '' %>
+                </p>
+                <p class="truncate text-sm text-gray-500">Click to view chat</p>
+              </div>
+              <div>
+                <i class="fas fa-chevron-right text-gray-400"></i>
+              </div>
             </div>
-            <div class="min-w-0 flex-1">
-              <p class="truncate text-sm font-medium text-gray-900">
-                <%= contact.firstName || 'User' %> <%= contact.lastName || '' %>
-              </p>
-              <p class="truncate text-sm text-gray-500">Click to view chat</p>
-            </div>
-            <div>
-              <i class="fas fa-chevron-right text-gray-400"></i>
-            </div>
-          </div>
-        </a>
-      </li>
-      <% }) %>
-    </ul>
-    <% } else { %> <%# THIS IS THE "NO CHAT ROOMS" MESSAGE BLOCK %>
-    <div
-      class="text-center text-gray-500 py-10 px-4 flex flex-col items-center justify-center h-full"
-    >
-      <%# Added flex for centering %>
-      <i class="far fa-comments text-5xl mb-4 text-gray-400"></i> <%# Slightly
-      larger icon and margin %>
-      <p class="text-lg text-gray-700 font-semibold">No Conversations Yet</p>
-      <p class="mt-2 text-sm text-gray-500">
-        Start a chat by finding a product and contacting the seller,
-        <br />or wait for someone to message you!
-      </p>
-      <a
-        href="/"
-        class="mt-6 inline-block bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-150 ease-in-out"
+          </a>
+        </li>
+        <% }) %>
+      </ul>
+      <% } else { %>
+      <div
+        class="text-center text-gray-500 py-10 px-4 flex flex-col items-center justify-center h-full"
       >
-        Browse Products
-      </a>
-    </div>
+        <i class="far fa-comments text-5xl mb-4 text-gray-400"></i>
+        <p class="text-lg text-gray-700 font-semibold">No Conversations Yet</p>
+        <p class="mt-2 text-sm text-gray-500">
+          Start a chat by finding a product and contacting the seller,
+          <br />or wait for someone to message you!
+        </p>
+        <% if (userRole === 'buyer') { %> <%# Conditional browse button %>
+        <a
+          href="/"
+          class="mt-6 inline-block bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-150 ease-in-out"
+        >
+          Browse Products
+        </a>
+        <% } else if (userRole === 'seller') { %>
+         <a
+          href="/"
+          class="mt-6 inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-150 ease-in-out"
+        >
+          View My Postings
+        </a>
+        <% } %>
+      </div>
+      <% } %>
+    </main>
+
+
+    <% if (locals.userRole === 'seller') { %>
+        <%- include("templates/navbar_seller") %>
+    <% } else if (locals.userRole === 'buyer') { %>
+        <%- include("templates/navbar_buyer") %>
+    <% } else { %>
+        <%# Fallback or no navbar if role is not defined or not buyer/seller %>
+        <%# You could include a generic navbar or nothing %>
+        <% console.warn("User role not defined for contacts page navbar. Session:", session) %>
     <% } %>
-  </main>
-    <%- include("templates/navbar_buyer") %>
-    <%- include("templates/footer") %>
+
+  
+  </body>
 </html>
