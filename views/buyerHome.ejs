@@ -12,66 +12,93 @@
       <span id="city" class="font-medium">Detecting…</span>
     </p>
 
-      <!-- Category Filter Dropdown -->
-      <div class="relative mb-6">
-        <button id="filterBtn"
-          class="w-full flex justify-between items-center px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm text-left focus:outline-none focus:ring-2 focus:ring-indigo-500">
-          <span>
-            Category:
-            <strong>
-              <%= selectedCategory ? selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1) : 'All' %>
-            </strong>
-          </span>
-          <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
-        <div id="filterMenu"
-          class="hidden absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-          <a href="?category=" class="block px-4 py-2 text-sm hover:bg-gray-100
+    <!-- Category Filter Dropdown -->
+    <div class="relative mb-3">
+      <button id="filterBtn"
+        class="w-full flex justify-between items-center px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm text-left focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        <span>
+          Category:
+          <strong>
+            <%= selectedCategory ? selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1) : 'All' %>
+          </strong>
+        </span>
+        <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      <div id="filterMenu"
+        class="hidden absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+        <a href="?category=" class="block px-4 py-2 text-sm hover:bg-gray-100
                <%= selectedCategory === '' ? 'bg-indigo-100 text-indigo-700' : '' %>">All</a>
-          <% categories.forEach(cat=> { %>
-            <a href="?category=<%= cat %>" class="block px-4 py-2 text-sm hover:bg-gray-100
+        <% categories.forEach(cat=> { %>
+          <a href="?category=<%= cat %>" class="block px-4 py-2 text-sm hover:bg-gray-100
                  <%= selectedCategory === cat ? 'bg-indigo-100 text-indigo-700' : '' %>">
-              <%= cat.charAt(0).toUpperCase() + cat.slice(1) %>
-            </a>
-            <% }) %>
-        </div>
+            <%= cat.charAt(0).toUpperCase() + cat.slice(1) %>
+          </a>
+          <% }) %>
       </div>
+    </div>
 
-      <!-- Listings -->
-      <section class="mt-8">
-        <h2 class="text-2xl font-semibold mb-4 text-gray-800">All Available Postings</h2>
-        <% if (postings.length===0) { %>
-          <p class="text-gray-600">There are currently no postings yet.</p>
-          <% } else { %>
-            <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 ">
-              <% postings.forEach(p=> { %>
-                <a href="/viewpage?postId=<%= p._id %>" class="block group ">
-                  <div
-                    class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300">
-                    <div class="w-full h-48 overflow-hidden">
-                      <img src="<%= p.thumbSrc %>" alt="Thumbnail of <%= p.produce %>"
-                        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                    </div>
-                    <div class="p-4">
-                      <h5 class="text-xl font-bold text-indigo-600 mb-2 truncate
-                   group-hover:text-indigo-800 transition-colors duration-200">
-                        <%= p.produce %>
-                      </h5>
-                      <p class="text-sm font-medium text-gray-900 mb-2">
-                        Qty: <%= p.quantity %> | Price: $<%= typeof p.price==='number' ? p.price.toFixed(2) : p.price %>
-                      </p>
-                      <p class="text-xs text-gray-500">
-                        Posted: <%= new Date(p.createdAt).toLocaleDateString() %>
-                      </p>
-                    </div>
+    <!-- Language Filter Dropdown -->
+    <div class="relative mb-3">
+      <button id="languageBtn"
+        class="w-full flex justify-between items-center px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm text-left focus:outline-none focus:ring-2 focus:ring-green-500">
+        <span>
+          Language:
+          <strong>
+            <%= selectedLanguage || 'All' %>
+          </strong>
+        </span>
+        <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      <div id="languageMenu"
+        class="hidden absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+        <a href="?"
+          class="block px-4 py-2 text-sm hover:bg-gray-100 <%= !selectedLanguage ? 'bg-green-100 text-green-700' : '' %>">All</a>
+        <% languages.forEach(lang=> { %>
+          <a href="?language=<%= lang %>&category=<%= selectedCategory %>"
+            class="block px-4 py-2 text-sm hover:bg-gray-100 <%= selectedLanguage === lang ? 'bg-green-100 text-green-700' : '' %>">
+            <%= lang %>
+          </a>
+          <% }) %>
+      </div>
+    </div>
+
+    <!-- Listings -->
+    <section class="mt-8">
+      <h2 class="text-2xl font-semibold mb-4 text-gray-800">All Available Postings</h2>
+      <% if (postings.length===0) { %>
+        <p class="text-gray-600">There are currently no postings yet.</p>
+        <% } else { %>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 ">
+            <% postings.forEach(p=> { %>
+              <a href="/viewpage?postId=<%= p._id %>" class="block group ">
+                <div
+                  class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300">
+                  <div class="w-full h-48 overflow-hidden">
+                    <img src="<%= p.thumbSrc %>" alt="Thumbnail of <%= p.produce %>"
+                      class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                   </div>
-                </a>
-                <% }) %>
-            </div>
-            <% } %>
-      </section>
+                  <div class="p-4">
+                    <h5 class="text-xl font-bold text-indigo-600 mb-2 truncate
+                   group-hover:text-indigo-800 transition-colors duration-200">
+                      <%= p.produce %>
+                    </h5>
+                    <p class="text-sm font-medium text-gray-900 mb-2">
+                      Qty: <%= p.quantity %> | Price: $<%= typeof p.price==='number' ? p.price.toFixed(2) : p.price %>
+                    </p>
+                    <p class="text-xs text-gray-500">
+                      Posted: <%= new Date(p.createdAt).toLocaleDateString() %>
+                    </p>
+                  </div>
+                </div>
+              </a>
+              <% }) %>
+          </div>
+          <% } %>
+    </section>
   </div>
 
   <!-- AI HELPER BUTTON -->
@@ -140,4 +167,15 @@
             filterMenu.classList.add('hidden');
           }
         });
+
+        // Filter language dropdown toggle
+        const languageBtn = document.getElementById('languageBtn');
+        const languageMenu = document.getElementById('languageMenu');
+        languageBtn.addEventListener('click', () => languageMenu.classList.toggle('hidden'));
+        document.addEventListener('click', e => {
+          if (!languageBtn.contains(e.target) && !languageMenu.contains(e.target)) {
+            languageMenu.classList.add('hidden');
+          }
+        });
+
       </script>

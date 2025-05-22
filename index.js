@@ -162,18 +162,38 @@ app.get("/", async (req, res) => {
       // 1) Load all distinct categories for the dropdown
       const categories = await postingCollection.distinct("category");
 
-      // 2) Read the selected category from ?category=… (defaults to “all”)
+      // 2) Read selected filters from query
       const selectedCategory = req.query.category || "";
+      const selectedLanguage = req.query.language || "";
 
+      // 3) Get all postings
       let docs = await postingCollection
-        .find({}) // Find all posts for buyers
+        .find({})
         .sort({ createdAt: -1 })
         .toArray();
+
+      // 4) Get all sellers' language info
+      const sellerMap = await userCollection.find({ role: "seller" }).toArray()
+        .then(users => {
+          const map = {};
+          users.forEach(u => map[u._id.toString()] = u.languages || []);
+          return map;
+        });
+
+      // 5) Apply category filter if selected
       if (selectedCategory) {
-        docs = docs.filter((doc) => doc.category === selectedCategory);
+        docs = docs.filter(doc => doc.category === selectedCategory);
       }
 
-      // Map the selected posts to the view
+      // 6) Apply language filter if selected
+      if (selectedLanguage) {
+        docs = docs.filter(doc => {
+          const langs = sellerMap[doc.sellerId?.toString()] || [];
+          return langs.includes(selectedLanguage);
+        });
+      }
+
+      // 7) Format posts for template
       const postings = docs.map((doc) => ({
         _id: doc._id.toString(),
         produce: doc.produce,
@@ -183,23 +203,23 @@ app.get("/", async (req, res) => {
         createdAt: doc.createdAt,
         imageSrc:
           doc.image && doc.image.data
-            ? `data:${doc.image.contentType};base64,${doc.image.data.toString(
-              "base64"
-            )}`
+            ? `data:${doc.image.contentType};base64,${doc.image.data.toString("base64")}`
             : "/img/placeholder-large.png",
         thumbSrc:
           doc.thumbnail && doc.thumbnail.data
-            ? `data:${doc.thumbnail.contentType
-            };base64,${doc.thumbnail.data.toString("base64")}`
+            ? `data:${doc.thumbnail.contentType};base64,${doc.thumbnail.data.toString("base64")}`
             : "/img/placeholder-thumb.png",
       }));
 
+      // 8) Render buyer home with filters
       res.render("buyerHome", {
         title: "Buyer Home Page",
         mapboxToken: process.env.MAPBOX_API_TOKEN,
         postings: postings,
         categories: categories,
         selectedCategory: selectedCategory,
+        selectedLanguage: selectedLanguage,
+        languages: ['English', '中文', 'Español', 'Français', '한국어', 'Punjabi', 'Tiếng Việt', 'Tagalog']
       });
     } else {
       res.redirect("/login");
@@ -1185,7 +1205,7 @@ app.post("/profile", upload.single("image"), async (req, res) => {
     email: value.email
   };
 
-  if(req.file){
+  if (req.file) {
     const fullBuffer = await sharp(req.file.buffer)
       .resize({ width: 1080, withoutEnlargement: true })
       .jpeg({ quality: 80 })
@@ -1200,11 +1220,11 @@ app.post("/profile", upload.single("image"), async (req, res) => {
   }
 
   if (user.role === "seller") {
-    updates.address = { 
-      address, 
-      city, 
-      province, 
-      postalCode 
+    updates.address = {
+      address,
+      city,
+      province,
+      postalCode
     };
   }
 
@@ -1388,7 +1408,7 @@ app.use(async (req, res, next) => {
     { projection: { role: 1 } }
   );
 
-  res.status(404).render("404", { title: "Page Not Found", user});
+  res.status(404).render("404", { title: "Page Not Found", user });
 });
 
 app.use((err, req, res, next) => {
