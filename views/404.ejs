@@ -1,6 +1,13 @@
 <%- include("templates/header") %> 
-    <h1>Page not found - 404</h1>
 
-    <%# For testing what the navbar looks like %>
-    <%- include("templates/navbar_buyer") %>
+<div class="flex flex-col items-center justify-center min-h-screen bg-gray-100 text-center px-4">
+    <h1 class="text-4xl font-bold text-green-700 mb-6">Page not found - 404</h1>
+    
+    <img src="/img/famer.gif" alt="404 Not Found" class="max-w-full h-auto mb-8">
+
+    <p class="text-gray-700 mb-4">Oops! The page you're looking for doesn't exist.</p>
+    <a href="/" class="text-blue-500 hover:underline">Go back to homepage</a>
+</div>
+
+<%- include("templates/navbar_buyer") %>
 <%- include("templates/footer") %> 
