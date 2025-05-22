@@ -1,182 +1,443 @@
+<%-/* views/viewpage.ejs */%>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Egg Product Page</title>
+    <title><%= post.produce || "Product Details" %></title>
     <script src="https://cdn.tailwindcss.com"></script>
-
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
+    <!-- ADDED SWEETALERT2 SCRIPT -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; }
+        .qty-button { min-width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; }
+        #item-quality { height: 36px; display: flex; align-items: center; padding-top: 0.25rem; padding-bottom: 0.25rem; }
+        #map { height: 100%; width: 100%; }
+        .map-container { height: 12rem; } /* Or use 25vh if preferred */
+        .seller-pfp-container { width: 3rem; height: 3rem; }
+    </style>
 </head>
-<body class="bg-neutral-900 font-sans">
+<body class="bg-neutral-100">
 
-  <div class="max-w-md mx-auto bg-white min-h-screen relative pb-24"> 
-
-    <!-- Header -->
-    <header class="flex justify-between items-center p-4 border-b border-gray-200">
-      <div class="w-6 h-6"> 
-        <img src="img/arrow.png" alt="Back" class="w-full h-full object-contain" onclick="window.history.back()">
-      </div>
-      <div class="w-6 h-6"> 
-        <img src="img/cart.png" alt="Cart" class="w-full h-full object-contain" onclick="testAlert()">
-      </div>
+  <div class="max-w-md mx-auto bg-white min-h-screen shadow-lg relative pb-28">
+    <header class="flex justify-between items-center p-4 border-b border-gray-200 sticky top-0 bg-white z-20">
+      <div class="w-6 h-6"><img src="/img/arrow.png" alt="Back" class="w-full h-full object-contain cursor-pointer" onclick="window.history.back()"></div>
+      <h1 class="text-xl font-semibold text-gray-900 truncate px-2"><%= post.produce %></h1>
+      <div class="w-6 h-6"><img src="/img/cart.png" alt="Cart" class="w-full h-full object-contain cursor-pointer" onclick="window.location.href='/cart'"></div>
     </header>
 
-    <!-- Main Content Area -->
     <main class="p-4">
-      <!-- Product Title & Meta -->
-      <div class="mb-4">
-        <h1 class="text-2xl font-bold text-gray-900">Egg</h1>
-        <div class="flex justify-between items-center text-xs text-gray-500 mt-1">
-          <div class="flex items-center space-x-1">
-            <span>Post made 2 days ago</span>
-            <span class="bg-gray-400 rounded-full w-1 h-1 mx-1"></span>
-            <span>Burnaby, BC</span>
-          </div>
-          <div class="flex items-center space-x-1 text-sm text-gray-600">
-            <div class="w-4 h-4"> 
-              <img src="img/star.png" alt="Rating star" class="w-full h-full object-contain">
-            </div>
-            <span>4.9 (610)</span>
-          </div>
+      <div class="flex justify-between items-center text-xs text-gray-500 mb-3">
+        <div class="flex items-center space-x-1">
+          <span>Posted on <%= new Date(post.createdAt).toLocaleString() %></span>
         </div>
       </div>
 
-      <!-- Image -->
-      <div class="h-64 w-full mb-4 rounded-lg overflow-hidden"> 
-        <img src="img/egg.jpeg" alt="Eggs" class="h-full w-full object-cover">
+      <div class="h-64 w-full mb-4 rounded-lg overflow-hidden bg-gray-200">
+        <img src="<%= post.imageSrc || '/img/egg.jpeg' %>" alt="Image of <%= post.produce %>" class="h-full w-full object-cover">
       </div>
 
-      <!-- Stock, Price, Qty, Seller -->
       <div class="mb-4">
         <div class="flex justify-between items-start">
-          <div>
-            <p class="text-xs text-green-600 font-semibold">IN STOCK</p>
-            <p id="priceOfItem" class="text-3xl font-bold text-gray-900 mt-1">$5</p>
-            <div class="flex items-center space-x-2 mt-3">
-              <span class="text-sm text-gray-700">Qty</span>
+          <div class="flex-grow mr-4">
+            <p class="text-xs <%= post.quantity > 0 ? 'text-green-600' : 'text-red-600' %> font-semibold">
+              <%= post.quantity > 0 ? `IN STOCK` : 'OUT OF STOCK' %>
+               <% if (post.quantity > 0) { %>(<%= post.quantity %> available)<% } %>
+            </p>
+            <p id="priceOfItem" class="text-3xl font-bold text-gray-900 mt-1">$<%= post.price.toFixed(2) %></p>
+            <div class="flex items-center space-x-1 mt-3 mb-4">
+              <span class="text-sm text-gray-700 mr-1">Qty</span>
               <div class="flex items-center border border-gray-300 rounded-md">
-                <button onclick="downButton()" class="px-3 py-1 text-gray-800 hover:bg-gray-100 rounded-l-md text-lg font-medium">-</button>
-                <span id="item-quality" class="px-4 py-1 border-l border-r border-gray-300 text-gray-900 font-semibold text-base">1</span>
-                <button onclick="upButton()" class="px-3 py-1 text-gray-800 hover:bg-gray-100 rounded-r-md text-lg font-medium">+</button>
+                <button id="qtyDownButton" class="qty-button px-3 text-gray-800 hover:bg-gray-100 rounded-l-md text-lg font-medium disabled:opacity-50" <%= post.quantity === 0 ? 'disabled' : '' %>>-</button>
+                <span id="item-quality" class="px-4 border-l border-r border-gray-300 text-gray-900 font-semibold text-base">1</span>
+                <button id="qtyUpButton" class="qty-button px-3 text-gray-800 hover:bg-gray-100 rounded-r-md text-lg font-medium disabled:opacity-50" <%= post.quantity === 0 ? 'disabled' : '' %>>+</button>
               </div>
             </div>
+            <% if (post.seller && post.seller._id && post.seller._id.toString() !== session.userId) { %>
+                <button id="addToCartButton" class="w-full bg-green-600 hover:bg-green-700 text-white py-2.5 px-6 rounded-md flex justify-center items-center text-md font-semibold disabled:opacity-50 disabled:cursor-not-allowed" <%= post.quantity === 0 ? 'disabled' : '' %>>
+                  Add to Cart - $<span id="totalPriceForCart"><%= post.price.toFixed(2) %></span>
+                </button>
+            <% } %>
           </div>
-          <div class="text-right flex-shrink-0 ml-4">
-            <div class="w-12 h-12 rounded-full mb-1 ml-auto overflow-hidden"> 
-              <img src="img/farmerpfp.png" alt="Seller John Doe" class="w-full h-full object-cover">
+          <% if (sellerImage.imageUrl !== '/img/placeholder-large.png') { %>
+            <div class="text-right flex-shrink-0">
+                <div class="seller-pfp-container rounded-full mb-1 ml-auto overflow-hidden bg-gray-300">
+                    <img src="<%= sellerImage.imageUrl %>" alt="Seller: <%= post.seller.firstName %>" class="w-full h-full object-cover">
+                </div>
+                <p class="text-sm font-semibold text-gray-800"><%= post.seller.firstName || 'Seller' %> <%= post.seller.lastName || '' %></p>
+                <p class="text-xs text-gray-500">Seller's Detail</p>
             </div>
-            <p class="text-sm font-semibold text-gray-800">John Doe</p>
-            <p class="text-xs text-gray-500">Seller's Detail</p>
-          </div>
+          <% } else { %>
+             <div class="text-right flex-shrink-0">
+                <div class="seller-pfp-container rounded-full mb-1 ml-auto overflow-hidden bg-gray-300">
+                  <img src="/img/farmerpfp.png" alt="Seller N/A" class="w-full h-full object-cover">
+                </div>
+                <p class="text-sm font-semibold text-gray-800"><%= post.seller.firstName || 'Seller' %> <%= post.seller.lastName || '' %></p>
+                <p class="text-xs text-gray-500">Seller's Detail</p>
+            </div>
+          <% } %>
         </div>
       </div>
-
       <hr class="my-4 border-gray-200">
-
-      <!-- Description -->
       <div class="mb-4">
         <h2 class="text-lg font-semibold text-gray-800 mb-2">Description</h2>
-        <p class="text-sm text-gray-700 leading-relaxed">
-          Farm-fresh eggs with rich yolks and smooth whites – perfect for breakfast, baking, or adding protein-packed goodness to any meal.
-        </p>
+        <p class="text-sm text-gray-700 leading-relaxed whitespace-pre-line"><%= post.description %></p>
       </div>
-
       <hr class="my-4 border-gray-200">
-
-      <!-- Map Placeholder -->
       <div class="mb-4">
-        <div id="map" class="h-48 w-128 z-0 rounded-lg"></div>
+        <h2 class="text-lg font-semibold text-gray-800 mb-2">Item Location</h2>
+        <%
+          let mapLatVPA, mapLngVPA;
+          let mapLocationStringVPA = "Item Location"; // Default for data-location-string
+          let hasSpecificCoordsVPA = false;
+          let hasSellerAddressForGeocodingVPA = false;
 
+          if (post.coordinates && typeof post.coordinates.latitude === 'number' && typeof post.coordinates.longitude === 'number') {
+            mapLatVPA = post.coordinates.latitude;
+            mapLngVPA = post.coordinates.longitude;
+            mapLocationStringVPA = post.location || post.produce || "Exact Location";
+            hasSpecificCoordsVPA = true;
+          } else if (post.seller && post.seller.coordinates && typeof post.seller.coordinates.latitude === 'number' && typeof post.seller.coordinates.longitude === 'number') {
+            mapLatVPA = post.seller.coordinates.latitude;
+            mapLngVPA = post.seller.coordinates.longitude;
+            mapLocationStringVPA = post.seller.location || (post.seller.firstName ? post.seller.firstName + "'s Area" : "Seller's Area");
+            hasSpecificCoordsVPA = true;
+          }
+          
+          if (post.seller && post.seller.address && post.seller.address.address && post.seller.address.city) {
+            hasSellerAddressForGeocodingVPA = true;
+            if (!hasSpecificCoordsVPA) { 
+                 mapLocationStringVPA = post.seller.location || (post.seller.firstName ? post.seller.firstName + "'s General Area" : "Seller's General Area");
+            }
+          }
+          
+          if (!hasSpecificCoordsVPA && !hasSellerAddressForGeocodingVPA) {
+            mapLocationStringVPA = "Location not specified";
+          }
+
+          let canDisplayMapElementVPA = hasSpecificCoordsVPA || hasSellerAddressForGeocodingVPA;
+        %>
+     <div class="map-container relative w-full z-0 rounded-lg bg-gray-200 overflow-hidden">
+             <% if (!canDisplayMapElementVPA) { %>
+                <div class="flex items-center justify-center h-full"><p class="text-gray-500">Map location not specified.</p></div>
+             <% } else { %>
+                <div id="map"
+                     data-latitude="<%= hasSpecificCoordsVPA ? mapLatVPA : '' %>"
+                     data-longitude="<%= hasSpecificCoordsVPA ? mapLngVPA : '' %>"
+                     data-product-name="<%= post.produce || 'Product' %>"
+                     data-location-string="<%= mapLocationStringVPA %>"
+                     data-has-coords="<%= hasSpecificCoordsVPA.toString() %>"
+                     <% if (hasSellerAddressForGeocodingVPA) { %>
+                        data-seller-address='<%- JSON.stringify(post.seller.address) %>'
+                        data-seller-info='<%- JSON.stringify({firstName: post.seller.firstName || "Seller", lastName: post.seller.lastName || ""}) %>'
+                     <% } %>
+                ></div>
+             <% } %>
         </div>
       </div>
-
     </main>
 
-    <!-- Sticky Chat Footer -->
-    <footer class="fixed bottom-0 left-0 right-0">
-      <div class="max-w-md mx-auto p-3">
-        <button class="bg-neutral-800 hover:bg-neutral-700 text-white py-3 px-6 rounded-md w-full flex justify-between items-center text-lg font-semibold" onclick="window.location.href='/contact'">
-          <span>Chat</span>
-          <div class="w-7 h-6 bg-white rounded-sm">
-          </div>
-        </button>
+    <footer class="fixed bottom-0 left-0 right-0 z-10">
+      <div class="max-w-md mx-auto p-3 bg-white border-t border-gray-200 z-20">
+        <% if (post.seller && post.seller._id && post.seller._id.toString() !== session.userId) { %>
+            <button class="bg-neutral-800 hover:bg-neutral-700 text-white py-3 px-6 rounded-md w-full flex justify-between items-center text-lg font-semibold" onclick="window.location.href='/chat?with=<%= post.seller._id.toString() %>'">
+              <span>Chat</span><div class="w-7 h-6 bg-white rounded-sm flex items-center justify-center"><img src="/img/chat-bubble-empty.svg" alt="Chat icon" class="w-5 h-5 filter invert brightness-0"></div>
+            </button>
+        <% } else if (post.seller && post.seller._id.toString() === session.userId) { %>
+            <p class="text-center text-gray-600 py-3">This is your own posting. You can <a href="/post/<%= post._id %>/edit" class="text-green-600 hover:underline font-semibold">edit it here</a>.</p>
+        <% } else { %>
+            <button class="bg-gray-400 text-gray-700 py-3 px-6 rounded-md w-full text-lg font-semibold cursor-not-allowed" disabled>Chat Unavailable</button>
+        <% } %>
       </div>
     </footer>
-
   </div>
 
-  <!-- Leaflet library -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
   <script>
-  
-  let itemQuality = 1;
-  let itemPrice = 5;
+    // --- Configuration & Initial Data (from EJS) ---
+    const productConfig = {
+        basePrice: parseFloat("<%= post.price %>"),
+        maxQuantity: parseInt("<%= post.quantity %>"),
+        id: "<%= post._id %>",
+        produceName: "<%= post.produce %>",
+        imageSrc: "<%= post.imageSrc %>",
+        sellerId: "<%= post.seller && post.seller._id ? post.seller._id.toString() : 'UNKNOWN_SELLER_ID' %>",
+        sellerName: "<%= post.seller && post.seller.firstName ? (post.seller.firstName + ' ' + (post.seller.lastName || '')).trim() : 'Unknown Seller' %>"
+    };
+    let selectedQuantity = 1;
 
-  function updatePrice() {
-    const totalPrice = (itemQuality * itemPrice).toFixed(2);
-    document.getElementById("priceOfItem").innerText = `$${totalPrice}`;
-  }
+    // --- DOM Elements ---
+    const priceDisplayElement = document.getElementById("priceOfItem");
+    const quantityDisplayElement = document.getElementById("item-quality");
+    const totalPriceForCartElement = document.getElementById("totalPriceForCart");
+    const addToCartButtonElement = document.getElementById("addToCartButton");
+    const qtyUpButtonElement = document.getElementById("qtyUpButton");
+    const qtyDownButtonElement = document.getElementById("qtyDownButton");
 
-  function upButton() {
-    itemQuality += 1;
-    document.getElementById("item-quality").innerText = itemQuality;
-    updatePrice(); // update price after increasing
-  }
-
-  function downButton() {
-    if (itemQuality > 1) {
-      itemQuality -= 1;
-      document.getElementById("item-quality").innerText = itemQuality;
-      updatePrice(); // update price after decreasing
-    }
-  }
-
-  
-
-  function testAlert() {
-    alert("This is a test alert!");
-  }
-
-</script>
-
-  <!-- Map Scripts -->
-  <script>
-    // Default Burnaby when loading in
-    const map = L.map('map').setView([49.24871980930831, -122.98067289034908], 12);
-
-    const accessToken = '<%= mapboxToken %>';
-
-    // We can change to "streets-v11", "outdoors-v11", "satellite-v9", etc for different map views
-    const mapboxStyle = 'mapbox/streets-v12';
-
-    L.tileLayer(`https://api.mapbox.com/styles/v1/${mapboxStyle}/tiles/{z}/{x}/{y}?access_token=${accessToken}`, {
-        tileSize: 512,
-        zoomOffset: -1,
-        attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-        accessToken: accessToken
-    }).addTo(map);
-
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const latitude = position.coords.latitude;
-          const longitude = position.coords.longitude;
-          console.log(`Latitude: ${latitude}, Longitude: ${longitude}`);
-
-          const marker = L.marker([latitude, longitude]).addTo(map);
-          marker.bindPopup("<b>Your current location</b>").openPopup();
-        },
-        (error) => {
-          console.error("Error getting location:", error.message);
+    // --- Helper Functions ---
+    function updateDisplayedPrices() {
+        const currentTotalPrice = selectedQuantity * productConfig.basePrice;
+        if (priceDisplayElement) {
+            priceDisplayElement.innerText = `$${currentTotalPrice.toFixed(2)}`;
         }
-      );
-    } else {
-      console.error("Geolocation is not supported by this browser.");
+        if (totalPriceForCartElement) {
+            totalPriceForCartElement.innerText = currentTotalPrice.toFixed(2);
+        }
     }
-  </script>
 
+    // --- Quantity Controls Logic ---
+    function initializeQuantityControls() {
+        if (!qtyUpButtonElement || !qtyDownButtonElement || !quantityDisplayElement) return;
+
+        qtyUpButtonElement.addEventListener('click', () => {
+            if (selectedQuantity < productConfig.maxQuantity && productConfig.maxQuantity > 0) {
+                selectedQuantity++;
+                quantityDisplayElement.innerText = selectedQuantity;
+                updateDisplayedPrices();
+            }
+        });
+
+        qtyDownButtonElement.addEventListener('click', () => {
+            if (selectedQuantity > 1 && productConfig.maxQuantity > 0) {
+                selectedQuantity--;
+                quantityDisplayElement.innerText = selectedQuantity;
+                updateDisplayedPrices();
+            }
+        });
+
+        if (productConfig.maxQuantity > 0) {
+            updateDisplayedPrices(); 
+        } else {
+            [qtyUpButtonElement, qtyDownButtonElement].forEach(btn => btn.disabled = true);
+            quantityDisplayElement.innerText = '0';
+            if (priceDisplayElement) priceDisplayElement.innerText = `$${(0 * productConfig.basePrice).toFixed(2)}`;
+            if (totalPriceForCartElement) totalPriceForCartElement.innerText = "0.00";
+        }
+        if (productConfig.maxQuantity > 0) {
+            quantityDisplayElement.innerText = selectedQuantity;
+        }
+    }
+
+    // --- Add to Cart Logic (MODIFIED TO USE SWEETALERT) ---
+    function initializeAddToCart() {
+        if (!addToCartButtonElement) return;
+
+        addToCartButtonElement.addEventListener('click', () => {
+            if (productConfig.maxQuantity === 0) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Out of Stock',
+                    text: 'This item is out of stock and cannot be added to cart.',
+                });
+                return;
+            }
+            if (productConfig.sellerId === 'UNKNOWN_SELLER_ID') {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Missing Information',
+                    text: 'Seller information is missing for this product. Cannot add to cart.',
+                });
+                return;
+            }
+
+            const cartItemData = {
+                id: productConfig.id,
+                produce: productConfig.produceName,
+                price: productConfig.basePrice,
+                quantity: selectedQuantity, // Quantity user intends to add in this operation
+                imageSrc: productConfig.imageSrc,
+                sellerId: productConfig.sellerId,
+                sellerName: productConfig.sellerName
+            };
+
+            let cart = JSON.parse(localStorage.getItem('cart') || '{}');
+            if (!cart[cartItemData.sellerId]) {
+                cart[cartItemData.sellerId] = { sellerName: cartItemData.sellerName, items: [] };
+            }
+            
+            const existingItemIndex = cart[cartItemData.sellerId].items.findIndex(item => item.id === cartItemData.id);
+            let quantityWasAdjusted = false;
+            let finalCartQuantityForItem; // The total quantity of this item in the cart after the operation
+
+            if (existingItemIndex > -1) { // Item already in cart, updating quantity
+                let currentCartQty = cart[cartItemData.sellerId].items[existingItemIndex].quantity;
+                let newTotalDesiredQuantity = currentCartQty + cartItemData.quantity;
+
+                if (newTotalDesiredQuantity > productConfig.maxQuantity) {
+                    quantityWasAdjusted = true;
+                    finalCartQuantityForItem = productConfig.maxQuantity;
+                } else {
+                    finalCartQuantityForItem = newTotalDesiredQuantity;
+                }
+                cart[cartItemData.sellerId].items[existingItemIndex].quantity = finalCartQuantityForItem;
+            } else { // New item to cart
+                let quantityToAdd = cartItemData.quantity;
+                if (quantityToAdd > productConfig.maxQuantity) {
+                    quantityWasAdjusted = true;
+                    quantityToAdd = productConfig.maxQuantity;
+                }
+                const newItemForCart = { ...cartItemData, quantity: quantityToAdd };
+                cart[cartItemData.sellerId].items.push(newItemForCart);
+                finalCartQuantityForItem = quantityToAdd;
+            }
+            
+            localStorage.setItem('cart', JSON.stringify(cart));
+
+            if (quantityWasAdjusted) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Quantity Adjusted & Cart Updated',
+                    html: `You attempted to add ${selectedQuantity} unit(s) of <strong>${cartItemData.produce}</strong>.
+                           However, the maximum available stock is ${productConfig.maxQuantity}.<br><br>
+                           Your cart has been updated, and now contains <strong>${finalCartQuantityForItem}</strong> unit(s) of this item.`,
+                });
+            } else {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Cart Updated!',
+                    text: `${selectedQuantity} x ${cartItemData.produce} ${existingItemIndex > -1 ? 'quantity updated in' : 'added to'} cart. Total in cart for this item: ${finalCartQuantityForItem}.`,
+                    timer: 2500, // Auto-close after 2.5 seconds
+                    showConfirmButton: false
+                    // Removed toast: true and position: 'top-end' to make it a centered modal
+                });
+            }
+        });
+    }
+
+    // --- Map Initialization Logic (Integrated) ---
+    function initializeMap() {
+        const mapContainerElement = document.getElementById('map');
+        if (!mapContainerElement) {
+            return;
+        }
+
+        const mapboxToken = '<%= mapboxToken %>';
+        if (!mapboxToken || mapboxToken === 'YOUR_MAPBOX_ACCESS_TOKEN_ENV' || mapboxToken.length < 10) {
+            console.error("Mapbox token is missing or invalid. Please set MAPBOX_TOKEN in your .env file.");
+            mapContainerElement.innerHTML = '<p class="text-center p-4 text-red-500">Map configuration error.</p>';
+            return;
+        }
+
+        const defaultViewLat = 49.2487; 
+        const defaultViewLng = -122.9806;
+        let initialView = [defaultViewLat, defaultViewLng];
+        let initialZoom = 8; 
+
+        const productName = mapContainerElement.dataset.productName || "Item";
+        let itemLocationString = mapContainerElement.dataset.locationString || "Location"; 
+
+        try {
+            const mapInstance = L.map(mapContainerElement); 
+
+            L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
+                attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © <a href="http://openstreetmap.org/copyright">OpenStreetMap</a>',
+                maxZoom: 18,
+                id: 'mapbox/streets-v12', 
+                tileSize: 512,
+                zoomOffset: -1,
+                accessToken: mapboxToken
+            }).addTo(mapInstance);
+
+            const hasSpecificCoords = mapContainerElement.dataset.hasCoords === 'true';
+            const sellerAddressData = mapContainerElement.dataset.sellerAddress;
+            const sellerInfoData = mapContainerElement.dataset.sellerInfo;
+            let itemMarkerPlaced = false;
+
+            if (hasSpecificCoords) {
+                const latitude = parseFloat(mapContainerElement.dataset.latitude);
+                const longitude = parseFloat(mapContainerElement.dataset.longitude);
+
+                if (!isNaN(latitude) && !isNaN(longitude)) {
+                    initialView = [latitude, longitude];
+                    initialZoom = 14; 
+                    mapInstance.setView(initialView, initialZoom);
+                    L.marker(initialView).addTo(mapInstance)
+                        .bindPopup(`<b>${productName}</b><br>${itemLocationString}`)
+                        .openPopup();
+                    itemMarkerPlaced = true;
+                } else {
+                     console.warn("Map: 'data-has-coords' was true, but latitude/longitude were invalid.");
+                }
+            }
+            
+            if (!itemMarkerPlaced && sellerAddressData) { 
+                try {
+                    const sellerAddress = JSON.parse(sellerAddressData);
+                    const sellerInfo = sellerInfoData ? JSON.parse(sellerInfoData) : {firstName: "Seller", lastName: ""};
+
+                    if (sellerAddress && sellerAddress.address && sellerAddress.city) {
+                        const addressString = `${sellerAddress.address}, ${sellerAddress.city}, ${sellerAddress.province || ''}, ${sellerAddress.postalCode || ''}`.replace(/,\s*$/, "").trim();
+                        
+                        fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(addressString)}.json?access_token=${mapboxToken}`)
+                            .then(res => res.json())
+                            .then(data => {
+                                if (data.features && data.features.length > 0) {
+                                    const [lng, lat] = data.features[0].center;
+                                    initialView = [lat, lng]; 
+                                    initialZoom = 14;
+                                    mapInstance.setView(initialView, initialZoom);
+
+                                    const sellerNameDisplay = (sellerInfo.firstName + ' ' + (sellerInfo.lastName || '')).trim();
+                                    L.marker(initialView).addTo(mapInstance)
+                                        .bindPopup(`
+                                            <a href="https://www.google.com/maps/search/?api=1&query=${lat},${lng}" target="_blank" rel="noopener noreferrer" style="text-decoration: none; color: inherit; display: block;">
+                                                <div class="text-center">
+                                                    <b>${productName}</b><br>
+                                                    <small>Near ${sellerNameDisplay}</small><br>
+                                                    <small style="font-size:0.8em;">${addressString}</small>
+                                                </div>
+                                            </a>`)
+                                        .openPopup();
+                                    itemMarkerPlaced = true;
+                                } else {
+                                    console.warn("Geocoding did not find a location for address:", addressString);
+                                    mapInstance.setView(initialView, initialZoom); 
+                                }
+                            })
+                            .catch(err => {
+                                console.error("Geocoding API call failed:", err);
+                                mapInstance.setView(initialView, initialZoom);
+                            });
+                    } else {
+                         mapInstance.setView(initialView, initialZoom); 
+                    }
+                } catch (e) {
+                    console.error("Error parsing seller address data for map:", e);
+                    mapInstance.setView(initialView, initialZoom);
+                }
+            } else if (!itemMarkerPlaced) {
+                mapInstance.setView(initialView, initialZoom);
+            }
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const userLat = position.coords.latitude;
+                        const userLng = position.coords.longitude;
+                        const userMarker = L.marker([userLat, userLng]).addTo(mapInstance);
+                        userMarker.bindPopup(`<b>Your Current Location</b>`);
+                    },
+                    (error) => {
+                        console.warn("Could not get user's location for map:", error.message);
+                    }
+                );
+            }
+
+        } catch (error) {
+            console.error("Leaflet map initialization critical error:", error);
+            if (mapContainerElement) { 
+                 mapContainerElement.innerHTML = '<p class="text-center p-4 text-red-500">Map failed to load.</p>';
+            }
+        }
+    }
+
+    // --- Initialize Page Scripts ---
+    document.addEventListener('DOMContentLoaded', () => {
+        initializeQuantityControls();
+        initializeAddToCart();
+        initializeMap();
+    });
+  </script>
 </body>
 </html>

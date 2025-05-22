@@ -1,94 +1,85 @@
-<%- include('templates/header') %>
+<%- include("templates/header") %>
 
-<div class="flex flex-col min-h-screen bg-gray-50">
-  <!-- HEADER -->
-  <header class="flex-none p-4 bg-white shadow">
-    <div class="flex items-center justify-between">
-      <h1 class="text-lg font-semibold">SELLER HOME PAGE</h1>
-      <button
-        id="signout"
-        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
-      >
-        Sign out
-      </button>
-    </div>
-  </header>
+<div class="font-sans antialiased px-4 py-6 pb-24 mx-auto max-w-4xl">
+  <!-- Page header -->
+  <div class="mb-6 text-center">
+    <h1 class="text-3xl font-bold text-gray-800">Welcome back, <%= userFirstName %>!</h1>
+  </div>
 
-  <script>
-    // sign out
-    document.getElementById("signout")
-      .addEventListener("click", () => window.location.href = "/logout");
+  <!-- Location display -->
+  <p class="mb-4 text-gray-700">
+    Your current location:
+    <span id="city" class="font-medium">Detecting…</span>
+  </p>
 
-    // geolocation → city
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(async ({ coords }) => {
-        const { latitude, longitude } = coords;
-        const res = await fetch(
-          `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=<%= mapboxToken %>`
-        );
-        const json = await res.json();
-        const place = json.features.find(f => f.place_type.includes('place'));
-        document.getElementById('city').textContent = place?.text || 'Unknown';
-      }, () => {
-        document.getElementById('city').textContent = 'Permission denied';
-      });
-    } else {
-      document.getElementById('city').textContent = 'Geolocation not supported';
-    }
-  </script>
+  <!-- Seller nav bar -->
+  <%- include("templates/navbar_seller") %>
 
-  <!-- MAIN -->
-  <main class="flex-1 overflow-auto px-4 py-6">
-    <p class="mb-4">
-      Your city:
-      <span id="city" class="font-medium">Detecting…</span>
-    </p>
+  <!-- Active Postings -->
+  <section class="mt-8">
+    <h2 class="text-2xl font-semibold mb-4 text-gray-800">Your Active Postings</h2>
 
-    <%- include('templates/navbar_seller') %>
+    <% if (postings.length === 0) { %>
+      <p class="text-gray-600">There are currently no postings yet.</p>
+    <% } else { %>
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+        <% postings.forEach(p => { %>
+          <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300 flex flex-col h-full">
 
-    <section class="mt-8">
-      <h2 class="text-2xl font-semibold mb-4">All Available Postings</h2>
+            <!-- thumbnail -->
+            <div class="w-full h-48 overflow-hidden">
+              <img
+                src="<%= p.thumbSrc %>"
+                alt="Thumbnail of <%= p.produce %>"
+                class="w-full h-full object-cover object-center"
+              />
+            </div>
 
-      <% if (postings.length === 0) { %>
-        <p class="text-gray-600">There are currently no postings yet.</p>
-      <% } else { %>
-        <div class="grid grid-cols-2 gap-6">
-          <% postings.forEach(p => { %>
-            <!-- card wrapper -->
-            <div class="bg-white shadow-lg rounded-lg overflow-hidden flex flex-col h-full">
-
-              <!-- thumbnail -->
-              <div class="w-full aspect-square bg-gray-100 overflow-hidden">
-                <img
-                  src="<%= p.thumbSrc %>"
-                  alt="Thumbnail of <%= p.produce %>"
-                  class="w-full h-full object-cover object-center"
-                >
-              </div>
-
-              <!-- product name centered -->
-              <div class="flex-1 flex flex-col justify-center items-center p-4">
-                <h3 class="text-xl font-medium truncate"><%= p.produce %></h3>
-              </div>
-
-              <!-- edit button -->
-              <!-- href: From the client’s (browser’s) perspective, it changes the URL and 
+            <!-- product name & action -->
+            <!-- edit button -->
+            <!-- href: From the client’s (browser’s) perspective, it changes the URL and 
                    at the same time issues a GET request to the server for that URL. 
                    Which in this case, calls the route of app.get("/post/:id/edit"-->
-              <div class="px-4 pb-4">
-                <a
-                  href="/post/<%= p.id %>/edit"
-                  class="block w-full text-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
-                >
-                  Edit
-                </a>
+            <div class="p-4 flex-1 flex flex-col justify-between">
+              <div class="flex items-center justify-between mb-2">
+                <h3 class="text-xl font-bold text-green-700 truncate"><%= p.produce %></h3>
+                <span class="text-sm text-gray-500"><%= new Date(p.createdAt).toLocaleDateString() %></span>
               </div>
+              <a
+                href="/post/<%= p._id %>/edit"
+                class="inline-flex items-center justify-center px-3 py-1 bg-green-600 hover:bg-green-700 focus:ring-2 focus:ring-green-200 text-white text-sm font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2v-5m-4.586-4.586a2 2 0 112.828 2.828L11 17l-4 1 1-4 8.414-8.414z" />
+                </svg>
+                Edit
+              </a>
             </div>
-          <% }) %>
-        </div>
-      <% } %>
-    </section>
-  </main>
-
-  <%- include('templates/footer') %>
+            
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+  </section>
 </div>
+
+<!-- City geolocation script -->
+<script>
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(async ({ coords }) => {
+      const { latitude, longitude } = coords;
+      const res = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=<%= mapboxToken %>`
+      );
+      const json = await res.json();
+      const place = json.features.find(f => f.place_type.includes('place'));
+      document.getElementById('city').textContent = place?.text || 'Unknown';
+    }, () => {
+      document.getElementById('city').textContent = 'Permission denied';
+    });
+  } else {
+    document.getElementById('city').textContent = 'Geolocation not supported';
+  }
+</script>
+
+<%- include("templates/footer") %>

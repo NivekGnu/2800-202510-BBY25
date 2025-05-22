@@ -8,7 +8,14 @@ module.exports = {
     "./src/**/*.js"      // JS files (if any)
   ],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        'farmer-primary': '#849966',
+        'farmer-primary-hover': '#768a5c',
+        'farmer-secondary': '#d6d7b8',
+        'farmer-secondary-hover': '#c1c1a6',
+      },
+    },
   },
   plugins: [],
 }
