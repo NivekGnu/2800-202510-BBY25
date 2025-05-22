@@ -67,7 +67,7 @@
           <% if (post.seller) { %>
             <div class="text-right flex-shrink-0">
                 <div class="seller-pfp-container rounded-full mb-1 ml-auto overflow-hidden bg-gray-300">
-                    <img src="<%= post.seller.profilePictureUrl || '/img/farmerpfp.png' %>" alt="Seller: <%= post.seller.firstName %>" class="w-full h-full object-cover">
+                    <img src="<%= sellerImage.imageUrl || '/img/farmerpfp.png' %>" alt="Seller: <%= post.seller.firstName %>" class="w-full h-full object-cover">
                 </div>
                 <p class="text-sm font-semibold text-gray-800"><%= post.seller.firstName || 'Seller' %> <%= post.seller.lastName || '' %></p>
                 <p class="text-xs text-gray-500">Seller's Detail</p>

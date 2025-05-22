@@ -807,13 +807,22 @@ app.get("/viewpage", async (req, res) => {
           projection: {
             firstName: 1,
             lastName: 1,
-            profilePictureUrl: 1,
+            image: 1,
             location: 1,
             address: 1,
             _id: 1 /* Need _id for chat link */,
           },
         }
       );
+    }
+
+    const sellerImage = {
+      imageUrl:
+        sellerDetails.image && sellerDetails.image.data
+          ? `data:${sellerDetails.image.contentType};base64,${sellerDetails.image.data.toString(
+            "base64"
+          )}`
+          : "/img/placeholder-large.png"
     }
 
     const postForTemplate = {
@@ -838,6 +847,7 @@ app.get("/viewpage", async (req, res) => {
       title: `${post.produce || "View Post"}`,
       post: postForTemplate,
       mapboxToken: process.env.MAPBOX_API_TOKEN,
+      sellerImage
     });
   } catch (error) {
     console.error("Error fetching post for viewpage:", error);
