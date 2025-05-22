@@ -157,6 +157,7 @@ app.get("/", async (req, res) => {
         title: "My Postings",
         postings: postings,
         mapboxToken: process.env.MAPBOX_API_TOKEN,
+        userFirstName: req.session.firstName,
       });
     } else if (req.session.role === "buyer") {
       // 1) Load all distinct categories for the dropdown
