@@ -1056,6 +1056,15 @@ app.get("/profile", async (req, res) => {
     { projection: { password: 0 } }
   );
 
+  const userImage = {
+    imageUrl:
+      user.image && user.image.data
+        ? `data:${user.image.contentType};base64,${user.image.data.toString(
+          "base64"
+        )}`
+        : "/img/placeholder-large.png"
+  }
+
   // edge case: session exists but user corrupt/null
   if (!user) {
     req.session.destroy();
@@ -1068,11 +1077,12 @@ app.get("/profile", async (req, res) => {
     title: "User Profile Settings",
     user,
     mapboxToken: process.env.MAPBOX_API_TOKEN,
+    userImage
   });
 });
 
 // handle profile edits
-app.post("/profile", async (req, res) => {
+app.post("/profile", upload.single("image"), async (req, res) => {
   if (!req.session.authenticated) {
     return res.redirect("/");
   }
@@ -1095,7 +1105,7 @@ app.post("/profile", async (req, res) => {
       firstName: Joi.string().min(1).max(50).required(),
       lastName: Joi.string().min(1).max(50).required(),
       email: Joi.string().email().required()
-    });
+    }).unknown(true);
   } else if (user.role === "seller") {
     // Seller's can also update address
     schema = Joi.object({
@@ -1106,9 +1116,8 @@ app.post("/profile", async (req, res) => {
       city: Joi.string().min(1).max(50).required(),
       province: Joi.string().min(1).max(50).required(),
       postalCode: Joi.string().min(7).max(7).required(),
-    });
+    }).unknown(true);
   }
-
 
   const { error, value } = schema.validate(req.body, { abortEarly: false });
   if (error) {
@@ -1128,8 +1137,22 @@ app.post("/profile", async (req, res) => {
   const updates = {
     firstName: value.firstName,
     lastName: value.lastName,
-    email: value.email,
+    email: value.email
   };
+
+  if(req.file){
+    const fullBuffer = await sharp(req.file.buffer)
+      .resize({ width: 1080, withoutEnlargement: true })
+      .jpeg({ quality: 80 })
+      .toBuffer();
+    const thumbBuffer = await sharp(req.file.buffer)
+      .resize({ width: 400, withoutEnlargement: true })
+      .jpeg({ quality: 70 })
+      .toBuffer();
+    updates.image = { data: fullBuffer, contentType: "image/jpeg" };
+    updates.thumbnail = { data: thumbBuffer, contentType: "image/jpeg" };
+    console.log('image updated')
+  }
 
   if (user.role === "seller") {
     updates.address = { 
