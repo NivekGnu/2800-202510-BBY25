@@ -785,7 +785,7 @@ app.get("/viewpage", async (req, res) => {
   }
 
   const postIdString = req.query.postId;
-
+    
   if (!postIdString || !ObjectId.isValid(postIdString)) {
     return res
       .status(400)
@@ -813,7 +813,7 @@ app.get("/viewpage", async (req, res) => {
             lastName: 1,
             profilePictureUrl: 1,
             location: 1,
-            coordinates: 1,
+            address: 1,
             _id: 1 /* Need _id for chat link */,
           },
         }
