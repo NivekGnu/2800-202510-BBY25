@@ -220,7 +220,8 @@ app.get("/", async (req, res) => {
         categories: categories,
         selectedCategory: selectedCategory,
         selectedLanguage: selectedLanguage,
-        languages: ['English', '中文', 'Español', 'Français', '한국어', 'Punjabi', 'Tiếng Việt', 'Tagalog']
+        languages: ['English', '中文', 'Español', 'Français', '한국어', 'Punjabi', 'Tiếng Việt', 'Tagalog'],
+        userFirstName: req.session.firstName,
       });
     } else {
       res.redirect("/login");
