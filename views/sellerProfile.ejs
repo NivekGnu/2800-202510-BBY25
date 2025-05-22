@@ -11,7 +11,8 @@
       </button>
     </div>
 
-    <form action="/profile" method="post" class="space-y-6">
+    <!-- Basic info -->
+    <form action="/profile" method="post" enctype="multipart/form-data" class="space-y-6">
       <div>
         <label class="block text-gray-700 font-medium mb-2" for="firstName">First Name</label>
         <input id="firstName" name="firstName" value="<%= user.firstName %>" required
@@ -30,6 +31,51 @@
           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500" />
       </div>
 
+      <!-- Seller address -->
+      <div id="addressInput" class="space-y-4">
+        <!-- Address (one full-width row) -->
+        <div>
+          <p>Address</p>
+          <input name="address" data-property="address" value="<%= user.address.address %>" type="text"
+            autocomplete="address-line1"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition address-search" />
+        </div>
+
+        <!-- City, Province, Postal Code (one shared row) -->
+        <div class="flex gap-2">
+          <div class="flex-1 min-w-[100px]">
+            <p>City</p>
+            <input name="city" value="<%= user.address.city %>" type="text" autocomplete="address-level2"
+              class="w-full px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition" />
+          </div>
+
+          <div class="flex-1 min-w-[100px]">
+            <p>Province</p>
+            <input name="province" value="<%= user.address.province %>" type="text" autocomplete="address-level1"
+              class="w-full px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition" />
+          </div>
+
+          <div class="flex-1 min-w-[100px]">
+            <p>Postal Code</p>
+            <input name="postalCode" value="<%= user.address.postalCode %>" type="text" autocomplete="postal-code"
+              class="w-full px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Change the seller's profile photo/image -->
+      <div class="content-center">
+        <label for="image" class="block text-sm font-medium text-gray-700 mb-1">Image Upload</label>
+        <input type="file" id="image" name="image" accept="image/*" capture="environment"
+          class="block w-full text-sm text-gray-600 file:py-2 file:px-4 file:border file:border-gray-300 file:rounded-lg file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200" />
+        <!-- Checks with default image name -->
+        <% if (userImage.imageUrl !=='/img/placeholder-large.png' ) { %>
+          <p class="mt-2 text-sm text-gray-600">Current posted image:</p>
+          <img src="<%= userImage.imageUrl %>" alt="User image" class="mt-1 rounded-md" style="max-width:150px;" />
+          <% } %>
+      </div>
+
+      <!-- Seller's languages -->
       <div>
         <label class="block text-gray-700 font-medium mb-2" for="languages">Supported Languages</label>
         <div class="flex flex-wrap gap-2">
@@ -50,38 +96,6 @@
           To update your supported languages, go <a href="/languages"
             class="text-green-600 underline font-medium">here</a>.
         </p>
-      </div>
-
-      <!-- Seller address -->
-      <div id="addressInput" class="space-y-4">
-        <div>
-          <p>Address</p>
-          <input name="address" data-property="address" value="<%= user.address.address %>" type="text"
-            autocomplete="address-line1"
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition address-search" />
-        </div>
-
-
-        <div class="flex flex-wrap gap-4">
-          <div>
-            <p>City</p>
-            <input name="city" value="<%= user.address.city %>" type="text" autocomplete="address-level2"
-              class="flex-1 min-w-[100px] px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition" />
-          </div>
-
-          <div>
-            <p>Province</p>
-            <input name="province" value="<%= user.address.province %>" type="text" autocomplete="address-level1"
-              class="flex-1 min-w-[100px] px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition" />
-          </div>
-
-          <div>
-            <p>Postal Code</p>
-            <input name="postalCode" value="<%= user.address.postalCode %>" type="text" autocomplete="postal-code"
-              class="flex-1 min-w-[100px] px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition" />
-          </div>
-
-        </div>
       </div>
 
       <div class="text-center">
@@ -107,9 +121,9 @@
     });
 
     document.getElementById("signout")
-    .addEventListener("click", () => {
+      .addEventListener("click", () => {
         window.location.href = "/logout"
-    });
+      });
   </script>
 
   <%- include("templates/footer") %>
