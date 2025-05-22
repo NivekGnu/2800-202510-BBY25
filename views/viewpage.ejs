@@ -64,10 +64,10 @@
                 </button>
             <% } %>
           </div>
-          <% if (post.seller) { %>
+          <% if (sellerImage.imageUrl !== '/img/placeholder-large.png') { %>
             <div class="text-right flex-shrink-0">
                 <div class="seller-pfp-container rounded-full mb-1 ml-auto overflow-hidden bg-gray-300">
-                    <img src="<%= sellerImage.imageUrl || '/img/farmerpfp.png' %>" alt="Seller: <%= post.seller.firstName %>" class="w-full h-full object-cover">
+                    <img src="<%= sellerImage.imageUrl %>" alt="Seller: <%= post.seller.firstName %>" class="w-full h-full object-cover">
                 </div>
                 <p class="text-sm font-semibold text-gray-800"><%= post.seller.firstName || 'Seller' %> <%= post.seller.lastName || '' %></p>
                 <p class="text-xs text-gray-500">Seller's Detail</p>
@@ -77,7 +77,8 @@
                 <div class="seller-pfp-container rounded-full mb-1 ml-auto overflow-hidden bg-gray-300">
                   <img src="/img/farmerpfp.png" alt="Seller N/A" class="w-full h-full object-cover">
                 </div>
-                <p class="text-sm font-semibold text-gray-800">Seller Information Unavailable</p>
+                <p class="text-sm font-semibold text-gray-800"><%= post.seller.firstName || 'Seller' %> <%= post.seller.lastName || '' %></p>
+                <p class="text-xs text-gray-500">Seller's Detail</p>
             </div>
           <% } %>
         </div>
