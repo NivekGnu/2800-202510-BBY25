@@ -140,42 +140,4 @@
             filterMenu.classList.add('hidden');
           }
         });
-
-        // AI helper logic
-        document.addEventListener('DOMContentLoaded', () => {
-          const aiBtn = document.getElementById('ai-helper-button');
-          const aiModal = document.getElementById('ai-modal');
-          const closeBtn = document.getElementById('close-modal');
-          const output = document.getElementById('output');
-
-          aiBtn.addEventListener('click', async () => {
-            aiModal.classList.remove('opacity-0', 'pointer-events-none');
-            aiModal.classList.add('opacity-100');
-            output.textContent = 'Loading…';
-            try {
-              const res = await fetch('/api/gemini', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  prompt: 'What are some produce in season right now?'
-                })
-              });
-              const data = await res.json();
-              output.textContent = data.text || 'No response';
-            } catch (err) {
-              output.textContent = 'Error: ' + err.message;
-            }
-          });
-
-          closeBtn.addEventListener('click', () => {
-            aiModal.classList.add('opacity-0', 'pointer-events-none');
-            aiModal.classList.remove('opacity-100');
-          });
-
-          document.addEventListener('click', e => {
-            if (!aiModal.contains(e.target) && !aiBtn.contains(e.target)) {
-              aiModal.classList.add('opacity-0', 'pointer-events-none');
-            }
-          });
-        });
       </script>

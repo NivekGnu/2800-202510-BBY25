@@ -85,7 +85,6 @@ async function geminiCall() {
         });
 
         const data = await res.json();
-        console.log(data);
 
         clearInterval(loadingDots); // Stop the loading animation
         await printLineEffect("output", data.text || "No response");
