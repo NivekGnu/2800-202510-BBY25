@@ -1063,7 +1063,7 @@ app.post("/checkout", async (req, res) => {
           destination: seller.stripeAccountId,
         },
       },
-      success_url: `${LIVE_DOMAIN}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${LIVE_DOMAIN}`,
       cancel_url: `${LIVE_DOMAIN}/cart`,
       metadata: {
         buyerId: req.session.userId,
