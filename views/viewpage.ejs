@@ -122,7 +122,7 @@
 
           let canDisplayMapElementVPA = hasSpecificCoordsVPA || hasSellerAddressForGeocodingVPA;
         %>
-        <div class="map-container w-full z-0 rounded-lg bg-gray-200 overflow-hidden">
+     <div class="map-container relative w-full z-0 rounded-lg bg-gray-200 overflow-hidden">
              <% if (!canDisplayMapElementVPA) { %>
                 <div class="flex items-center justify-center h-full"><p class="text-gray-500">Map location not specified.</p></div>
              <% } else { %>
@@ -143,7 +143,7 @@
     </main>
 
     <footer class="fixed bottom-0 left-0 right-0 z-10">
-      <div class="max-w-md mx-auto p-3 bg-white border-t border-gray-200">
+      <div class="max-w-md mx-auto p-3 bg-white border-t border-gray-200 z-20">
         <% if (post.seller && post.seller._id && post.seller._id.toString() !== session.userId) { %>
             <button class="bg-neutral-800 hover:bg-neutral-700 text-white py-3 px-6 rounded-md w-full flex justify-between items-center text-lg font-semibold" onclick="window.location.href='/chat?with=<%= post.seller._id.toString() %>'">
               <span>Chat</span><div class="w-7 h-6 bg-white rounded-sm flex items-center justify-center"><img src="/img/chat-bubble-empty.svg" alt="Chat icon" class="w-5 h-5 filter invert brightness-0"></div>
