@@ -143,14 +143,13 @@ app.get("/", async (req, res) => {
         imageSrc:
           doc.image && doc.image.data
             ? `data:${doc.image.contentType};base64,${doc.image.data.toString(
-                "base64"
-              )}`
+              "base64"
+            )}`
             : "/img/placeholder-large.png",
         thumbSrc:
           doc.thumbnail && doc.thumbnail.data
-            ? `data:${
-                doc.thumbnail.contentType
-              };base64,${doc.thumbnail.data.toString("base64")}`
+            ? `data:${doc.thumbnail.contentType
+            };base64,${doc.thumbnail.data.toString("base64")}`
             : "/img/placeholder-thumb.png",
       }));
 
@@ -185,14 +184,13 @@ app.get("/", async (req, res) => {
         imageSrc:
           doc.image && doc.image.data
             ? `data:${doc.image.contentType};base64,${doc.image.data.toString(
-                "base64"
-              )}`
+              "base64"
+            )}`
             : "/img/placeholder-large.png",
         thumbSrc:
           doc.thumbnail && doc.thumbnail.data
-            ? `data:${
-                doc.thumbnail.contentType
-              };base64,${doc.thumbnail.data.toString("base64")}`
+            ? `data:${doc.thumbnail.contentType
+            };base64,${doc.thumbnail.data.toString("base64")}`
             : "/img/placeholder-thumb.png",
       }));
 
@@ -540,8 +538,8 @@ app.get("/post/:id/edit", async (req, res) => {
     imageUrl:
       doc.image && doc.image.data
         ? `data:${doc.image.contentType};base64,${doc.image.data.toString(
-            "base64"
-          )}`
+          "base64"
+        )}`
         : "/img/placeholder-large.png",
   };
   res.render("editPost", { title: "Edit Post", currentPost });
@@ -646,9 +644,8 @@ app.get("/chat", async (req, res) => {
       currentUserId,
       currentUserFirstName: req.session.firstName,
       otherUserId: otherUserIdString,
-      otherUserName: `${otherUser.firstName} ${
-        otherUser.lastName || ""
-      }`.trim(),
+      otherUserName: `${otherUser.firstName} ${otherUser.lastName || ""
+        }`.trim(),
       chatId,
     });
   } catch (error) {
@@ -682,10 +679,9 @@ app.get("/api/chat/:chatId/messages", async (req, res) => {
       receiverId: msg.receiverId.toString(),
       ...(msg.messageType === "image" &&
         msg.image?.data && {
-          imageDataUri: `data:${
-            msg.image.contentType
+        imageDataUri: `data:${msg.image.contentType
           };base64,${msg.image.data.toString("base64")}`,
-        }),
+      }),
     }));
     res.json(messages);
   } catch (error) {
@@ -785,7 +781,7 @@ app.get("/viewpage", async (req, res) => {
   }
 
   const postIdString = req.query.postId;
-    
+
   if (!postIdString || !ObjectId.isValid(postIdString)) {
     return res
       .status(400)
@@ -830,8 +826,8 @@ app.get("/viewpage", async (req, res) => {
       imageSrc:
         post.image && post.image.data
           ? `data:${post.image.contentType};base64,${post.image.data.toString(
-              "base64"
-            )}`
+            "base64"
+          )}`
           : "/img/placeholder-large.png",
       location: post.location, // Item's specific location string
       coordinates: post.coordinates, // Item's specific coordinates
@@ -897,10 +893,10 @@ app.post("/checkout", async (req, res) => {
       "Seller found in DB:",
       seller
         ? JSON.stringify({
-            _id: seller._id,
-            stripeAccountId: seller.stripeAccountId,
-            firstName: seller.firstName,
-          })
+          _id: seller._id,
+          stripeAccountId: seller.stripeAccountId,
+          firstName: seller.firstName,
+        })
         : "null"
     );
 
@@ -1088,16 +1084,31 @@ app.post("/profile", async (req, res) => {
     postalCode,
   } = req.body;
 
-  // Validate incoming fields
-  const schema = Joi.object({
-    firstName: Joi.string().min(1).max(50).required(),
-    lastName: Joi.string().min(1).max(50).required(),
-    email: Joi.string().email().required(),
-    "address address-search": Joi.string().min(1).max(50).required(),
-    city: Joi.string().min(1).max(50).required(),
-    province: Joi.string().min(1).max(50).required(),
-    postalCode: Joi.string().min(7).max(7).required(),
-  });
+  const user = await userCollection.findOne({ _id: new ObjectId(req.session.userId) });
+
+  let schema;
+
+  // Validate incoming fields based on user
+  if (user.role === "buyer") {
+    // Buyer's only need to upate name and email
+    schema = Joi.object({
+      firstName: Joi.string().min(1).max(50).required(),
+      lastName: Joi.string().min(1).max(50).required(),
+      email: Joi.string().email().required()
+    });
+  } else if (user.role === "seller") {
+    // Seller's can also update address
+    schema = Joi.object({
+      firstName: Joi.string().min(1).max(50).required(),
+      lastName: Joi.string().min(1).max(50).required(),
+      email: Joi.string().email().required(),
+      "address address-search": Joi.string().min(1).max(50).required(),
+      city: Joi.string().min(1).max(50).required(),
+      province: Joi.string().min(1).max(50).required(),
+      postalCode: Joi.string().min(7).max(7).required(),
+    });
+  }
+
 
   const { error, value } = schema.validate(req.body, { abortEarly: false });
   if (error) {
@@ -1120,7 +1131,14 @@ app.post("/profile", async (req, res) => {
     email: value.email,
   };
 
-  updates.address = { address, city, province, postalCode };
+  if (user.role === "seller") {
+    updates.address = { 
+      address, 
+      city, 
+      province, 
+      postalCode 
+    };
+  }
 
   // Only sellers have languages, but they manage those elsewhere (/languages)
   // So we don't touch languages here
@@ -1233,9 +1251,8 @@ app.get("/chat", async (req, res) => {
       currentUserId: currentUserId,
       currentUserFirstName: req.session.firstName, // Assuming this is in session
       otherUserId: otherUserIdString,
-      otherUserName: `${otherUser.firstName || ""} ${
-        otherUser.lastName || ""
-      }`.trim(),
+      otherUserName: `${otherUser.firstName || ""} ${otherUser.lastName || ""
+        }`.trim(),
       chatId: chatId,
     });
   } catch (error) {
@@ -1281,8 +1298,7 @@ io.on("connection", (socket) => {
   });
   socket.on("disconnect", () => {
     console.log(
-      `User disconnected: ${socket.id} (User: ${
-        session.firstName || "Unknown"
+      `User disconnected: ${socket.id} (User: ${session.firstName || "Unknown"
       })`
     );
   });
