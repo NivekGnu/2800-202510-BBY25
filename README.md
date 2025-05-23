@@ -63,19 +63,18 @@ Obtain API keys for the following (Account for each required)
  - Create two session secrets (for node and mongodb) with any UUID generator (ie. https://www.uuidgenerator.net/)
 
 Then copy the following into your ".env" file and replace '{YOUR KEY}' your API key **NO SPACE**
-**DASHES (-) WERE ADDED FOR FORMATTING PLEASE REMOVE AND REPLACE NO SPACES**
 
--MONGODB_HOST={YOUR KEY}
--MONGODB_USER={YOUR KEY}
--MONGODB_PASSWORD={YOUR KEY}
--MONGODB_DATABASE={YOUR KEY}
--MONGODB_SESSION_SECRET={YOUR KEY}
--NODE_SESSION_SECRET={YOUR KEY}
--MAPBOX_API_TOKEN={YOUR KEY}
--GEMINI_API_KEY={YOUR KEY}
--STRIPE_PUBLISHABLE_KEY={YOUR KEY}
--STRIPE_SECRET_KEY={YOUR KEY}
--STRIPE_WEBHOOK_SECRET={YOUR KEY}
+- MONGODB_HOST={YOUR KEY}
+- MONGODB_USER={YOUR KEY}
+- MONGODB_PASSWORD={YOUR KEY}
+- MONGODB_DATABASE={YOUR KEY}
+- MONGODB_SESSION_SECRET={YOUR KEY}
+- NODE_SESSION_SECRET={YOUR KEY}
+- MAPBOX_API_TOKEN={YOUR KEY}
+- GEMINI_API_KEY={YOUR KEY}
+- STRIPE_PUBLISHABLE_KEY={YOUR KEY}
+- STRIPE_SECRET_KEY={YOUR KEY}
+- STRIPE_WEBHOOK_SECRET={YOUR KEY}
 
 4. Fork this repository for yourself and place your ".env" in the folder
 It should be in the main folder (you should see index.js as well)
