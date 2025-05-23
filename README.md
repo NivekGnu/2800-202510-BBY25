@@ -79,6 +79,10 @@ Then copy the following into your ".env" file and replace '{YOUR KEY}' with your
 4. Fork this repository for yourself and place your ".env" in the folder.
 It should be in the main folder (you should see index.js as well)
 
+5. Use "node index.js" to get it running locally (ie. http://localhost:3000/)
+  - Bonus: use "nodemon index.js" if you want the server to refresh with you changes after you save them (ctrl + s)
+  - **You may need to install nodemon (npm i nodemon)**
+
 ## Features
  - Purchase fresh produce directly form the farmer
  - Create, edit, and delete postings 
