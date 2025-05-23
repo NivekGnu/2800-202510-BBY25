@@ -16,19 +16,19 @@
       <div>
         <label class="block text-gray-700 font-medium mb-2" for="firstName">First Name</label>
         <input id="firstName" name="firstName" value="<%= user.firstName %>" required
-          class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500" />
+          class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-farmer-primary" />
       </div>
 
       <div>
         <label class="block text-gray-700 font-medium mb-2" for="lastName">Last Name</label>
         <input id="lastName" name="lastName" value="<%= user.lastName %>" required
-          class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500" />
+          class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-farmer-primary" />
       </div>
 
       <div>
         <label class="block text-gray-700 font-medium mb-2" for="email">Email</label>
         <input id="email" name="email" type="email" value="<%= user.email %>" required
-          class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500" />
+          class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-farmer-primary" />
       </div>
 
       <!-- Seller address -->
@@ -38,7 +38,7 @@
           <p>Address</p>
           <input name="address" data-property="address" value="<%= user.address.address %>" type="text"
             autocomplete="address-line1"
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition address-search" />
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-farmer-primary transition address-search" />
         </div>
 
         <!-- City, Province, Postal Code (one shared row) -->
@@ -46,19 +46,19 @@
           <div class="flex-1 min-w-[100px]">
             <p>City</p>
             <input name="city" value="<%= user.address.city %>" type="text" autocomplete="address-level2"
-              class="w-full px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition" />
+              class="w-full px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-farmer-primary transition" />
           </div>
 
           <div class="flex-1 min-w-[100px]">
             <p>Province</p>
             <input name="province" value="<%= user.address.province %>" type="text" autocomplete="address-level1"
-              class="w-full px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition" />
+              class="w-full px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-farmer-primary transition" />
           </div>
 
           <div class="flex-1 min-w-[100px]">
             <p>Postal Code</p>
             <input name="postalCode" value="<%= user.address.postalCode %>" type="text" autocomplete="postal-code"
-              class="w-full px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition" />
+              class="w-full px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-farmer-primary transition" />
           </div>
         </div>
       </div>
@@ -81,7 +81,7 @@
         <div class="flex flex-wrap gap-2">
           <% if (user.languages && user.languages.length) { %>
             <% user.languages.forEach(lang=> { %>
-              <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
+              <span class="px-3 py-1 bg-farmer-secondary text-white rounded-full text-sm">
                 <%= lang %>
               </span>
               <% }) %>
@@ -94,13 +94,13 @@
       <div>
         <p class="text-gray-700">
           To update your supported languages, go <a href="/languages"
-            class="text-green-600 underline font-medium">here</a>.
+            class="text-farmer-secondary underline font-medium">here</a>.
         </p>
       </div>
 
       <div class="text-center">
         <button type="submit" id="submit"
-          class="px-6 py-2 bg-green-600 text-white font-semibold rounded-full shadow hover:bg-green-700 transition">
+          class="px-6 py-2 bg-farmer-primary text-white font-semibold rounded-full shadow hover:bg-farmer-primary-hover transition">
           Save
         </button>
       </div>

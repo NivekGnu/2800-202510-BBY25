@@ -3,7 +3,7 @@
   <div class="max-w-2xl mx-auto p-6 bg-white rounded-2xl shadow-lg">
 
     <div class="relative text-center mb-6">
-      <button class="absolute left-0 top-1/2 -translate-y-1/2 text-2xl text-gray-700 hover:text-green-600 p-2t"
+      <button class="absolute left-0 top-1/2 -translate-y-1/2 text-2xl text-gray-700 hover:text-farmer-primary p-2t"
         onclick="window.history.back();">
         <i class="fas fa-chevron-left"></i>
       </button>
@@ -21,7 +21,7 @@
           Category
         </label>
         <select id="category" name="category" required
-          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-farmer-primary">
           <option value="" disabled selected>Select a category</option>
           <option value="fruits" <%=listing?.category==='fruits' ? 'selected' : '' %>>Fruits</option>
           <option value="vegetables" <%=listing?.category==='vegetables' ? 'selected' : '' %>>Vegetables</option>
@@ -36,23 +36,27 @@
         <label for="produce" class="block text-sm font-medium text-gray-700 mb-1">Produce</label>
         <input type="text" id="produce" name="produce" required value="<%= listing ? listing.produce : '' %>"
           placeholder="Enter produce"
-          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-farmer-primary />
       </div>
 
       <!-- 3) Quantity -->
       <div>
         <label for="quantity" class="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
-        <input type="number" id="quantity" name="quantity" required value="<%= listing ? listing.quantity : '' %>"
+        <input type="number" id="quantity" name="quantity" required value="<%= listing ? listing.quantity : '' %>" 
+          min="0"
+          max="100000"
           placeholder="Enter quantity"
-          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-farmer-primary" />
       </div>
 
       <!-- 4) Price -->
       <div>
         <label for="price" class="block text-sm font-medium text-gray-700 mb-1">Price (per item/weight)</label>
         <input type="text" id="price" name="price" required value="<%= listing ? listing.price : '' %>"
+          min="0.01"
+          max="1000"
           placeholder="Enter price (per item/weight)"
-          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-farmer-primary />
       </div>
 
       <!-- 5) Description -->
@@ -60,7 +64,7 @@
         <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
         <textarea id="description" name="description" rows="4" maxlength="200"
           placeholder="Enter produce descriptions (max 200 characters)"
-          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"><%= listing ? listing.description : '' %></textarea>
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-farmer-primary"><%= listing ? listing.description : '' %></textarea>
       </div>
 
       <!-- 6) Image Upload -->
@@ -77,7 +81,7 @@
       <!-- Submit Button -->
       <div class="text-center ">
         <button type="submit"
-          class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-6 rounded-lg transition">
+          class="bg-farmer-primary hover:bg-farmer-primary-hover text-white font-semibold py-2 px-6 rounded-lg transition">
           Submit
         </button>
       </div>

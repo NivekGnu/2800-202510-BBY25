@@ -64,7 +64,7 @@ async function geminiCall() {
     aiButton.classList.remove("bg-green-500", "hover:bg-green-700");
 
     // Clear old response
-    document.getElementById('output').value = ''
+    document.getElementById('output').value = '';
     // Start running loading animation
     const loadingDots = animateLoadingDots("output");
 

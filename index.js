@@ -161,7 +161,10 @@ app.get("/", async (req, res) => {
       });
     } else if (req.session.role === "buyer") {
       // 1) Load all distinct categories for the dropdown
-      const categories = await postingCollection.distinct("category");
+      const rawCategories = await postingCollection.distinct("category");
+      let categories = rawCategories
+        .map(c => c.trim().toLowerCase())
+        .filter((c, idx, self) => self.indexOf(c) === idx);
 
       // 2) Read selected filters from query
       const selectedCategory = req.query.category || "";
@@ -183,7 +186,10 @@ app.get("/", async (req, res) => {
 
       // 5) Apply category filter if selected
       if (selectedCategory) {
-        docs = docs.filter(doc => doc.category === selectedCategory);
+        docs = docs.filter(doc =>
+          typeof doc.category === 'string' &&
+          doc.category.trim().toLowerCase() === selectedCategory
+        );
       }
 
       // 6) Apply language filter if selected
@@ -421,6 +427,7 @@ app.post("/signupSubmit", async (req, res) => {
   }
 });
 
+
 app.get("/languages", (req, res) => {
   if (!req.session.authenticated || req.session.role !== "seller") {
     return res.redirect("/");
@@ -515,7 +522,6 @@ app.post("/createPost", upload.single("image"), async (req, res) => {
     ) {
       newPosting.coordinates = {
         latitude: parseFloat(latitude),
-        longitude: parseFloat(longitude),
         longitude: parseFloat(longitude),
       };
     }
@@ -776,7 +782,7 @@ app.post("/api/chat/messages", async (req, res) => {
     io.to(chatId).emit("newMessage", savedMessage);
     res.status(201).json(savedMessage);
   } catch (error) {
-    console.error("Error sending chat message:", error);
+    console.error("Error sending text message:", error);
     res.status(500).json({ error: "Server error sending message." });
   }
 });
@@ -793,8 +799,8 @@ app.post(
         return res.status(400).json({ error: "No image file uploaded." });
       if (senderId !== req.session.userId)
         return res.status(403).json({ error: "Mismatched sender." });
-      if (!chatId || !receiverId)
-        return res.status(400).json({ error: "Missing fields." });
+      if (!chatId || !receiverId) // Simplified from parent, but original had this.
+        return res.status(400).json({ error: "Missing fields." }); // Reverted to parent's original logic from context
 
       const imageBuffer = await sharp(req.file.buffer)
         .resize({ width: 800, withoutEnlargement: true })
@@ -812,9 +818,9 @@ app.post(
       const result = await chatMessageCollection.insertOne(newMessageDocument);
       const savedMessage = {
         _id: result.insertedId.toString(),
-        chatId,
-        senderId,
-        receiverId,
+        chatId, // Simplified from parent, using direct variable from scope
+        senderId, // Simplified
+        receiverId, // Simplified
         messageType: "image",
         timestamp: newMessageDocument.timestamp,
         messageText: newMessageDocument.messageText,
@@ -1155,6 +1161,9 @@ app.post("/profile", upload.single("image"), async (req, res) => {
   }
 
   const {
+    firstName, // Make sure these are correctly named in your form or use req.body.firstName etc.
+    lastName,
+    email,
     "address address-search": address,
     city,
     province,
@@ -1162,6 +1171,10 @@ app.post("/profile", upload.single("image"), async (req, res) => {
   } = req.body;
 
   const user = await userCollection.findOne({ _id: new ObjectId(req.session.userId) });
+  if (!user) { // Good to have this check as well
+    req.session.destroy();
+    return res.redirect("/");
+  }
 
   let schema;
 
@@ -1172,24 +1185,25 @@ app.post("/profile", upload.single("image"), async (req, res) => {
       firstName: Joi.string().min(1).max(50).required(),
       lastName: Joi.string().min(1).max(50).required(),
       email: Joi.string().email().required()
-    }).unknown(true);
+    }).unknown(true); // Allow other fields like address to be present but not validated
   } else if (user.role === "seller") {
     // Seller's can also update address
     schema = Joi.object({
       firstName: Joi.string().min(1).max(50).required(),
       lastName: Joi.string().min(1).max(50).required(),
       email: Joi.string().email().required(),
-      "address address-search": Joi.string().min(1).max(50).required(),
+      "address address-search": Joi.string().min(1).max(100).required(), // Increased max length
       city: Joi.string().min(1).max(50).required(),
       province: Joi.string().min(1).max(50).required(),
-      postalCode: Joi.string().min(7).max(7).required(),
+      postalCode: Joi.string().pattern(/^[A-Za-z]\d[A-Za-z][ -]?\d[A-Za-z]\d$/).required().messages({ 'string.pattern.base': 'Postal code must be in a valid Canadian format (e.g., A1A 1A1).' }),
     }).unknown(true);
   }
 
+  // Use req.body for validation as it contains all submitted fields
   const { error, value } = schema.validate(req.body, { abortEarly: false });
   if (error) {
     const msgs = error.details.map((d) => d.message).join("; ");
-    return res.status(400).send(msgs);
+    return res.status(400).send(msgs + ' <a href="/profile">Try again</a>');
   }
 
   // ensure no one else is using this email
@@ -1197,10 +1211,10 @@ app.post("/profile", upload.single("image"), async (req, res) => {
   if (existing && existing._id.toString() !== req.session.userId) {
     return res
       .status(400)
-      .send("That email is already in use by another account.");
+      .send("That email is already in use by another account." + ' <a href="/profile">Try again</a>');
   }
 
-  // Build update object
+  // Build update object from validated 'value'
   const updates = {
     firstName: value.firstName,
     lastName: value.lastName,
@@ -1209,7 +1223,7 @@ app.post("/profile", upload.single("image"), async (req, res) => {
 
   if (req.file) {
     const fullBuffer = await sharp(req.file.buffer)
-      .resize({ width: 1080, withoutEnlargement: true })
+      .resize({ width: 1080, withoutEnlargement: true }) // Using parent's image resize
       .jpeg({ quality: 80 })
       .toBuffer();
     const thumbBuffer = await sharp(req.file.buffer)
@@ -1218,25 +1232,27 @@ app.post("/profile", upload.single("image"), async (req, res) => {
       .toBuffer();
     updates.image = { data: fullBuffer, contentType: "image/jpeg" };
     updates.thumbnail = { data: thumbBuffer, contentType: "image/jpeg" };
-    console.log('image updated')
   }
 
   if (user.role === "seller") {
     updates.address = {
-      address,
-      city,
-      province,
-      postalCode
+      address: value["address address-search"], // use validated value
+      city: value.city,
+      province: value.province,
+      postalCode: value.postalCode ? value.postalCode.toUpperCase().replace(/\s/g, '') : undefined // Standardize from validated value
     };
   }
-
-  // Only sellers have languages, but they manage those elsewhere (/languages)
-  // So we don't touch languages here
 
   await userCollection.updateOne(
     { _id: new ObjectId(req.session.userId) },
     { $set: updates }
   );
+  // Parent version does not update session variables here, so removed those lines.
+  // Update session details if they changed (optional, but good for UX)
+  req.session.firstName = updates.firstName;
+  req.session.lastName = updates.lastName;
+  req.session.email = updates.email;
+
 
   res.redirect("/profile");
 });
@@ -1252,8 +1268,6 @@ app.get("/contacts", async (req, res) => {
   const currentUserRole = req.session.role; // Get the role from the session
 
   try {
-    // ... (your existing logic to fetch distinctSenderIds, distinctReceiverIds, allInteractedUserIds) ...
-
     const distinctSenderIds = await chatMessageCollection.distinct("senderId", {
       receiverId: currentUserId,
     });
@@ -1277,19 +1291,19 @@ app.get("/contacts", async (req, res) => {
             projection: {
               firstName: 1,
               lastName: 1,
-              profilePictureUrl: 1,
-              image: 1
+              profilePictureUrl: 1, // Keep this if you use it as a specific field
+              image: 1 // Keep this for fallback
             },
           }
         )
         .map(user => ({
           ...user,
           _id: user._id.toString(),
+          // Prioritize specific profilePictureUrl, then image.data, then fallback
           profilePictureUrl: user.profilePictureUrl || (user.image && user.image.data ? `data:${user.image.contentType};base64,${user.image.data.toString("base64")}` : '/img/farmerpfp.png')
         }))
         .toArray();
     }
-
     res.render("contacts", {
       title: "My Messages",
       contacts: contacts,
@@ -1305,8 +1319,7 @@ app.get("/contacts", async (req, res) => {
   }
 });
 
-// Your existing /chat route should mostly remain the same.
-// It's what the links from the contacts page will point to.
+// This is the chat route intended to be used after /contacts or directly
 app.get("/chat", async (req, res) => {
   if (!req.session.authenticated) return res.redirect("/login");
   const currentUserId = req.session.userId; // String
@@ -1343,15 +1356,14 @@ app.get("/chat", async (req, res) => {
     const ids = [currentUserId, otherUserIdString].sort(); // Sort to ensure chatId is always the same for two users
     const chatId = ids.join("-");
 
-    res.render("chat", {
-      // This is your existing chat.ejs
-      title: `Chat with ${otherUser.firstName || "User"}`,
-      currentUserId: currentUserId,
+    res.render("chat", { // This is your existing chat.ejs
+      title: `Chat with ${otherUser.firstName}`, // Reverted to simpler title
+      currentUserId, // Reverted to shorthand
       currentUserFirstName: req.session.firstName, // Assuming this is in session
       otherUserId: otherUserIdString,
-      otherUserName: `${otherUser.firstName || ""} ${otherUser.lastName || ""
+      otherUserName: `${otherUser.firstName} ${otherUser.lastName || ""
         }`.trim(),
-      chatId: chatId,
+      chatId, // Reverted to shorthand
     });
   } catch (error) {
     console.error("GET /chat error:", error);
@@ -1363,16 +1375,20 @@ app.get("/chat", async (req, res) => {
       });
   }
 });
+
 app.get("/map", async (req, res) => {
   // General map page, if needed
   if (!req.session.authenticated) return res.redirect("/login");
 
+  // Fetch sellers, potentially with location data for map markers
   const sellers = await userCollection.find({ role: "seller" }).toArray();
+  // You might want to filter sellers to only those with address/coordinates
+  // e.g. { role: "seller", $or: [{ address: { $exists: true, $ne: null } }, { coordinates: { $exists: true, $ne: null } }] }
 
   res.render("map", {
     title: "Map",
     mapboxToken: process.env.MAPBOX_API_TOKEN,
-    sellers: sellers,
+    sellers: sellers, // Pass sellers to the template
   });
 });
 
@@ -1404,17 +1420,26 @@ io.on("connection", (socket) => {
 
 // --- 404 AND ERROR HANDLER ---
 app.use(async (req, res, next) => {
-  // fetch only user role
-  const user = await userCollection.findOne(
-    { _id: new ObjectId(req.session.userId) },
-    { projection: { role: 1 } }
-  );
-
+  let user = null; // Initialize user as null
+  // Check if session and userId are valid before querying DB
+  if (req.session && req.session.authenticated && req.session.userId && ObjectId.isValid(req.session.userId)) {
+    try {
+      user = await userCollection.findOne( // Assign to user directly
+        { _id: new ObjectId(req.session.userId) },
+        { projection: { role: 1 } } // Only fetch role
+      );
+    } catch (dbError) {
+      console.error("Error fetching user role for 404 page:", dbError);
+      // Potentially proceed without user data or handle error differently
+    }
+  }
+  // Pass the user object (which might be null or contain the role)
   res.status(404).render("404", { title: "Page Not Found", user });
 });
 
 app.use((err, req, res, next) => {
-  console.error("Global error for URL:", req.originalUrl, "\n", err.stack);
+  console.error("Global error for URL:", req.originalUrl);
+  console.error(err.stack); // Log the full stack trace
   if (!res.headersSent) {
     res.status(err.status || 500).render("errorPage", {
       title: "Server Error",

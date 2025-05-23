@@ -1,3 +1,6 @@
+<%- include("templates/header") %>
+<%- include("templates/footer") %>
+
 <%-/* views/viewpage.ejs */%>
 <!DOCTYPE html>
 <html lang="en">
@@ -55,7 +58,7 @@
               </div>
             </div>
             <% if (post.seller && post.seller._id && post.seller._id.toString() !== session.userId) { %>
-                <button id="addToCartButton" class="w-full bg-green-600 hover:bg-green-700 text-white py-2.5 px-6 rounded-md flex justify-center items-center text-md font-semibold disabled:opacity-50 disabled:cursor-not-allowed" <%= post.quantity === 0 ? 'disabled' : '' %>>
+                <button id="addToCartButton" class="w-full bg-farmer-primary hover:bg-farmer-primary-hover text-white py-2.5 px-6 rounded-md flex justify-center items-center text-md font-semibold disabled:opacity-50 disabled:cursor-not-allowed" <%= post.quantity === 0 ? 'disabled' : '' %>>
                   Add to Cart - $<span id="totalPriceForCart"><%= post.price.toFixed(2) %></span>
                 </button>
             <% } %>
