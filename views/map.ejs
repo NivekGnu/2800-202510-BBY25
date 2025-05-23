@@ -13,6 +13,8 @@
 
     const accessToken = '<%= mapboxToken %>';
 
+    const sellers = <%- JSON.stringify(sellers) %>;
+
     // We can change to "streets-v11", "outdoors-v11", "satellite-v9", etc for different map views
     const mapboxStyle = 'mapbox/streets-v12';
 
@@ -23,18 +25,30 @@
       accessToken: accessToken
     }).addTo(map);
 
-    const marker = L.marker([49.249999, -123.001]).addTo(map);
-    marker.bindPopup(`
-      <a href="https://www.bcit.ca/" target="_blank" style="text-decoration: none; color: inherit; display: block;">
-        <div style="padding: 4px;">
-        <b>Burnaby</b><br>
-        Home of BCIT.
-        </div>
-      </a>
-    `).openPopup();
-  </script>
+    sellers.forEach(seller => {
+      if(!seller.address) return;
 
-  <script>
+      const address = seller.address;
+      const addressString = `${address.address}, ${address.city}, ${address.province}, ${address.postalCode}`;
+
+      fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(addressString)}.json?access_token=${accessToken}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.features.length > 0) {
+          const [lng, lat] = data.features[0].center;
+          const marker = L.marker([lat, lng]).addTo(map);
+          marker.bindPopup(`
+            <b>${seller.firstName} ${seller.lastName}</b><br>
+            ${addressString}
+          `);
+        }
+      })
+      .catch(err => {
+        console.error("Geocoding failed for:", addressString, err);
+      });
+    });
+  
+    // Buyer's current location; may need their permission for geolocation
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition((position) => {
           const latitude = position.coords.latitude;
@@ -55,6 +69,8 @@
     } else {
       console.error("Geolocation is not supported by this browser.");
     }
+
+
   </script>
   
 <%- include("templates/footer") %>

@@ -2,87 +2,104 @@
 
 /* Reset & viewport padding */
 *, *::before, *::after {
-    box-sizing: border-box;
+  box-sizing: border-box;
+}
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background: #fff;
+  overflow-x: hidden;
+}
+body {
+  padding: 0 16px;
+  padding-top:    env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Container below fixed header */
+.language-container {
+  margin-top: 80px;          /* same offset as signup */
+  width: 100%;
+  max-width: 379px;
+  margin-inline: auto;       /* center */
+}
+
+/* Title */
+.language-title {
+  text-align: center;
+  font-size: 20px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 24px;
+}
+
+/* Spacing between form children */
+.language-form > * + * { margin-top: 16px; }
+
+/* Language grid */
+.lang-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* pill-style checkbox wrapper */
+.lang-item {
+  flex: 1 1 45%;           /* ≈ two per row on mobile */
+  background: #ddd;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: background .2s, border-color .2s, color .2s;
+}
+.lang-item:hover {
+  background: #c1c1a6;       /* farmer-secondary-hover */
+  border-color: #849966;     /* farmer-primary */
+}
+.lang-item input {
+  width: 18px;
+  height: 18px;
+}
+.lang-item span {
+  font-size: 16px;
+  color: #333;
+}
+
+/* highlight pill when checked */
+@supports(selector(:has(*))) {
+  .lang-item:has(input:checked) {
+    background: #d6d7b8;       /* farmer-secondary */
+    border-color: #849966;     /* farmer-primary */
   }
-  html, body {
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    height: 100%;
-    background: #fff;
-    overflow-x: hidden;
+  .lang-item:has(input:checked) span {
+    color: #333;               /* keep text dark for contrast */
   }
-  body {
-    padding: 0 16px;
-    padding-top:    env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-  
-  /* Container below fixed header */
-  .language-container {
-    margin-top: 80px;          /* same offset as signup */
-    width: 100%;
-    max-width: 379px;
-    margin-inline: auto;       /* center */
-  }
-  
-  /* Title */
-  .language-title {
-    text-align: center;
-    font-size: 20px;
-    font-weight: 500;
-    color: #333;
-    margin-bottom: 24px;
-  }
-  
-  /* Spacing between form children */
-  .language-form > * + * { margin-top: 16px; }
-  
-  /* Language grid */
-  .lang-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  
-  /* pill‑style checkbox wrapper */
-  .lang-item {
-    flex: 1 1 45%;           /* ≈ two per row on mobile */
-    background: #ddd;
-    border-radius: 8px;
-    padding: 12px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
-    transition: background .2s;
-  }
-  .lang-item:hover { background: #ccc; }
-  
-  .lang-item input { width: 18px; height: 18px; }
-  .lang-item span  { font-size: 16px; color: #333; }
-  
-  /* highlight pill when checked */
-  @supports(selector(:has(*))) {
-    .lang-item:has(input:checked) {
-      background: #2f8a3e;
-    }
-    .lang-item:has(input:checked) span {
-      color: #fff;
-    }
-  }
-  
-  /* Save button */
-  .save-btn {
-    width: 100%;
-    height: 51px;
-    border: none;
-    border-radius: 8px;
-    background: #ddd;
-    color: #fff;
-    font-size: 16px;
-    transition: background .2s;
-  }
-  .save-btn:not(:disabled) { background: #2f8a3e; }
-  .save-btn:disabled       { opacity: 0.6; cursor: not-allowed; }
-  
+}
+
+/* Save button */
+.save-btn {
+  width: 100%;
+  height: 51px;
+  border: none;
+  border-radius: 8px;
+  background: #ddd;
+  color: #fff;
+  font-size: 16px;
+  transition: background .2s;
+}
+.save-btn:not(:disabled) {
+  background: #849966;        /* farmer-primary */
+}
+.save-btn:not(:disabled):hover {
+  background: #768a5c;        /* farmer-primary-hover */
+}
+.save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
