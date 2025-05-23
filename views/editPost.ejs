@@ -7,7 +7,7 @@
     <div class="relative mb-6 flex items-center justify-center h-12">
       <!-- Back button -->
       <button
-        class="absolute left-0 text-2xl text-gray-700 hover:text-green-600 p-2"
+        class="absolute left-0 text-2xl text-gray-700 hover:text-farmer-primary p-2"
         onclick="window.history.back();"
       >
         <i class="fas fa-chevron-left"></i>
@@ -40,7 +40,7 @@
           value="<%= currentPost.category
                     ? currentPost.category.charAt(0).toUpperCase() + currentPost.category.slice(1)
                     : '' %>"
-          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-farmer-primary transition"
         />
       </div>
 
@@ -55,8 +55,7 @@
           name="produce"
           required
           value="<%= currentPost.produce %>"
-          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-        />
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-farmer-primary transition"        />
       </div>
 
       <!-- Quantity -->
@@ -70,7 +69,7 @@
           name="quantity"
           required
           value="<%= currentPost.quantity %>"
-          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-farmer-primary transition"
         />
       </div>
 
@@ -85,7 +84,7 @@
           name="price"
           required
           value="<%= currentPost.price %>"
-          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-farmer-primary transition"
         />
       </div>
 
@@ -99,7 +98,7 @@
           name="description"
           rows="4"
           maxlength="200"
-          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-farmer-primary transition"
         ><%= currentPost.description %></textarea>
       </div>
 
@@ -137,7 +136,7 @@
       <button
         type="submit"
         form="editForm"
-        class="w-40 py-2 bg-green-600 text-white text-sm font-semibold rounded-lg shadow hover:bg-green-700 transition"
+        class="w-40 py-2 bg-farmer-primary text-white text-sm font-semibold rounded-lg shadow hover:bg-farmer-primary-hover transition"
       >
         Update Post
       </button>
