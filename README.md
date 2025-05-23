@@ -51,7 +51,7 @@ Full listing of files can be found in full_file_list.txt
   - Leaflet (npm i leaflet): For Map API
   - Tailwindcss (npm i tailwindcss): For our app styling
     - For testing you can put "<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>" in the head
-    - ** PLEASE DO NOT USE FOR ACTUAL RELEASE **
+    - **PLEASE DO NOT USE FOR ACTUAL RELEASE**
   - Google Gemini (npm i @google/generative-ai)
   
 3. Required APIs ** IMPORTANT: PLEASE ENSURE YOU KEEP API KEYS IN A ".env" FILE **
@@ -62,19 +62,20 @@ Obtain API keys for the following (Account for each required)
  - Stripe
  - Create two session secrets (for node and mongodb) with any UUID generator (ie. https://www.uuidgenerator.net/)
 
-Then copy the following into your ".env" file and fill each in with your API key **NO SPACES**
+Then copy the following into your ".env" file and replace '{YOUR KEY}' your API key **NO SPACE**
+**DASHES (-) WERE ADDED FOR FORMATTING PLEASE REMOVE AND REPLACE NO SPACES**
 
-MONGODB_HOST={YOUR KEY}
-MONGODB_USER={YOUR KEY}
-MONGODB_PASSWORD={YOUR KEY}
-MONGODB_DATABASE={YOUR KEY}
-MONGODB_SESSION_SECRET={YOUR KEY}
-NODE_SESSION_SECRET={YOUR KEY}
-MAPBOX_API_TOKEN={YOUR KEY}
-GEMINI_API_KEY={YOUR KEY}
-STRIPE_PUBLISHABLE_KEY={YOUR KEY}
-STRIPE_SECRET_KEY={YOUR KEY}
-STRIPE_WEBHOOK_SECRET={YOUR KEY}
+-MONGODB_HOST={YOUR KEY}
+-MONGODB_USER={YOUR KEY}
+-MONGODB_PASSWORD={YOUR KEY}
+-MONGODB_DATABASE={YOUR KEY}
+-MONGODB_SESSION_SECRET={YOUR KEY}
+-NODE_SESSION_SECRET={YOUR KEY}
+-MAPBOX_API_TOKEN={YOUR KEY}
+-GEMINI_API_KEY={YOUR KEY}
+-STRIPE_PUBLISHABLE_KEY={YOUR KEY}
+-STRIPE_SECRET_KEY={YOUR KEY}
+-STRIPE_WEBHOOK_SECRET={YOUR KEY}
 
 4. Fork this repository for yourself and place your ".env" in the folder
 It should be in the main folder (you should see index.js as well)
