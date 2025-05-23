@@ -1791,6 +1791,11 @@ video {
   background-color: rgb(118 138 92 / var(--tw-bg-opacity, 1));
 }
 
+.hover\:bg-farmer-secondary:hover {
+  --tw-bg-opacity: 1;
+  background-color: rgb(214 215 184 / var(--tw-bg-opacity, 1));
+}
+
 .hover\:bg-farmer-secondary-hover:hover {
   --tw-bg-opacity: 1;
   background-color: rgb(193 193 166 / var(--tw-bg-opacity, 1));
@@ -1837,6 +1842,11 @@ video {
 }
 
 .hover\:text-\[\#849966\]:hover {
+  --tw-text-opacity: 1;
+  color: rgb(132 153 102 / var(--tw-text-opacity, 1));
+}
+
+.hover\:text-farmer-primary:hover {
   --tw-text-opacity: 1;
   color: rgb(132 153 102 / var(--tw-text-opacity, 1));
 }
@@ -1903,14 +1913,14 @@ video {
   --tw-ring-color: rgb(132 153 102 / var(--tw-ring-opacity, 1));
 }
 
+.focus\:ring-farmer-secondary-hover:focus {
+  --tw-ring-opacity: 1;
+  --tw-ring-color: rgb(193 193 166 / var(--tw-ring-opacity, 1));
+}
+
 .focus\:ring-gray-300:focus {
   --tw-ring-opacity: 1;
   --tw-ring-color: rgb(209 213 219 / var(--tw-ring-opacity, 1));
-}
-
-.focus\:ring-green-200:focus {
-  --tw-ring-opacity: 1;
-  --tw-ring-color: rgb(187 247 208 / var(--tw-ring-opacity, 1));
 }
 
 .focus\:ring-green-400:focus {
@@ -1945,6 +1955,11 @@ video {
   --tw-scale-x: 1.05;
   --tw-scale-y: 1.05;
   transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+
+.group:hover .group-hover\:text-farmer-primary {
+  --tw-text-opacity: 1;
+  color: rgb(132 153 102 / var(--tw-text-opacity, 1));
 }
 
 .group:hover .group-hover\:text-farmer-primary-hover {
