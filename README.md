@@ -54,15 +54,15 @@ Full listing of files can be found in full_file_list.txt
     - **PLEASE DO NOT USE FOR ACTUAL RELEASE**
   - Google Gemini (npm i @google/generative-ai)
   
-3. Required APIs ** IMPORTANT: PLEASE ENSURE YOU KEEP API KEYS IN A ".env" FILE **
-Obtain API keys for the following (Account for each required)
+3. Required APIs **IMPORTANT: PLEASE ENSURE YOU KEEP API KEYS IN A ".env" FILE**.
+Obtain API keys for the following (account for each required)
  - MongoDB
  - Mapbox
  - Gemini
  - Stripe
  - Create two session secrets (for node and mongodb) with any UUID generator (ie. https://www.uuidgenerator.net/)
 
-Then copy the following into your ".env" file and replace '{YOUR KEY}' your API key **NO SPACE**
+Then copy the following into your ".env" file and replace '{YOUR KEY}' with your API key **NO SPACE**
 
 - MONGODB_HOST={YOUR KEY}
 - MONGODB_USER={YOUR KEY}
@@ -76,7 +76,7 @@ Then copy the following into your ".env" file and replace '{YOUR KEY}' your API 
 - STRIPE_SECRET_KEY={YOUR KEY}
 - STRIPE_WEBHOOK_SECRET={YOUR KEY}
 
-4. Fork this repository for yourself and place your ".env" in the folder
+4. Fork this repository for yourself and place your ".env" in the folder.
 It should be in the main folder (you should see index.js as well)
 
 ## Features
