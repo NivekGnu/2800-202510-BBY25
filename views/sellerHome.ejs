@@ -42,12 +42,12 @@
                    Which in this case, calls the route of app.get("/post/:id/edit"-->
             <div class="p-4 flex-1 flex flex-col justify-between">
               <div class="flex items-center justify-between mb-2">
-                <h3 class="text-xl font-bold text-green-700 truncate"><%= p.produce %></h3>
+                <h3 class="text-xl font-bold text-farmer-primary truncate"><%= p.produce %></h3>
                 <span class="text-sm text-gray-500"><%= new Date(p.createdAt).toLocaleDateString() %></span>
               </div>
               <a
                 href="/post/<%= p._id %>/edit"
-                class="inline-flex items-center justify-center px-3 py-1 bg-green-600 hover:bg-green-700 focus:ring-2 focus:ring-green-200 text-white text-sm font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
+                class="inline-flex items-center justify-center px-3 py-1 bg-farmer-secondary hover:bg-farmer-secondary focus:ring-2 focus:ring-farmer-secondary-hover text-white text-sm font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2v-5m-4.586-4.586a2 2 0 112.828 2.828L11 17l-4 1 1-4 8.414-8.414z" />
