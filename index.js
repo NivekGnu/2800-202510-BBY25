@@ -161,7 +161,10 @@ app.get("/", async (req, res) => {
       });
     } else if (req.session.role === "buyer") {
       // 1) Load all distinct categories for the dropdown
-      const categories = await postingCollection.distinct("category");
+      const rawCategories = await postingCollection.distinct("category");
+      let categories = rawCategories
+        .map(c => c.trim().toLowerCase())
+        .filter((c, idx, self) => self.indexOf(c) === idx);
 
       // 2) Read selected filters from query
       const selectedCategory = req.query.category || "";
@@ -183,7 +186,10 @@ app.get("/", async (req, res) => {
 
       // 5) Apply category filter if selected
       if (selectedCategory) {
-        docs = docs.filter(doc => doc.category === selectedCategory);
+        docs = docs.filter(doc =>
+          typeof doc.category === 'string' &&
+          doc.category.trim().toLowerCase() === selectedCategory
+        );
       }
 
       // 6) Apply language filter if selected
@@ -1166,8 +1172,8 @@ app.post("/profile", upload.single("image"), async (req, res) => {
 
   const user = await userCollection.findOne({ _id: new ObjectId(req.session.userId) });
   if (!user) { // Good to have this check as well
-      req.session.destroy();
-      return res.redirect("/");
+    req.session.destroy();
+    return res.redirect("/");
   }
 
   let schema;
@@ -1189,7 +1195,7 @@ app.post("/profile", upload.single("image"), async (req, res) => {
       "address address-search": Joi.string().min(1).max(100).required(), // Increased max length
       city: Joi.string().min(1).max(50).required(),
       province: Joi.string().min(1).max(50).required(),
-      postalCode: Joi.string().pattern(/^[A-Za-z]\d[A-Za-z][ -]?\d[A-Za-z]\d$/).required().messages({'string.pattern.base': 'Postal code must be in a valid Canadian format (e.g., A1A 1A1).'}),
+      postalCode: Joi.string().pattern(/^[A-Za-z]\d[A-Za-z][ -]?\d[A-Za-z]\d$/).required().messages({ 'string.pattern.base': 'Postal code must be in a valid Canadian format (e.g., A1A 1A1).' }),
     }).unknown(true);
   }
 
@@ -1417,15 +1423,15 @@ app.use(async (req, res, next) => {
   let user = null; // Initialize user as null
   // Check if session and userId are valid before querying DB
   if (req.session && req.session.authenticated && req.session.userId && ObjectId.isValid(req.session.userId)) {
-      try {
-          user = await userCollection.findOne( // Assign to user directly
-              { _id: new ObjectId(req.session.userId) },
-              { projection: { role: 1 } } // Only fetch role
-          );
-      } catch (dbError) {
-          console.error("Error fetching user role for 404 page:", dbError);
-          // Potentially proceed without user data or handle error differently
-      }
+    try {
+      user = await userCollection.findOne( // Assign to user directly
+        { _id: new ObjectId(req.session.userId) },
+        { projection: { role: 1 } } // Only fetch role
+      );
+    } catch (dbError) {
+      console.error("Error fetching user role for 404 page:", dbError);
+      // Potentially proceed without user data or handle error differently
+    }
   }
   // Pass the user object (which might be null or contain the role)
   res.status(404).render("404", { title: "Page Not Found", user });
