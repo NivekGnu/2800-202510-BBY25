@@ -10,15 +10,14 @@ const multer = require("multer");
 const sharp = require("sharp");
 const Joi = require("joi");
 const { ObjectId } = require("mongodb");
-const http = require("http"); // Required for Socket.IO
-const { Server } = require("socket.io"); // Required for Socket.IO
+const http = require("http");
+const { Server } = require("socket.io");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 const saltRounds = 12;
 const app = express();
-const server = http.createServer(app); // Create HTTP server from Express app
+const server = http.createServer(app);
 const io = new Server(server, {
-  // Attach Socket.IO to the HTTP server
   cors: {
     origin: "*", // Adjust for production
     methods: ["GET", "POST"],
@@ -30,6 +29,7 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 const expireTime = 1 * 60 * 60 * 1000; // 1 hour
 const port = process.env.PORT || 3000;
 const LIVE_DOMAIN = process.env.LIVE_DOMAIN || `http://localhost:${port}`;
+
 
 // MongoDB Configuration
 const mongodb_host = process.env.MONGODB_HOST;
@@ -255,39 +255,89 @@ app.post("/loginSubmit", async (req, res) => {
 });
 
 app.post("/signupSubmit", async (req, res) => {
-  const { firstName, lastName, email, password, role, "address address-search": address, city, province, postalCode } = req.body;
-  const schema = Joi.object({
+  const {
+    firstName,
+    lastName,
+    email,
+    password,
+    role,
+    "address address-search": address, // Make sure this matches your form's name attribute
+    city,
+    province,
+    postalCode,
+    // terms, // The 'terms' field will be in req.body if sent from the form
+  } = req.body;
+
+  // Log the received body to help debug if field names are unexpected
+  console.log("Signup submitted with req.body:", req.body);
+
+  let schemaDefinition = {
     firstName: Joi.string().alphanum().min(1).max(50).required(),
     lastName: Joi.string().alphanum().min(1).max(50).required(),
     email: Joi.string().email().required(),
     password: Joi.string().min(6).max(100).required(),
     role: Joi.string().valid("buyer", "seller").required(),
-    "address address-search": Joi.string().allow('').optional(),
-    city: Joi.string().allow('').optional(),
-    province: Joi.string().allow('').optional(),
-    postalCode: Joi.string().allow('').optional(),
-  });
+    // No 'terms' field defined here, .unknown(true) will allow it
+  };
+
+  if (role === "seller") { // Check req.body.role or the destructured 'role'
+    schemaDefinition["address address-search"] = Joi.string().min(1).max(100).required().messages({
+        'string.empty': 'Address is required for sellers.',
+        'any.required': 'Address is required for sellers.'
+    });
+    schemaDefinition.city = Joi.string().min(1).max(50).required().messages({
+        'string.empty': 'City is required for sellers.',
+        'any.required': 'City is required for sellers.'
+    });
+    schemaDefinition.province = Joi.string().min(1).max(50).required().messages({
+        'string.empty': 'Province is required for sellers.',
+        'any.required': 'Province is required for sellers.'
+    });
+    schemaDefinition.postalCode = Joi.string().pattern(/^[A-Za-z]\d[A-Za-z][ -]?\d[A-Za-z]\d$/).required().messages({
+        'string.empty': 'Postal code is required for sellers.',
+        'any.required': 'Postal code is required for sellers.',
+        'string.pattern.base': 'Postal code must be in a valid Canadian format (e.g., A1A 1A1).'
+    });
+  } else {
+    // For buyers, these address fields are optional
+    schemaDefinition["address address-search"] = Joi.string().allow('').optional();
+    schemaDefinition.city = Joi.string().allow('').optional();
+    schemaDefinition.province = Joi.string().allow('').optional();
+    schemaDefinition.postalCode = Joi.string().allow('').optional();
+  }
+
+  // Allow unknown keys (like 'terms') to pass through validation
+  const schema = Joi.object(schemaDefinition).unknown(true);
 
   const { error: validationError } = schema.validate(req.body, { abortEarly: false });
-  if (validationError) return res.status(400).send(`${validationError.details.map(d => d.message).join("<br>")} <a href="/signup">Try again</a>`);
 
-  if (role === "seller" && (!address || !city || !province || !postalCode)) {
-      return res.status(400).send(`Address, City, Province, and Postal Code are required for sellers. <a href="/signup">Try again</a>`);
+  if (validationError) {
+    const errorMessages = validationError.details.map(d => d.message).join("<br>");
+    console.error("Signup Validation Error:", errorMessages); // Log validation errors
+    return res.status(400).send(`${errorMessages} <br><a href="/signup">Try again</a>`);
   }
 
   try {
     const emailExists = await userCollection.findOne({ email });
-    if (emailExists) return res.status(400).send('Email already registered. <a href="/login">Login</a> or <a href="/signup">try another email</a>.');
+    if (emailExists) {
+      return res.status(400).send('Email already registered. <a href="/login">Login</a> or <a href="/signup">try another email</a>.');
+    }
 
     const hashedPassword = await bcrypt.hash(password, saltRounds);
     const newUserDocument = {
       firstName, lastName, email, password: hashedPassword, role,
       languages: role === "seller" ? [] : undefined,
       createdAt: new Date(),
-      // Default profile image can be set here if desired, or handled on display
-      // profilePictureUrl: '/img/default-pfp.png'
     };
-    if (role === "seller") newUserDocument.address = { address, city, province, postalCode };
+
+    if (role === "seller") {
+      newUserDocument.address = {
+        address: address, // Will be populated if role is seller
+        city: city,
+        province: province,
+        postalCode: postalCode ? postalCode.toUpperCase().replace(/\s/g, '') : undefined // Standardize if present
+      };
+    }
 
     const result = await userCollection.insertOne(newUserDocument);
     const newUserId = result.insertedId;
@@ -310,17 +360,17 @@ app.post("/signupSubmit", async (req, res) => {
         await userCollection.updateOne({ _id: newUserId }, { $set: { stripeAccountId: account.id } });
         return res.redirect("/languages");
       } catch (stripeError) {
-        console.error("Stripe account creation/update error:", stripeError);
-        // Potentially redirect to a page explaining the Stripe issue or just proceed to "/"
-        // For now, letting it fall through to the general redirect
+        console.error("Stripe account creation/update error during signup:", stripeError);
+        // Potentially inform user or log for admin attention
       }
     }
     return res.redirect("/");
   } catch (error) {
-    console.error("Signup error:", error);
+    console.error("Signup server error:", error);
     return res.status(500).send("Error creating account. <a href='/signup'>Try again</a>");
   }
 });
+
 
 app.get("/languages", (req, res) => {
   if (!req.session.authenticated || req.session.role !== "seller") return res.redirect("/");
@@ -451,11 +501,10 @@ app.post("/post/:id/delete", async (req, res) => {
 
 
 // --- CHAT ROUTES ---
-// GET /chat (Main chat page for a specific conversation)
 app.get("/chat", async (req, res) => {
   if (!req.session.authenticated) return res.redirect("/login");
-  const currentUserId = req.session.userId; // String
-  const otherUserIdString = req.query.with; // String
+  const currentUserId = req.session.userId;
+  const otherUserIdString = req.query.with;
 
   if (!otherUserIdString || !ObjectId.isValid(otherUserIdString) || currentUserId === otherUserIdString) {
     return res.status(400).render("errorPage", { title: "Chat Error", errorMessage: "Invalid chat parameters." });
@@ -468,17 +517,15 @@ app.get("/chat", async (req, res) => {
     if (!otherUser) {
       return res.status(404).render("errorPage", { title: "Chat Error", errorMessage: "Chat partner not found." });
     }
-
-    const ids = [currentUserId, otherUserIdString].sort(); // Sort to ensure chatId is always the same
+    const ids = [currentUserId, otherUserIdString].sort();
     const chatId = ids.join("-");
-
-    res.render("chat", { // Renders chat.ejs
+    res.render("chat", {
       title: `Chat with ${otherUser.firstName || "User"}`,
       currentUserId: currentUserId,
       currentUserFirstName: req.session.firstName,
       otherUserId: otherUserIdString,
       otherUserName: `${otherUser.firstName || ""} ${otherUser.lastName || ""}`.trim(),
-      chatId: chatId, // Pass the generated chatId to the client
+      chatId: chatId,
     });
   } catch (error) {
     console.error("GET /chat error:", error);
@@ -486,17 +533,14 @@ app.get("/chat", async (req, res) => {
   }
 });
 
-// API to fetch messages for a given chat
 app.get("/api/chat/:chatId/messages", async (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Unauthorized" });
   try {
     const { chatId } = req.params;
-    // Validate that the current user is part of this chat
     const [user1Id, user2Id] = chatId.split("-");
     if (req.session.userId !== user1Id && req.session.userId !== user2Id) {
       return res.status(403).json({ error: "Forbidden: You are not part of this chat." });
     }
-
     const messagesFromDb = await chatMessageCollection.find({ chatId }).sort({ timestamp: 1 }).toArray();
     const messages = messagesFromDb.map((msg) => ({
       ...msg,
@@ -514,7 +558,6 @@ app.get("/api/chat/:chatId/messages", async (req, res) => {
   }
 });
 
-// API to post a new text message
 app.post("/api/chat/messages", async (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Unauthorized" });
   try {
@@ -540,15 +583,14 @@ app.post("/api/chat/messages", async (req, res) => {
       messageType: "text",
       timestamp: newMessageDocument.timestamp,
     };
-    io.to(chatId).emit("newMessage", savedMessage); // Broadcast to all clients in the room
+    io.to(chatId).emit("newMessage", savedMessage);
     res.status(201).json(savedMessage);
   } catch (error) {
-    console.error("Error sending chat message:", error);
+    console.error("Error sending text message:", error);
     res.status(500).json({ error: "Server error sending message." });
   }
 });
 
-// API to post a new image message
 app.post("/api/chat/messages/image", upload.single("chatImage"), async (req, res) => {
   if (!req.session.authenticated) return res.status(401).json({ error: "Unauthorized" });
   try {
@@ -578,7 +620,7 @@ app.post("/api/chat/messages/image", upload.single("chatImage"), async (req, res
       messageText: newMessageDocument.messageText,
       imageDataUri: `data:image/jpeg;base64,${imageBuffer.toString("base64")}`,
     };
-    io.to(chatId).emit("newMessage", savedMessage); // Broadcast to all clients in the room
+    io.to(chatId).emit("newMessage", savedMessage);
     res.status(201).json(savedMessage);
   } catch (error) {
     console.error("Error sending image message:", error);
@@ -610,7 +652,7 @@ app.get("/viewpage", async (req, res) => {
       description: post.description, createdAt: post.createdAt,
       imageSrc: post.image?.data ? `data:${post.image.contentType};base64,${post.image.data.toString("base64")}` : "/img/placeholder-large.png",
       location: post.location, coordinates: post.coordinates,
-      seller: sellerDetails, // Contains seller's full details or null
+      seller: sellerDetails,
     };
     res.render("viewpage", { title: `${post.produce || "View Post"}`, post: postForTemplate, mapboxToken: process.env.MAPBOX_API_TOKEN, sellerImage });
   } catch (error) {
@@ -643,15 +685,13 @@ app.post("/checkout", async (req, res) => {
       const parsedQuantity = parseInt(item.quantity, 10);
       if (isNaN(parsedPrice) || parsedPrice <= 0) throw new Error(`Invalid price for item "${item.produce}"`);
       if (isNaN(parsedQuantity) || parsedQuantity <= 0) throw new Error(`Invalid quantity for item "${item.produce}"`);
-      const unitAmount = Math.round(parsedPrice * 100); // Price in cents
+      const unitAmount = Math.round(parsedPrice * 100);
       let productImages = [];
-      // Only include image if it's a public URL, not a data URI
       if (item.imageSrc && !item.imageSrc.startsWith("data:")) productImages.push(item.imageSrc);
 
       return {
         price_data: {
-          currency: "cad", // Or your store's currency
-          product_data: { name: item.produce, ...(productImages.length > 0 && { images: productImages }) },
+          currency: "cad", product_data: { name: item.produce, ...(productImages.length > 0 && { images: productImages }) },
           unit_amount: unitAmount,
         },
         quantity: parsedQuantity,
@@ -660,7 +700,7 @@ app.post("/checkout", async (req, res) => {
 
     const subtotal = line_items.reduce((sum, item) => sum + item.price_data.unit_amount * item.quantity, 0);
     if (subtotal === 0 && line_items.length > 0) return res.status(400).json({ error: "Cart total is zero." });
-    const application_fee_amount = Math.max(0, Math.min(subtotal, Math.round(subtotal * 0.05))); // 5% fee, capped
+    const application_fee_amount = Math.max(0, Math.min(subtotal, Math.round(subtotal * 0.05)));
 
     const checkoutSessionPayload = {
       payment_method_types: ["card"], line_items, mode: "payment",
@@ -675,7 +715,7 @@ app.post("/checkout", async (req, res) => {
     const checkoutSession = await stripe.checkout.sessions.create(checkoutSessionPayload);
     res.json({ url: checkoutSession.url });
   } catch (error) {
-    console.error("Stripe Checkout Error:", error.message, error); // Log full error
+    console.error("Stripe Checkout Error:", error.message, error);
     res.status(500).json({ error: "Failed to create checkout session", stripeError: error.message });
   }
 });
@@ -683,7 +723,7 @@ app.post("/checkout", async (req, res) => {
 app.get("/profile", async (req, res) => {
   if (!req.session.authenticated) return res.redirect("/");
   const user = await userCollection.findOne({ _id: new ObjectId(req.session.userId) }, { projection: { password: 0 } });
-  if (!user) { req.session.destroy(); return res.redirect("/"); } // Handle case where user deleted but session exists
+  if (!user) { req.session.destroy(); return res.redirect("/"); }
   const userImage = { imageUrl: user.image?.data ? `data:${user.image.contentType};base64,${user.image.data.toString("base64")}` : "/img/farmerpfp.png" };
   const view = user.role === "seller" ? "sellerProfile" : "buyerProfile";
   res.render(view, { title: "User Profile", user, mapboxToken: process.env.MAPBOX_API_TOKEN, userImage });
@@ -703,7 +743,6 @@ app.post("/profile", upload.single("image"), async (req, res) => {
     schemaDefinition["address address-search"] = Joi.string().min(1).max(100).required();
     schemaDefinition.city = Joi.string().min(1).max(50).required();
     schemaDefinition.province = Joi.string().min(1).max(50).required();
-    // Canadian postal code: A1A 1A1 or A1A1A1
     schemaDefinition.postalCode = Joi.string().pattern(/^[A-Za-z]\d[A-Za-z][ -]?\d[A-Za-z]\d$/).required().messages({'string.pattern.base': 'Postal code must be in a valid Canadian format (e.g., A1A 1A1).'});
   }
   const schema = Joi.object(schemaDefinition).unknown(true);
@@ -716,7 +755,6 @@ app.post("/profile", upload.single("image"), async (req, res) => {
 
   const updates = { firstName: value.firstName, lastName: value.lastName, email: value.email };
   if (req.file) {
-    // For profile pictures, often a square crop is desired.
     const imageBuffer = await sharp(req.file.buffer)
       .resize({ width: 300, height: 300, fit: sharp.fit.cover, withoutEnlargement: true })
       .jpeg({ quality: 80 })
@@ -726,12 +764,10 @@ app.post("/profile", upload.single("image"), async (req, res) => {
   if (user.role === "seller") {
     updates.address = {
       address: value["address address-search"], city: value.city,
-      province: value.province, postalCode: value.postalCode.toUpperCase().replace(/\s/g, ''), // Standardize
+      province: value.province, postalCode: value.postalCode.toUpperCase().replace(/\s/g, ''),
     };
-    // If seller address changes, consider geocoding and updating user.coordinates
   }
   await userCollection.updateOne({ _id: new ObjectId(req.session.userId) }, { $set: updates });
-  // Update session with new details if they changed
   req.session.firstName = updates.firstName;
   req.session.lastName = updates.lastName;
   req.session.email = updates.email;
@@ -744,13 +780,10 @@ app.get("/contacts", async (req, res) => {
   const currentUserId = new ObjectId(currentUserIdString);
 
   try {
-    // Get all unique user IDs this user has chatted with
     const distinctSenderIds = await chatMessageCollection.distinct("senderId", { receiverId: currentUserId });
     const distinctReceiverIds = await chatMessageCollection.distinct("receiverId", { senderId: currentUserId });
-
-    // Combine, remove self, and convert to ObjectId
     const allInteractedUserIds = [...new Set([...distinctSenderIds, ...distinctReceiverIds])]
-      .filter(id => id.toString() !== currentUserIdString) // Exclude self
+      .filter(id => id.toString() !== currentUserIdString)
       .map(id => new ObjectId(id));
 
     let contacts = [];
@@ -760,11 +793,10 @@ app.get("/contacts", async (req, res) => {
         .map(user => ({
           ...user,
           _id: user._id.toString(),
-          profilePictureUrl: user.image?.data ? `data:${user.image.contentType};base64,${user.image.data.toString("base64")}` : '/img/farmerpfp.png' // Default or dynamic
+          profilePictureUrl: user.image?.data ? `data:${user.image.contentType};base64,${user.image.data.toString("base64")}` : '/img/farmerpfp.png'
         }))
         .toArray();
     }
-
     res.render("contacts", {
       title: "My Messages",
       contacts: contacts,
@@ -779,26 +811,21 @@ app.get("/contacts", async (req, res) => {
 
 app.get("/map", async (req, res) => {
   if (!req.session.authenticated) return res.redirect("/login");
-  // Fetch sellers with address or coordinates for map display
   const sellers = await userCollection.find({ role: "seller", $or: [{ address: { $exists: true, $ne: null } }, { coordinates: { $exists: true, $ne: null } }] }).toArray();
   res.render("map", { title: "Map", mapboxToken: process.env.MAPBOX_API_TOKEN, sellers: sellers });
 });
 
-
-// --- SOCKET.IO REAL-TIME LOGIC ---
+// --- SOCKET.IO CONNECTION HANDLING ---
 io.on("connection", (socket) => {
-  const session = socket.request.session; // Access session data via middleware
+  const session = socket.request.session;
   if (!session || !session.authenticated) {
-    console.log(`Socket connection attempt by unauthenticated user. Disconnecting socket ${socket.id}`);
     socket.disconnect(true);
     return;
   }
-
-  console.log(`User ${session.firstName || 'Unknown'} (${session.userId}) connected with socket ${socket.id}`);
+  console.log(`User ${session.firstName || 'Unknown'} (${session.userId}, Socket ID: ${socket.id}) connected.`);
 
   socket.on("joinChat", (chatId) => {
     if (chatId && typeof chatId === "string" && chatId.includes("-")) {
-      // Basic validation for chatId format, e.g., "userId1-userId2"
       socket.join(chatId);
       console.log(`Socket ${socket.id} (User: ${session.userId}) joined chat room: ${chatId}`);
     } else {
@@ -806,9 +833,12 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("disconnect", () => {
-    console.log(`User disconnected: ${socket.id} (User: ${session.firstName || "Unknown"})`);
-    // Socket.IO automatically handles leaving rooms on disconnect
+  socket.on("disconnect", (reason) => {
+    console.log(`User disconnected: ${socket.id} (User: ${session.firstName || "Unknown"}). Reason: ${reason}`);
+  });
+
+  socket.on("connect_error", (err) => {
+    console.error(`Socket connect_error for ${socket.id} (User: ${session.firstName || "Unknown"}): ${err.message}`);
   });
 });
 
@@ -816,7 +846,8 @@ io.on("connection", (socket) => {
 // --- 404 AND ERROR HANDLER ---
 app.use(async (req, res, next) => {
   let userRole = null;
-  if (req.session && req.session.authenticated && req.session.userId) {
+  // Check if session and userId are valid before querying DB
+  if (req.session && req.session.authenticated && req.session.userId && ObjectId.isValid(req.session.userId)) {
       try {
           const user = await userCollection.findOne(
               { _id: new ObjectId(req.session.userId) },
@@ -825,25 +856,27 @@ app.use(async (req, res, next) => {
           userRole = user ? user.role : null;
       } catch (dbError) {
           console.error("Error fetching user role for 404 page:", dbError);
+          // Potentially proceed without role or handle error differently
       }
   }
+  // Pass an object to the template, even if role is null
   res.status(404).render("404", { title: "Page Not Found", user: { role: userRole } });
 });
 
 
 app.use((err, req, res, next) => {
-  console.error("Global error for URL:", req.originalUrl, "\n", err.stack);
+  console.error("Global error for URL:", req.originalUrl);
+  console.error(err.stack); // Log the full stack trace
   if (!res.headersSent) {
     res.status(err.status || 500).render("errorPage", {
       title: "Server Error",
       errorMessage: err.message || "An unexpected server error occurred.",
     });
   } else {
-    next(err); // Delegate to default Express error handler if headers already sent
+    next(err);
   }
 });
 
-// Start the server
 server.listen(port, () => {
   console.log(`Server with Socket.IO is running on port ${port}`);
   console.log(`Access at: ${LIVE_DOMAIN}`);
